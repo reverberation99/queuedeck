@@ -1,0 +1,121 @@
+import os
+from flask import Blueprint, Response
+import requests
+
+from .models_settings import get_setting
+
+bp = Blueprint("images", __name__)
+
+
+def _cfg(key_db: str, key_env: str, default: str = "") -> str:
+    """
+    Prefer DB settings, fallback to environment variables.
+    Called inside request context, so get_setting() is safe here.
+    """
+    try:
+        v = (get_setting(key_db) or "").strip()
+    except Exception:
+        v = ""
+    if v:
+        return v
+    return (os.getenv(key_env, default) or "").strip()
+
+
+def _proxy_image(url: str, headers: dict | None = None) -> Response:
+    r = requests.get(url, headers=headers or {}, timeout=25)
+    r.raise_for_status()
+    ct = r.headers.get("Content-Type", "image/jpeg")
+    resp = Response(r.content, status=200, content_type=ct)
+    # cache a bit; Jellyfin/Sonarr/Radarr handle freshness via tags/ids
+    resp.headers["Cache-Control"] = "public, max-age=3600"
+    return resp
+
+
+# ---------------------------
+# Jellyfin images
+# ---------------------------
+
+@bp.get("/img/jellyfin/primary/<item_id>")
+def jellyfin_primary(item_id: str):
+    base = _cfg("jellyfin_url", "JELLYFIN_URL", "").rstrip("/")
+    api_key = _cfg("jellyfin_api_key", "JELLYFIN_API_KEY", "")
+    if not base:
+        return Response("Missing Jellyfin URL", status=500)
+    if not api_key:
+        return Response("Missing Jellyfin API key", status=500)
+
+    # Jellyfin supports Items/<id>/Images/Primary
+    url = f"{base}/Items/{item_id}/Images/Primary?quality=90"
+    return _proxy_image(url, headers={"X-Emby-Token": api_key})
+
+
+@bp.get("/img/jellyfin/series/<series_id>")
+def jellyfin_series(series_id: str):
+    base = _cfg("jellyfin_url", "JELLYFIN_URL", "").rstrip("/")
+    api_key = _cfg("jellyfin_api_key", "JELLYFIN_API_KEY", "")
+    if not base:
+        return Response("Missing Jellyfin URL", status=500)
+    if not api_key:
+        return Response("Missing Jellyfin API key", status=500)
+
+    url = f"{base}/Items/{series_id}/Images/Primary?quality=90"
+    return _proxy_image(url, headers={"X-Emby-Token": api_key})
+
+
+# ---------------------------
+# Sonarr poster by TVDB id
+# ---------------------------
+
+@bp.get("/img/sonarr/series/<int:tvdb_id>.jpg")
+def sonarr_series_poster(tvdb_id: int):
+    base = _cfg("sonarr_url", "SONARR_URL", "").rstrip("/")
+    api_key = _cfg("sonarr_api_key", "SONARR_API_KEY", "")
+    if not base:
+        return Response("Missing Sonarr URL", status=500)
+    if not api_key:
+        return Response("Missing Sonarr API key", status=500)
+
+    # Find Sonarr series ID by tvdbId
+    s = requests.get(
+        f"{base}/api/v3/series",
+        headers={"X-Api-Key": api_key},
+        timeout=25,
+    )
+    s.raise_for_status()
+    series = next((x for x in (s.json() or []) if int(x.get("tvdbId") or 0) == tvdb_id), None)
+    if not series:
+        return Response("Series not found in Sonarr", status=404)
+
+    series_id = series.get("id")
+    # Standard Sonarr cover endpoint
+    url = f"{base}/api/v3/MediaCover/{series_id}/poster.jpg"
+    return _proxy_image(url, headers={"X-Api-Key": api_key})
+
+
+# ---------------------------
+# Radarr poster by TMDB id
+# ---------------------------
+
+@bp.get("/img/radarr/tmdb/<int:tmdb_id>.jpg")
+def radarr_movie_poster(tmdb_id: int):
+    base = _cfg("radarr_url", "RADARR_URL", "").rstrip("/")
+    api_key = _cfg("radarr_api_key", "RADARR_API_KEY", "")
+    if not base:
+        return Response("Missing Radarr URL", status=500)
+    if not api_key:
+        return Response("Missing Radarr API key", status=500)
+
+    # Find Radarr movie ID by tmdbId
+    m = requests.get(
+        f"{base}/api/v3/movie",
+        headers={"X-Api-Key": api_key},
+        timeout=25,
+    )
+    m.raise_for_status()
+    movie = next((x for x in (m.json() or []) if int(x.get("tmdbId") or 0) == tmdb_id), None)
+    if not movie:
+        return Response("Movie not found in Radarr", status=404)
+
+    movie_id = movie.get("id")
+    url = f"{base}/api/v3/MediaCover/{movie_id}/poster.jpg"
+    return _proxy_image(url, headers={"X-Api-Key": api_key})

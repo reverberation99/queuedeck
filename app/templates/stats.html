@@ -1,0 +1,2305 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QueueDeck Stats</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=5" />
+
+  <style>
+    :root{
+      --bg0:#07090c;
+      --bg1:#0b0f14;
+      --card: rgba(255,255,255,.055);
+      --border: rgba(255,255,255,.10);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.64);
+      --accent:#7c5cff;
+      --accent2:#4ea1ff;
+      --shadow: 0 20px 60px rgba(0,0,0,.55);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ margin:0; min-height:100%; }
+    body{
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(900px 600px at 15% 0%, rgba(124,92,255,.14), transparent 60%),
+        radial-gradient(900px 700px at 100% 0%, rgba(78,161,255,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      padding: 28px;
+    }
+
+    .wrap{
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      margin-bottom:18px;
+      flex-wrap:wrap;
+    }
+
+    .brand{
+      display:flex;
+      align-items:flex-start;
+      gap:14px;
+    }
+
+    .logo{
+      width:40px;
+      height:40px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .logo img{
+      width:26px;
+      height:26px;
+      display:block;
+    }
+
+    h1{
+      margin:0;
+      font-size:22px;
+      line-height:1.1;
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+
+    .sub{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.35;
+    }
+
+    .top-links{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .userMenu{
+      position:relative;
+      display:flex;
+      align-items:center;
+      flex:0 0 auto;
+    }
+
+    .userMenuBtn{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      min-height:44px;
+      padding:8px 12px 8px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      color:#fff;
+      cursor:pointer;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.04),
+        0 8px 22px rgba(0,0,0,.18);
+    }
+
+    .userMenuBtn:hover{
+      background: rgba(255,255,255,.09);
+      border-color: rgba(255,255,255,.16);
+    }
+
+    .userAvatar{
+      width:30px;
+      height:30px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+      font-weight:900;
+      color:#fff;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      flex:0 0 auto;
+    }
+
+    .userMenuName{
+      font-size:13px;
+      font-weight:800;
+      color: rgba(255,255,255,.92);
+      white-space:nowrap;
+    }
+
+    .userMenuChevron{
+      font-size:11px;
+      color: rgba(255,255,255,.72);
+      transition: transform .18s ease;
+    }
+
+    .userMenu.open .userMenuChevron{
+      transform: rotate(180deg);
+    }
+
+    .userDropdown{
+      position:absolute;
+      right:0;
+      top:calc(100% + 10px);
+      min-width:220px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(10,12,18,.94);
+      backdrop-filter: blur(10px);
+      border-radius:16px;
+      box-shadow: 0 24px 70px rgba(0,0,0,.55);
+      padding:8px;
+      display:none;
+      z-index:30;
+    }
+
+    .userMenu.open .userDropdown{
+      display:block;
+    }
+
+    .userDropdownHead{
+      padding:10px 12px 8px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      margin-bottom:6px;
+    }
+
+    .userDropdownTitle{
+      font-size:13px;
+      font-weight:900;
+      color: rgba(255,255,255,.94);
+      line-height:1.2;
+    }
+
+    .userDropdownSub{
+      margin-top:3px;
+      font-size:12px;
+      color: rgba(255,255,255,.62);
+    }
+
+    .userDropdown a{
+      display:flex;
+      align-items:center;
+      padding:10px 12px;
+      border-radius:12px;
+      font-size:13px;
+      font-weight:700;
+      color: rgba(255,255,255,.88);
+      text-decoration:none;
+    }
+
+    .userDropdown a:hover{
+      background: rgba(255,255,255,.06);
+      color:#fff;
+    }
+
+    .userDropdown a.danger{
+      color: rgba(255,130,130,.95);
+    }
+
+    @media (max-width:760px){
+      .userMenuName{ display:none; }
+      .userMenuBtn{ padding-right:10px; }
+    }
+
+    .btn, button{
+      border:none;
+      border-radius:16px;
+      padding:12px 18px;
+      min-height:46px;
+      font-weight:800;
+      color:#fff;
+      cursor:pointer;
+      text-decoration:none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      font-size:14px;
+      line-height:1;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08),
+        0 10px 26px rgba(0,0,0,.22);
+    }
+
+    .btn.secondary, button.secondary{
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.04),
+        0 8px 22px rgba(0,0,0,.18);
+    }
+
+    .btn.secondary:hover, button.secondary:hover{
+      background: rgba(255,255,255,.09);
+    }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+
+    
+
+    /* ---------- Watch Window Filters ---------- */
+
+    .filtersRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-bottom:18px;
+    }
+
+    .filterPill{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color:#fff;
+      padding:8px 14px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      cursor:pointer;
+      transition: all .18s ease;
+    }
+
+    .filterPill:hover{
+      background: rgba(255,255,255,.12);
+    }
+
+    .filterPill.active{
+      background: linear-gradient(135deg,#7c5cff,#5aa9ff);
+      border-color: transparent;
+    }
+
+    /* ---------- Mini Stat Cards ---------- */
+
+    .miniGrid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+      gap:14px;
+      margin-bottom:22px;
+    }
+
+    .miniCard{
+      padding:16px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.18);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+    .miniCard:hover{
+      transform: translateY(-2px);
+      box-shadow:0 10px 26px rgba(0,0,0,.35);
+    }
+
+    .miniLabel{
+      font-size:12px;
+      font-weight:800;
+      color: rgba(255,255,255,.65);
+      margin-bottom:6px;
+      letter-spacing:.05em;
+      text-transform:uppercase;
+    }
+
+    .miniValue{
+      font-size:28px;
+      font-weight:900;
+      margin-bottom:4px;
+    }
+
+    .miniSub{
+      font-size:12px;
+      color: rgba(255,255,255,.55);
+    }
+
+    /* ---------- Heatmap + Donut Layout ---------- */
+
+    .heatmapWrap{
+      display:grid;
+      grid-template-columns: minmax(0, 1.65fr) minmax(260px, .75fr);
+      gap:22px;
+      align-items:start;
+      margin-bottom:16px;
+    }
+
+    @media (max-width:1000px){
+      .heatmapWrap{
+        grid-template-columns:1fr;
+      }
+    }
+
+    .heatmapGridWrap{
+      padding:14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.18);
+      overflow-x:auto;
+      overflow-y:hidden;
+      min-height: 210px;
+    }
+
+    .activitySummary{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap:12px;
+      margin-bottom:16px;
+    }
+
+    @media (max-width:900px){
+      .activitySummary{
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width:560px){
+      .activitySummary{
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .activityChip{
+      padding:14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.14);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.03),
+        0 8px 20px rgba(0,0,0,.14);
+    }
+
+    .activityChipLabel{
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.58);
+      margin-bottom:6px;
+    }
+
+    .activityChipValue{
+      font-size:24px;
+      font-weight:900;
+      line-height:1;
+    }
+
+    .activityChipSub{
+      margin-top:6px;
+      font-size:11px;
+      color: rgba(255,255,255,.55);
+      line-height:1.3;
+    }
+
+    .heatmapWeekdays{
+      display:grid;
+      grid-template-columns: 34px repeat(18, 12px);
+      gap:6px;
+      align-items:center;
+      margin-bottom:8px;
+      min-width:max-content;
+      font-size:10px;
+      color: rgba(255,255,255,.55);
+    }
+
+    .heatmapBody{
+      display:grid;
+      grid-template-columns: 34px repeat(18, 12px);
+      gap:6px;
+      align-items:center;
+      min-width:max-content;
+    }
+
+    .heatCell{
+      width:12px;
+      height:12px;
+      border-radius:3px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.04);
+      box-sizing:border-box;
+      transition: transform .12s ease, border-color .12s ease;
+    }
+
+    .heatCell:hover{
+      transform: scale(1.12);
+      border-color: rgba(255,255,255,.18);
+    }
+
+    .heatCell.l0{ background: rgba(255,255,255,.05); }
+    .heatCell.l1{ background: rgba(78,161,255,.28); }
+    .heatCell.l2{ background: rgba(78,161,255,.48); }
+    .heatCell.l3{ background: rgba(124,92,255,.62); }
+    .heatCell.l4{ background: rgba(124,92,255,.88); }
+
+    .heatmapDayLabel{
+      width:34px;
+      font-size:10px;
+      color: rgba(255,255,255,.52);
+      text-align:right;
+      padding-right:6px;
+      white-space:nowrap;
+    }
+
+    .heatmapLegend{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:10px;
+      font-size:11px;
+      color: rgba(255,255,255,.55);
+    }
+
+    .heatmapLegendScale{
+      display:flex;
+      align-items:center;
+      gap:4px;
+    }
+
+    .heatmapLegendScale .heatCell{
+      transform:none !important;
+    }
+
+
+    /* ---------- Weekday Donut ---------- */
+
+    .weekdayWrap{
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+
+    .weekdayDonutWrap{
+      display:flex;
+      justify-content:center;
+    }
+
+    .weekdayDonut{
+      width:180px;
+      height:180px;
+      border-radius:50%;
+      position:relative;
+      background: conic-gradient(#7c5cff 0deg 360deg);
+    }
+
+    .weekdayDonutHole{
+      position:absolute;
+      inset:18px;
+      background:#0b0f14;
+      border-radius:50%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:12px;
+    }
+
+    .weekdayBestLabel{
+      font-size:10px;
+      letter-spacing:.12em;
+      color: rgba(255,255,255,.55);
+    }
+
+    .weekdayBestValue{
+      font-size:18px;
+      font-weight:900;
+      margin-top:2px;
+    }
+
+    .weekdayBestSub{
+      font-size:11px;
+      color: rgba(255,255,255,.6);
+    }
+
+
+.sectionTitle{
+      margin:0 0 6px;
+      font-size:18px;
+      font-weight:900;
+    }
+
+    .sectionSub{
+      margin:0 0 16px;
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .statsGrid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+      gap:16px;
+      margin-top:18px;
+    }
+
+    .statCard{
+      padding:18px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.12);
+    }
+
+    .statLabel{
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.2;
+      margin-bottom:8px;
+    }
+
+    .statValue{
+      font-size:32px;
+      font-weight:900;
+      line-height:1;
+    }
+
+    .overviewGroup{
+      margin-top: 20px;
+    }
+
+    .overviewGroup:first-of-type{
+      margin-top: 0;
+    }
+
+    .overviewHeader{
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.62);
+      margin: 0 0 12px;
+      padding-left: 2px;
+    }
+
+    .overviewGrid{
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    }
+
+    .overviewGridTotals{
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    }
+
+    .statCard{
+      position: relative;
+      overflow: hidden;
+      padding: 18px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.015)),
+        rgba(0,0,0,.12);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.04),
+        0 10px 24px rgba(0,0,0,.16);
+    }
+
+    .statCard::before{
+      content:"";
+      position:absolute;
+      top:0;
+      left:0;
+      right:0;
+      height:3px;
+      background: rgba(255,255,255,.12);
+      opacity:.9;
+    }
+
+    .statCardHero{
+      min-height: 132px;
+    }
+
+    @media (min-width: 980px){
+      .overviewGridTotals .statCardHero,
+      .overviewGrid .statCardHero{
+        grid-column: span 2;
+      }
+    }
+
+    .statTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+
+    .statBadge{
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:.04em;
+      color: rgba(255,255,255,.78);
+      padding:6px 8px;
+      border-radius:999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      white-space:nowrap;
+    }
+
+    .statCardHero .statValue{
+      font-size: 42px;
+    }
+
+    .statChips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:14px;
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:7px 10px;
+      border-radius:999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      font-size:12px;
+      color: rgba(255,255,255,.82);
+    }
+
+    .chip strong{
+      color:#fff;
+      font-weight:900;
+    }
+
+    .backlogBarWrap{
+      margin-top:10px;
+    }
+
+    .backlogBar{
+      height:6px;
+      border-radius:999px;
+      background: rgba(255,255,255,.08);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.06);
+    }
+
+    .backlogFill{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, #7c5cff, #4ea1ff);
+      transition: width .45s ease;
+    }
+
+    .backlogLabel{
+      margin-top:6px;
+      font-size:12px;
+      color: rgba(255,255,255,.72);
+      line-height:1.25;
+    }
+
+    .accent-purple::before{ background: linear-gradient(90deg, rgba(124,92,255,.98), rgba(171,122,255,.98)); }
+    .accent-violet::before{ background: linear-gradient(90deg, rgba(155,120,255,.98), rgba(124,92,255,.98)); }
+    .accent-blue::before{ background: linear-gradient(90deg, rgba(78,161,255,.98), rgba(92,189,255,.98)); }
+    .accent-sky::before{ background: linear-gradient(90deg, rgba(78,190,255,.98), rgba(120,214,255,.98)); }
+    .accent-cyan::before{ background: linear-gradient(90deg, rgba(71,208,214,.98), rgba(78,161,255,.98)); }
+    .accent-green::before{ background: linear-gradient(90deg, rgba(64,208,160,.98), rgba(94,231,182,.98)); }
+    .accent-amber::before{ background: linear-gradient(90deg, rgba(255,170,70,.98), rgba(255,208,90,.98)); }
+    .accent-rose::before{ background: linear-gradient(90deg, rgba(255,92,122,.98), rgba(255,140,168,.98)); }
+    .accent-indigo::before{ background: linear-gradient(90deg, rgba(98,109,255,.98), rgba(124,92,255,.98)); }
+
+    .twoCol{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap:18px;
+    }
+
+    @media (max-width: 900px){
+      .twoCol{
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .listRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 92px 12px 14px;
+      border-radius:14px;
+      background: rgba(0,0,0,.12);
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    .listName{
+      font-weight:700;
+    }
+
+    .listMeta{
+      color:var(--muted);
+      font-size:13px;
+      white-space:nowrap;
+    }
+
+    .status{
+      margin-top:14px;
+      padding:11px 14px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.84);
+      font-size:13px;
+    }
+
+    .splitWrap{
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+
+    .splitBar{
+      display:flex;
+      width:100%;
+      height:18px;
+      border-radius:999px;
+      overflow:hidden;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    .splitSeg{
+      height:100%;
+      transition: width .25s ease;
+    }
+
+    .splitSeg.movies{ background: linear-gradient(135deg, rgba(124,92,255,.95), rgba(155,120,255,.95)); }
+    .splitSeg.tv{ background: linear-gradient(135deg, rgba(78,161,255,.95), rgba(92,189,255,.95)); }
+    .splitSeg.anime{ background: linear-gradient(135deg, rgba(64,208,160,.95), rgba(94,231,182,.95)); }
+
+    .splitLegend{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .splitRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:10px 12px;
+      border-radius:12px;
+      background: rgba(0,0,0,.10);
+      border:1px solid rgba(255,255,255,.06);
+    }
+
+    .splitKey{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:700;
+    }
+
+    .splitMeta{
+      color: var(--muted);
+      font-size:13px;
+      white-space:nowrap;
+    }
+
+    .dot{
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      display:inline-block;
+    }
+
+    .dot.movies{ background: rgba(124,92,255,.95); }
+    .dot.tv{ background: rgba(78,161,255,.95); }
+    .dot.anime{ background: rgba(64,208,160,.95); }
+
+    .splitWrapDonut{
+      display:grid;
+      grid-template-columns: 240px 1fr;
+      gap:22px;
+      align-items:center;
+    }
+
+    @media (max-width:760px){
+      .splitWrapDonut{ grid-template-columns:1fr; }
+    }
+
+    .donutBlock{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+    }
+
+    .donutChart{
+      width:200px;
+      height:200px;
+      border-radius:50%;
+      position:relative;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.06),
+        0 14px 36px rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    .donutHole{
+      position:absolute;
+      inset:22px;
+      border-radius:50%;
+      background:linear-gradient(180deg, rgba(18,22,30,.92), rgba(11,15,20,.96));
+      border:1px solid rgba(255,255,255,.06);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .donutTotalLabel{
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:4px;
+    }
+
+    .donutTotalValue{
+      font-size:30px;
+      font-weight:900;
+    }
+
+    .barList{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .barRow{
+      padding:12px 92px 12px 14px;
+      border-radius:14px;
+      background:rgba(0,0,0,.12);
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    .barRow{
+      position:relative;
+      overflow:hidden;
+      transition:
+        transform .18s ease,
+        border-color .18s ease,
+        background .18s ease,
+        box-shadow .18s ease;
+    }
+
+    .rowHideBtn{
+      position:absolute;
+      top:50%;
+      right:12px;
+      transform:translate(120%, -50%);
+      opacity:0;
+      transition:
+        opacity .22s ease,
+        transform .26s cubic-bezier(.22,.8,.22,1),
+        background .18s ease,
+        border-color .18s ease,
+        box-shadow .18s ease;
+      border:1px solid rgba(255,120,120,.34);
+      background: linear-gradient(135deg, rgba(255,92,122,.82), rgba(255,140,168,.76));
+      color:#fff;
+      border-radius:12px;
+      padding:8px 13px;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.03em;
+      cursor:pointer;
+      z-index:4;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.12),
+        0 10px 24px rgba(0,0,0,.24);
+      white-space:nowrap;
+      min-width:64px;
+      text-align:center;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .barRow:hover .rowHideBtn,
+    .listRow:hover .rowHideBtn{
+      opacity:1;
+      transform:translate(0, -50%);
+    }
+
+    .rowHideBtn:hover{
+      background: linear-gradient(135deg, rgba(255,92,122,.96), rgba(255,140,168,.90));
+      border-color: rgba(255,170,170,.48);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.14),
+        0 14px 28px rgba(0,0,0,.28);
+    }
+
+    .rowHideBtn:active{
+      transform:translate(0, -50%) scale(.98);
+    }
+
+    .rowPendingHide{
+      opacity:.58;
+      transform:scale(.995);
+      pointer-events:none;
+      filter:saturate(.82);
+      transition:opacity .18s ease, transform .18s ease, filter .18s ease;
+    }
+
+    .rowHidingOut{
+      opacity:0 !important;
+      transform:translateX(26px) scale(.985) !important;
+      filter:saturate(.72);
+      transition:
+        opacity .26s ease,
+        transform .28s cubic-bezier(.22,.8,.22,1),
+        filter .22s ease;
+      pointer-events:none;
+    }
+
+    .statsToastWrap{
+      position:fixed;
+      right:18px;
+      bottom:18px;
+      z-index:1200;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      pointer-events:none;
+    }
+
+    .statsToast{
+      min-width:240px;
+      max-width:320px;
+      border-radius:16px;
+      padding:12px 14px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)),
+        rgba(10,14,20,.92);
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.06),
+        0 18px 34px rgba(0,0,0,.30);
+      color:#fff;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      pointer-events:auto;
+      opacity:0;
+      transform:translateY(12px);
+      transition:opacity .22s ease, transform .24s cubic-bezier(.22,.8,.22,1);
+    }
+
+    .statsToast.show{
+      opacity:1;
+      transform:translateY(0);
+    }
+
+    .statsToastTitle{
+      font-size:13px;
+      font-weight:900;
+      margin-bottom:8px;
+      letter-spacing:.01em;
+    }
+
+    .statsToastRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .statsToastBtn{
+      border:1px solid rgba(255,255,255,.14);
+      background: linear-gradient(135deg, rgba(124,92,255,.40), rgba(78,161,255,.32));
+      color:#fff;
+      border-radius:10px;
+      padding:7px 10px;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.02em;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+
+    .statsToastBtn:hover{
+      background: linear-gradient(135deg, rgba(124,92,255,.54), rgba(78,161,255,.46));
+    }
+
+    .rowHideBtn.isPending{
+      opacity:1 !important;
+      transform:translate(0, -50%) !important;
+      background: linear-gradient(135deg, rgba(255,170,70,.92), rgba(255,208,90,.86));
+      border-color: rgba(255,220,140,.42);
+      color:#fff;
+      cursor:default;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.14),
+        0 10px 24px rgba(0,0,0,.24);
+    }
+
+    .listRow{
+      position:relative;
+      overflow:hidden;
+      transition:
+        transform .18s ease,
+        border-color .18s ease,
+        background .18s ease,
+        box-shadow .18s ease;
+    }
+
+    .barRow:hover,
+    .listRow:hover{
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,.14);
+      background: rgba(255,255,255,.04);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.04),
+        0 12px 26px rgba(0,0,0,.18);
+    }
+
+
+    .barTop{
+      display:flex;
+      justify-content:space-between;
+      margin-bottom:8px;
+    }
+
+    .barTrack{
+      height:10px;
+      border-radius:999px;
+      overflow:hidden;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.06);
+    }
+
+    .barFill{
+      height:100%;
+      border-radius:999px;
+      transition: width .75s cubic-bezier(.22, .8, .22, 1);
+      background:linear-gradient(135deg, rgba(124,92,255,.95), rgba(78,161,255,.95));
+    }
+
+    .barFill.genre{
+      background:linear-gradient(135deg, rgba(64,208,160,.95), rgba(94,231,182,.95));
+    }
+
+    .barFill.anime{
+      background:linear-gradient(135deg, rgba(255,170,70,.95), rgba(255,208,90,.95));
+    }
+
+    .barFill.queue{
+      background:linear-gradient(135deg, rgba(78,161,255,.95), rgba(124,92,255,.95));
+    }
+
+    .barTopLeft{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+      flex:1 1 auto;
+    }
+
+    .rankBadge{
+      width:28px;
+      height:28px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:12px;
+      font-weight:900;
+      flex:0 0 auto;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.88);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }
+
+    .rankBadge.gold{
+      background: linear-gradient(135deg, rgba(255,210,90,.24), rgba(255,170,70,.24));
+      color:#ffd76a;
+      border-color: rgba(255,210,90,.22);
+    }
+
+    .rankBadge.silver{
+      background: linear-gradient(135deg, rgba(210,220,235,.22), rgba(170,180,195,.22));
+      color:#d7dfeb;
+      border-color: rgba(210,220,235,.20);
+    }
+
+    .rankBadge.bronze{
+      background: linear-gradient(135deg, rgba(214,148,96,.22), rgba(176,110,65,.22));
+      color:#e2ab7a;
+      border-color: rgba(214,148,96,.20);
+    }
+
+    .statValue{
+      letter-spacing:-.03em;
+    }
+
+    .statValue.animating{
+      opacity:.96;
+      transform:translateY(0);
+    }
+
+
+    .empty{
+      color:var(--muted);
+      font-size:14px;
+      padding:10px 0;
+    }
+
+    .titleWithInfo{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .infoDot{
+      width:20px;
+      height:20px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:11px;
+      font-weight:900;
+      color:rgba(255,255,255,.9);
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      cursor:help;
+      position:relative;
+      flex:0 0 auto;
+    }
+
+    .infoDot:hover .tooltip,
+    .infoDot:focus-within .tooltip{
+      opacity:1;
+      transform:translateY(0);
+      pointer-events:auto;
+    }
+
+    .tooltip{
+      position:absolute;
+      left:0;
+      top:calc(100% + 10px);
+      width:280px;
+      padding:12px 13px;
+      border-radius:14px;
+      background:rgba(10,14,20,.96);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow:0 16px 36px rgba(0,0,0,.32);
+      color:rgba(255,255,255,.88);
+      font-size:12px;
+      line-height:1.45;
+      opacity:0;
+      transform:translateY(6px);
+      transition:opacity .18s ease, transform .18s ease;
+      pointer-events:none;
+      z-index:30;
+      text-align:left;
+    }
+
+    .tooltip strong{
+      color:#fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"><img src="/favicon.svg?v=5" alt=""></div>
+        <div>
+          <h1>QueueDeck Statistics</h1>
+          <div class="sub">Per-user watch stats based on your current QueueDeck and Jellyfin data.</div>
+        </div>
+      </div>
+
+      <div class="top-links">
+        {% set username = (me.username if me and me.username else 'User') %}
+        {% set initial = (username[:1] | upper) %}
+        <div class="userMenu" id="userMenu">
+          <button class="userMenuBtn" id="userMenuBtn" type="button" aria-haspopup="menu" aria-expanded="false">
+            <span class="userAvatar">{{ initial }}</span>
+            <span class="userMenuName">{{ username }}</span>
+            <span class="userMenuChevron">▾</span>
+          </button>
+
+          <div class="userDropdown" id="userDropdown" role="menu">
+            <div class="userDropdownHead">
+              <div class="userDropdownTitle">{{ username }}</div>
+              <div class="userDropdownSub">QueueDeck user</div>
+            </div>
+            <a href="/">Dashboard</a>
+            <a href="/settings">Preferences</a>
+            <a href="/stats">Statistics</a>
+            <a href="/hidden">Hidden Items</a>
+            {% if me and me.get("is_admin") %}<a href="/admin/settings">Admin Settings</a>{% endif %}
+            <a class="danger" href="/logout">Log out</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-stats-section="overview">
+      <div class="sectionTitle titleWithInfo">Overview
+        <span class="infoDot">?
+          <span class="tooltip"><strong>Source:</strong> Mixed.<br><strong>Watched / progress:</strong> Jellyfin raw per-user watched state.<br><strong>Queue metrics:</strong> Jellyfin, Sonarr, and Radarr helpers.<br><strong>Hidden items:</strong> Overview does <strong>not</strong> currently remove hidden QueueDeck items.</span>
+        </span>
+      </div>
+      <div class="sectionSub">These stats are scoped to the currently logged-in QueueDeck user.</div>
+
+      <div class="overviewGroup">
+        <div class="overviewHeader">Watch Totals</div>
+        <div class="statsGrid overviewGrid overviewGridTotals">
+          <div class="statCard statCardHero accent-purple">
+            <div class="statTop">
+              <div class="statLabel">Watched Episodes</div>
+              <div class="statBadge">Primary</div>
+            </div>
+            <div class="statValue" id="watchedEpisodes">-</div>
+            <div class="statChips">
+              <span class="chip">TV <strong id="watchedTvEpisodes">-</strong></span>
+              <span class="chip">Anime <strong id="watchedAnimeEpisodes">-</strong></span>
+            </div>
+          </div>
+
+          <div class="statCard accent-violet">
+            <div class="statTop">
+              <div class="statLabel">Watched Movies</div>
+              <div class="statBadge">Library</div>
+            </div>
+            <div class="statValue" id="watchedMovies">-</div>
+          </div>
+
+          <div class="statCard accent-blue">
+            <div class="statTop">
+              <div class="statLabel">TV Episodes</div>
+              <div class="statBadge">Split</div>
+            </div>
+            <div class="statValue" id="watchedTvEpisodesMirror">-</div>
+          </div>
+
+          <div class="statCard accent-green">
+            <div class="statTop">
+              <div class="statLabel">Anime Episodes</div>
+              <div class="statBadge">Split</div>
+            </div>
+            <div class="statValue" id="watchedAnimeEpisodesMirror">-</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="overviewGroup">
+        <div class="overviewHeader">Progress</div>
+        <div class="statsGrid overviewGrid">
+          <div class="statCard statCardHero accent-green">
+            <div class="statTop">
+              <div class="statLabel">Completed Series</div>
+              <div class="statBadge">Progress</div>
+            </div>
+            <div class="statValue" id="completedSeries">-</div>
+            <div class="statChips">
+              <span class="chip">In Progress <strong id="seriesProgressChip">-</strong></span>
+            </div>
+          </div>
+
+          <div class="statCard accent-blue">
+            <div class="statTop">
+              <div class="statLabel">Series In Progress</div>
+              <div class="statBadge">Progress</div>
+            </div>
+            <div class="statValue" id="seriesProgress">-</div>
+          </div>
+
+          <div class="statCard accent-sky">
+            <div class="statTop">
+              <div class="statLabel">Continue Watching</div>
+              <div class="statBadge">Live</div>
+            </div>
+            <div class="statValue" id="continueWatching">-</div>
+          </div>
+
+          <div class="statCard accent-indigo">
+            <div class="statTop">
+              <div class="statLabel">Series Remaining</div>
+              <div class="statBadge">Backlog</div>
+            </div>
+            <div class="statValue" id="seriesRemaining">-</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="overviewGroup">
+        <div class="overviewHeader">Queue Health</div>
+        <div class="statsGrid overviewGrid">
+          <div class="statCard accent-blue">
+            <div class="statTop">
+              <div class="statLabel">Next Up — TV</div>
+              <div class="statBadge">Queue</div>
+            </div>
+            <div class="statValue" id="nextUpTv">-</div>
+          </div>
+
+          <div class="statCard accent-cyan">
+            <div class="statTop">
+              <div class="statLabel">Next Up — Anime</div>
+              <div class="statBadge">Queue</div>
+            </div>
+            <div class="statValue" id="nextUpAnime">-</div>
+          </div>
+
+          <div class="statCard accent-violet">
+            <div class="statTop">
+              <div class="statLabel">Unwatched Movies</div>
+              <div class="statBadge">Library</div>
+            </div>
+            <div class="statValue" id="unwatchedMovies">-</div>
+            <div class="backlogBarWrap">
+              <div class="backlogBar">
+                <div class="backlogFill" id="movieBacklogFill"></div>
+              </div>
+              <div class="backlogLabel" id="movieBacklogLabel"></div>
+            </div>
+          </div>
+
+          <div class="statCard accent-amber">
+            <div class="statTop">
+              <div class="statLabel">Airing Tonight</div>
+              <div class="statBadge">Live</div>
+            </div>
+            <div class="statValue" id="airingTonight">-</div>
+          </div>
+
+          <div class="statCard accent-rose">
+            <div class="statTop">
+              <div class="statLabel">Radarr Missing</div>
+              <div class="statBadge">Backlog</div>
+            </div>
+            <div class="statValue" id="radarrMissing">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-stats-section="watch_window">
+      <div class="sectionTitle">Watch Window</div>
+      <div class="sectionSub">Filter streaks, runtimes, completion, heatmap, and weekday activity insights.</div>
+
+      <div class="filtersRow" id="statsWindowFilters">
+        <button class="filterPill active" type="button" data-window="lifetime">Lifetime</button>
+        <button class="filterPill" type="button" data-window="365d">Past Year</button>
+        <button class="filterPill" type="button" data-window="90d">Past 90 Days</button>
+        <button class="filterPill" type="button" data-window="30d">Past 30 Days</button>
+      </div>
+
+      <div class="miniGrid">
+        <div class="miniCard">
+          <div class="miniLabel">Current Streak</div>
+          <div class="miniValue" id="currentStreak">-</div>
+          <div class="miniSub">Consecutive active watch days in this window.</div>
+        </div>
+
+        <div class="miniCard">
+          <div class="miniLabel">Longest Streak</div>
+          <div class="miniValue" id="longestStreak">-</div>
+          <div class="miniSub">Best run of consecutive watch days.</div>
+        </div>
+
+        <div class="miniCard">
+          <div class="miniLabel">Average Movie Runtime</div>
+          <div class="miniValue" id="avgMovieRuntime">-</div>
+          <div class="miniSub">Average watched movie length.</div>
+        </div>
+
+        <div class="miniCard">
+          <div class="miniLabel">Average Episode Runtime</div>
+          <div class="miniValue" id="avgEpisodeRuntime">-</div>
+          <div class="miniSub">Average watched episode length.</div>
+        </div>
+
+        <div class="miniCard">
+          <div class="miniLabel">Series Started</div>
+          <div class="miniValue" id="startedSeries">-</div>
+          <div class="miniSub">Series with activity in this watch window.</div>
+        </div>
+
+        <div class="miniCard">
+          <div class="miniLabel">Series Finished</div>
+          <div class="miniValue" id="finishedSeries">-</div>
+          <div class="miniSub">Started series that are fully completed.</div>
+        </div>
+
+        <div class="miniCard">
+          <div class="miniLabel">Completion Rate</div>
+          <div class="miniValue" id="completionRate">-</div>
+          <div class="miniSub">Finished ÷ started in this watch window.</div>
+        </div>
+
+        <div class="miniCard">
+          <div class="miniLabel">Best Watch Day</div>
+          <div class="miniValue" id="bestWatchDay">-</div>
+          <div class="miniSub">Your most active weekday in this watch window.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-stats-section="watch_activity">
+      <div class="sectionTitle">Watch Activity</div>
+      <div class="sectionSub">Recent watch pattern and strongest weekday signal.</div>
+
+      <div class="heatmapWrap">
+        <div class="heatmapGridWrap">
+          <div class="heatmapWeekdays" id="heatmapWeekdays"></div>
+          <div class="heatmapBody" id="heatmapBody"></div>
+          <div class="heatmapLegend">
+            <span>Less</span>
+            <div class="heatmapLegendScale">
+              <div class="heatCell l0"></div>
+              <div class="heatCell l1"></div>
+              <div class="heatCell l2"></div>
+              <div class="heatCell l3"></div>
+              <div class="heatCell l4"></div>
+            </div>
+            <span>More</span>
+          </div>
+        </div>
+
+        <div class="weekdayDonutWrap">
+          <div class="weekdayDonut" id="weekdayDonut">
+            <div class="weekdayDonutHole">
+              <div class="weekdayBestLabel">MOST ACTIVE</div>
+              <div class="weekdayBestValue" id="weekdayBestValue">-</div>
+              <div class="weekdayBestSub" id="weekdayBestSub">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="activitySummary">
+        <div class="activityChip">
+          <div class="activityChipLabel">Total Plays</div>
+          <div class="activityChipValue" id="activityTotalPlays">-</div>
+          <div class="activityChipSub">Watched items in this selected window.</div>
+        </div>
+
+        <div class="activityChip">
+          <div class="activityChipLabel">Active Days</div>
+          <div class="activityChipValue" id="activityActiveDays">-</div>
+          <div class="activityChipSub">Days with at least one completed watch.</div>
+        </div>
+
+        <div class="activityChip">
+          <div class="activityChipLabel">Current Streak</div>
+          <div class="activityChipValue" id="activityCurrentStreak">-</div>
+          <div class="activityChipSub">Consecutive active days right now.</div>
+        </div>
+
+        <div class="activityChip">
+          <div class="activityChipLabel">Longest Streak</div>
+          <div class="activityChipValue" id="activityLongestStreak">-</div>
+          <div class="activityChipSub">Best run in this selected window.</div>
+        </div>
+      </div>
+
+      <div class="list" id="weekdayList"></div>
+    </div>
+
+    <div class="twoCol" data-stats-section="top_pair_one">
+      <div class="card">
+        <div class="sectionTitle titleWithInfo">Top Watched Shows
+          <span class="infoDot">?
+            <span class="tooltip"><strong>Source:</strong> Jellyfin raw episode history.<br><strong>Logic:</strong> Counts watched non-anime episodes grouped by series.<br><strong>Hidden items:</strong> Hidden QueueDeck items are <strong>not</strong> removed here yet.</span>
+          </span>
+        </div>
+        <div class="sectionSub">Most watched non-anime series by episode count.</div>
+        <div class="list" id="topShowsList"></div>
+      </div>
+
+      <div class="card">
+        <div class="sectionTitle titleWithInfo">Top Genres
+          <span class="infoDot">?
+            <span class="tooltip"><strong>Source:</strong> Jellyfin raw watched movies and episodes.<br><strong>Logic:</strong> Aggregates watched item genres across both movies and episodes.<br><strong>Hidden items:</strong> Hidden QueueDeck items are <strong>not</strong> removed here yet.</span>
+          </span>
+        </div>
+        <div class="sectionSub">Combined from watched movies and episodes.</div>
+        <div class="list" id="topGenresList"></div>
+      </div>
+    </div>
+
+    <div class="twoCol" data-stats-section="top_pair_two">
+      <div class="card">
+        <div class="sectionTitle titleWithInfo">Top Watched Anime
+          <span class="infoDot">?
+            <span class="tooltip"><strong>Source:</strong> Jellyfin raw episode history.<br><strong>Logic:</strong> Anime is determined from your configured anime paths, then grouped by series.<br><strong>Hidden items:</strong> Hidden QueueDeck items are <strong>not</strong> removed here yet.</span>
+          </span>
+        </div>
+        <div class="sectionSub">Most watched anime series by episode count.</div>
+        <div class="list" id="topAnimeList"></div>
+      </div>
+
+      <div class="card">
+        <div class="sectionTitle titleWithInfo">Queue Health
+          <span class="infoDot">?
+            <span class="tooltip"><strong>Source:</strong> Mixed.<br><strong>Continue Watching / Next Up / Latest Unwatched Movies:</strong> Jellyfin.<br><strong>Airing Tonight:</strong> Sonarr.<br><strong>Radarr Missing:</strong> Radarr.<br><strong>Hidden items:</strong> This section does <strong>not</strong> currently remove hidden QueueDeck items.</span>
+          </span>
+        </div>
+        <div class="sectionSub">Current queue and backlog counts.</div>
+        <div class="list" id="queueHealthList"></div>
+      </div>
+    </div>
+
+    <div class="twoCol" data-stats-section="top_pair_three">
+      <div class="card">
+        <div class="sectionTitle titleWithInfo">Current Activity
+          <span class="infoDot">?
+            <span class="tooltip"><strong>Source:</strong> Jellyfin-derived current sections.<br><strong>Logic:</strong> Continue Watching, Next Up TV/Anime, and Latest Unwatched Movies.<br><strong>Hidden items:</strong> This section <strong>does</strong> now remove hidden QueueDeck items.</span>
+          </span>
+        </div>
+        <div class="sectionSub">Live QueueDeck sections for this user.</div>
+        <div class="list" id="currentActivityList"></div>
+      </div>
+
+      <div class="card">
+        <div class="sectionTitle titleWithInfo">Watch Split
+          <span class="infoDot">?
+            <span class="tooltip"><strong>Source:</strong> Jellyfin raw per-user watched state.<br><strong>Logic:</strong> Splits watched activity into Movies, TV Episodes, and Anime Episodes.<br><strong>Hidden items:</strong> Hidden QueueDeck items are <strong>not</strong> removed here yet.</span>
+          </span>
+        </div>
+        <div class="sectionSub">How your watched activity is divided right now.</div>
+
+        <div class="splitWrap splitWrapDonut">
+          <div class="donutBlock">
+            <div class="donutChart" id="watchSplitDonut">
+              <div class="donutHole">
+                <div class="donutTotalLabel">Total</div>
+                <div class="donutTotalValue" id="watchSplitTotal">0</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="splitLegend">
+            <div class="splitRow">
+              <div class="splitKey"><span class="dot movies"></span> Movies</div>
+              <div class="splitMeta" id="splitMoviesMeta">0</div>
+            </div>
+            <div class="splitRow">
+              <div class="splitKey"><span class="dot tv"></span> TV Episodes</div>
+              <div class="splitMeta" id="splitTvMeta">0</div>
+            </div>
+            <div class="splitRow">
+              <div class="splitKey"><span class="dot anime"></span> Anime Episodes</div>
+              <div class="splitMeta" id="splitAnimeMeta">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let STATS_WINDOW = "lifetime";
+
+    function setActiveStatsWindow(windowKey){
+      STATS_WINDOW = windowKey || "lifetime";
+      document.querySelectorAll('#statsWindowFilters .filterPill').forEach(btn => {
+        btn.classList.toggle("active", String(btn.getAttribute("data-window") || "") === STATS_WINDOW);
+      });
+    }
+
+    function renderHeatmap(cells){
+      const weekdaysEl = document.getElementById("heatmapWeekdays");
+      const bodyEl = document.getElementById("heatmapBody");
+      if (!weekdaysEl || !bodyEl) return;
+
+      const cols = 18;
+      const rowNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      const mapped = {
+        "Monday": 0, "Tuesday": 1, "Wednesday": 2, "Thursday": 3,
+        "Friday": 4, "Saturday": 5, "Sunday": 6,
+      };
+
+      weekdaysEl.innerHTML = ['<div></div>']
+        .concat(Array.from({length: cols}, () => `<div></div>`))
+        .join("");
+
+      const grid = Array.from({length: 7}, () => Array.from({length: cols}, () => null));
+
+      (cells || []).forEach((cell, idx) => {
+        const week = Math.floor(idx / 7);
+        const dayIdx = mapped[String(cell.weekday || "")];
+        if (week >= 0 && week < cols && dayIdx >= 0 && dayIdx < 7){
+          grid[dayIdx][week] = cell;
+        }
+      });
+
+      const out = [];
+      rowNames.forEach((name, rowIdx) => {
+        out.push(`<div class="heatmapDayLabel">${name}</div>`);
+        for (let col = 0; col < cols; col++){
+          const cell = grid[rowIdx][col];
+          const level = cell ? Number(cell.level || 0) : 0;
+          const count = cell ? Number(cell.count || 0) : 0;
+          const date = cell ? String(cell.date || "") : "";
+          const title = date ? `${date} • ${count} plays` : "";
+          out.push(`<div class="heatCell l${level}" title="${title.replace(/"/g, '&quot;')}"></div>`);
+        }
+      });
+
+      bodyEl.innerHTML = out.join("");
+    }
+
+    function renderWeekdayBreakdown(counts){
+      const list = document.getElementById("weekdayList");
+      const donut = document.getElementById("weekdayDonut");
+      const bestValue = document.getElementById("weekdayBestValue");
+      const bestSub = document.getElementById("weekdayBestSub");
+      if (!list || !donut || !bestValue || !bestSub) return;
+
+      const order = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+      const values = order.map(day => ({ name: day, value: Number((counts || {})[day] || 0) }));
+      const total = values.reduce((s, x) => s + x.value, 0);
+
+      const palette = [
+        "rgba(124,92,255,.95)",
+        "rgba(98,109,255,.95)",
+        "rgba(78,161,255,.95)",
+        "rgba(71,208,214,.95)",
+        "rgba(64,208,160,.95)",
+        "rgba(255,170,70,.95)",
+        "rgba(255,92,122,.95)",
+      ];
+
+      if (!total){
+        donut.style.background = "conic-gradient(rgba(255,255,255,.08) 0deg 360deg)";
+        bestValue.textContent = "No data";
+        bestSub.textContent = "No activity in this watch window.";
+        list.innerHTML = '<div class="empty">No weekday activity yet.</div>';
+        return;
+      }
+
+      let deg = 0;
+      const segs = values.map((row, idx) => {
+        const part = (row.value / total) * 360;
+        const start = deg;
+        deg += part;
+        return `${palette[idx]} ${start}deg ${deg}deg`;
+      });
+      donut.style.background = `conic-gradient(${segs.join(", ")})`;
+
+      const ranked = values.slice().sort((a,b) => b.value - a.value);
+      const best = ranked[0];
+      bestValue.textContent = best.name;
+      bestSub.textContent = `${best.value} plays`;
+
+      renderBarList(
+        list,
+        ranked.map(v => ({ name: v.name, value: v.value, item_key: "" })),
+        row => `${row.value}`,
+        "",
+        ""
+      );
+    }
+
+    function renderList(el, rows, valueFormatter){
+      if (!el) return;
+      if (!Array.isArray(rows) || !rows.length){
+        el.innerHTML = '<div class="empty">Nothing to show yet.</div>';
+        return;
+      }
+
+      el.innerHTML = rows.map(row => {
+        const name = String(row.name || row.title || "Unknown");
+        const meta = valueFormatter ? valueFormatter(row) : "";
+        return `
+          <div class="listRow">
+            <div class="listName">${name}</div>
+            <div class="listMeta">${meta}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function ensureStatsToastWrap(){
+      let wrap = document.getElementById("statsToastWrap");
+      if (!wrap){
+        wrap = document.createElement("div");
+        wrap.id = "statsToastWrap";
+        wrap.className = "statsToastWrap";
+        document.body.appendChild(wrap);
+      }
+      return wrap;
+    }
+
+    async function unhideStatsItem(kind, itemId){
+      const r = await fetch("/api/action/stats_unhide", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: kind,
+          item_id: itemId
+        })
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok){
+        throw new Error(j.error || ("HTTP " + r.status));
+      }
+    }
+
+    function showStatsUndoToast({ label, kind, itemId }){
+      const wrap = ensureStatsToastWrap();
+      const toast = document.createElement("div");
+      toast.className = "statsToast";
+      toast.innerHTML = `
+        <div class="statsToastTitle">Hidden from stats</div>
+        <div class="statsToastRow">
+          <div style="font-size:12px; color:rgba(255,255,255,.74); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${String(label || "Item")}</div>
+          <button class="statsToastBtn" type="button">Undo</button>
+        </div>
+      `;
+      wrap.appendChild(toast);
+
+      requestAnimationFrame(() => toast.classList.add("show"));
+
+      let closed = false;
+      const close = () => {
+        if (closed) return;
+        closed = true;
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 220);
+      };
+
+      const timer = setTimeout(close, 6000);
+
+      toast.querySelector(".statsToastBtn").addEventListener("click", async () => {
+        try{
+          clearTimeout(timer);
+          await unhideStatsItem(kind, itemId);
+          close();
+          await loadStats();
+        }catch(err){
+          console.error(err);
+          alert("Failed to undo hidden stats item.");
+        }
+      });
+    }
+
+    async function hideStatsItem(section, itemKey, label, btn=null){
+      console.log("stats hide request", { section, itemKey, label });
+
+      const row = btn ? btn.closest(".barRow, .listRow") : null;
+      if (btn){
+        btn.disabled = true;
+        btn.classList.add("isPending");
+        btn.textContent = "Hiding…";
+      }
+      if (row){
+        row.classList.add("rowPendingHide");
+      }
+
+      const r = await fetch("/api/action/stats_hide", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          section: section,
+          item_key: itemKey,
+          label: label
+        })
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok){
+        if (btn){
+          btn.disabled = false;
+          btn.classList.remove("isPending");
+          btn.textContent = "Hide";
+        }
+        if (row){
+          row.classList.remove("rowPendingHide");
+        }
+        throw new Error(j.error || ("HTTP " + r.status));
+      }
+
+      if (row){
+        row.classList.add("rowHidingOut");
+      }
+
+      const kind = String(j.kind || "");
+      const itemId = String(j.item_id || itemKey || "");
+
+      showStatsUndoToast({
+        label: label,
+        kind: kind,
+        itemId: itemId
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 260));
+      await loadStats();
+    }
+
+    function renderBarList(el, rows, valueFormatter, fillClass="", sectionKey=""){
+      if (!el) return;
+      if (!Array.isArray(rows) || !rows.length){
+        el.innerHTML = '<div class="empty">Nothing to show yet.</div>';
+        return;
+      }
+
+      const values = rows.map(r => Number(r.count ?? r.value ?? 0));
+      const maxVal = Math.max(...values, 1);
+
+      const rankClass = (idx) => {
+        if (idx === 0) return "gold";
+        if (idx === 1) return "silver";
+        if (idx === 2) return "bronze";
+        return "";
+      };
+
+      el.innerHTML = `<div class="barList">` + rows.map((row, idx) => {
+        const name = String(row.name || row.title || "Unknown");
+        const value = Number(row.count ?? row.value ?? 0);
+        const pct = maxVal > 0 ? (value / maxVal) * 100 : 0;
+        const meta = valueFormatter ? valueFormatter(row) : String(value);
+        const itemKey = String(row.item_key || "");
+        return `
+          <div class="barRow">
+            ${sectionKey && itemKey ? `<button class="rowHideBtn" data-stats-hide="1" data-section="${sectionKey}" data-item-key="${itemKey}" data-label="${name}">Hide</button>` : ""}
+            <div class="barTop">
+              <div class="barTopLeft">
+                <div class="rankBadge ${rankClass(idx)}">#${idx + 1}</div>
+                <div class="barName">${name}</div>
+              </div>
+              <div class="barMeta">${meta}</div>
+            </div>
+            <div class="barTrack">
+              <div class="barFill ${fillClass}" data-target-width="${pct}" style="width:0%"></div>
+            </div>
+          </div>
+        `;
+      }).join("") + `</div>`;
+
+      const fills = Array.from(el.querySelectorAll(".barFill"));
+
+      fills.forEach(fill => {
+        fill.style.width = "0%";
+      });
+
+      requestAnimationFrame(() => {
+        fills.forEach(fill => void fill.offsetWidth);
+
+        requestAnimationFrame(() => {
+          fills.forEach(fill => {
+            const target = fill.getAttribute("data-target-width") || "0";
+            fill.style.width = `${target}%`;
+          });
+        });
+      });
+
+      el.querySelectorAll('[data-stats-hide="1"]').forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          try{
+            await hideStatsItem(
+              btn.getAttribute("data-section") || "",
+              btn.getAttribute("data-item-key") || "",
+              btn.getAttribute("data-label") || "",
+              btn
+            );
+          }catch(err){
+            console.error(err);
+            alert("Failed to hide stats item.");
+          }
+        });
+      });
+    }
+
+    function renderQueueHealth(el, rows){
+      if (!el) return;
+      renderBarList(el, rows || [], row => `${row.value}`, "queue", "queue_health");
+    }
+
+    function renderCurrentActivity(el, current){
+      if (!el) return;
+
+      const rows = [];
+
+      (current.continue_watching || []).forEach(x => {
+        rows.push({
+          title: `Continue Watching: ${x.title || "Item"}`,
+          item_key: x.item_key || "",
+        });
+      });
+
+      (current.nextup_tv || []).forEach(x => {
+        rows.push({
+          title: `Next Up TV: ${x.title || "Show"}${x.episode ? " • " + x.episode : ""}`,
+          item_key: x.item_key || "",
+        });
+      });
+
+      (current.nextup_anime || []).forEach(x => {
+        rows.push({
+          title: `Next Up Anime: ${x.title || "Anime"}${x.episode ? " • " + x.episode : ""}`,
+          item_key: x.item_key || "",
+        });
+      });
+
+      (current.latest_unwatched_movies || []).forEach(x => {
+        rows.push({
+          title: `Movie: ${x.title || "Movie"}${x.year ? " (" + x.year + ")" : ""}`,
+          item_key: x.item_key || "",
+        });
+      });
+
+      if (!rows.length){
+        el.innerHTML = '<div class="empty">Nothing to show yet.</div>';
+        return;
+      }
+
+      el.innerHTML = rows.slice(0, 12).map(row => `
+        <div class="listRow">
+          ${row.item_key ? `<button class="rowHideBtn" data-stats-hide="1" data-section="current_activity" data-item-key="${row.item_key}" data-label="${row.title.replace(/"/g, '&quot;')}">Hide</button>` : ""}
+          <div class="listName">${row.title}</div>
+        </div>
+      `).join("");
+
+      el.querySelectorAll('[data-stats-hide="1"]').forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          try{
+            await hideStatsItem(
+              btn.getAttribute("data-section") || "",
+              btn.getAttribute("data-item-key") || "",
+              btn.getAttribute("data-label") || "",
+              btn
+            );
+          }catch(err){
+            console.error(err);
+            alert("Failed to hide stats item.");
+          }
+        });
+      });
+    }
+
+    function animateValue(id, endValue, duration=700){
+      const el = document.getElementById(id);
+      if (!el) return;
+
+      const end = Number(endValue ?? 0);
+      if (!Number.isFinite(end)){
+        el.textContent = String(endValue ?? 0);
+        return;
+      }
+
+      const startTime = performance.now();
+      el.classList.add("animating");
+
+      function step(now){
+        const t = Math.min((now - startTime) / duration, 1);
+        const eased = 1 - Math.pow(1 - t, 3);
+        const value = Math.round(end * eased);
+        el.textContent = String(value);
+        if (t < 1){
+          requestAnimationFrame(step);
+        } else {
+          el.textContent = String(end);
+          el.classList.remove("animating");
+        }
+      }
+
+      requestAnimationFrame(step);
+    }
+
+    function animateDonut(el, moviesDeg, tvDeg, duration=850){
+      if (!el) return;
+
+      const startTime = performance.now();
+
+      function step(now){
+        const t = Math.min((now - startTime) / duration, 1);
+        const eased = 1 - Math.pow(1 - t, 3);
+
+        const mDeg = moviesDeg * eased;
+        const tDeg = tvDeg * eased;
+
+        el.style.background = `conic-gradient(
+          rgba(124,92,255,.95) 0deg ${mDeg}deg,
+          rgba(78,161,255,.95) ${mDeg}deg ${mDeg + tDeg}deg,
+          rgba(64,208,160,.95) ${mDeg + tDeg}deg 360deg
+        )`;
+
+        if (t < 1){
+          requestAnimationFrame(step);
+        }
+      }
+
+      el.style.background = `conic-gradient(
+        rgba(124,92,255,.95) 0deg 0deg,
+        rgba(78,161,255,.95) 0deg 0deg,
+        rgba(64,208,160,.95) 0deg 360deg
+      )`;
+
+      requestAnimationFrame(step);
+    }
+
+    function setStatCardVisible(valueId, visible){
+      const el = document.getElementById(valueId);
+      const card = el ? el.closest(".statCard") : null;
+      if (card){
+        card.style.display = visible ? "" : "none";
+      }
+    }
+
+    async function loadStats(windowKey = STATS_WINDOW){
+      setActiveStatsWindow(windowKey);
+      try{
+        const r = await fetch(`/api/stats/overview?window=${encodeURIComponent(windowKey)}`, { cache: "no-store" });
+        const j = await r.json().catch(() => ({}));
+
+        if (!r.ok){
+          throw new Error(j.error || ("HTTP " + r.status));
+        }
+
+        const o = j.overview || {};
+        const availability = j.availability || {};
+
+        setStatCardVisible("nextUpAnime", !!availability.anime);
+        setStatCardVisible("airingTonight", !!availability.sonarr);
+        setStatCardVisible("radarrMissing", !!availability.radarr);
+
+        const queueHealthCard = document.getElementById("queueHealthList")?.closest(".card");
+        if (queueHealthCard){
+          const hasAnyQueueHealth =
+            Number(o.continue_watching_count ?? 0) > 0 ||
+            Number(o.nextup_tv_count ?? 0) > 0 ||
+            (!!availability.anime && Number(o.nextup_anime_count ?? 0) >= 0) ||
+            Number(o.unwatched_movies ?? 0) > 0 ||
+            (!!availability.sonarr && Number(o.airing_tonight_count ?? 0) >= 0) ||
+            Number(o.series_remaining ?? 0) > 0 ||
+            (!!availability.radarr && Number(o.radarr_missing_count ?? 0) >= 0);
+          queueHealthCard.style.display = hasAnyQueueHealth ? "" : "none";
+        }
+
+        animateValue("watchedMovies", o.watched_movies ?? 0);
+        animateValue("watchedEpisodes", o.watched_episodes ?? 0);
+
+        const totalMovies = Number(o.total_movies ?? 0);
+        const watchedMoviesCount = Number(o.watched_movies ?? 0);
+        const movieCompletionPercent = Number(o.completion_percent ?? 0);
+
+        const backlogFill = document.getElementById("movieBacklogFill");
+        const backlogLabel = document.getElementById("movieBacklogLabel");
+
+        if (backlogFill){
+          backlogFill.style.width = `${Math.max(0, Math.min(100, movieCompletionPercent))}%`;
+        }
+        if (backlogLabel){
+          backlogLabel.textContent = `${watchedMoviesCount} / ${totalMovies} watched`;
+        }
+        animateValue("watchedTvEpisodes", o.watched_tv_episodes ?? 0);
+        animateValue("watchedAnimeEpisodes", o.watched_anime_episodes ?? 0);
+        animateValue("watchedTvEpisodesMirror", o.watched_tv_episodes ?? 0);
+        animateValue("watchedAnimeEpisodesMirror", o.watched_anime_episodes ?? 0);
+        animateValue("seriesProgress", o.series_in_progress ?? 0);
+        animateValue("seriesProgressChip", o.series_in_progress ?? 0);
+        animateValue("completedSeries", o.completed_series ?? 0);
+        animateValue("continueWatching", o.continue_watching_count ?? 0);
+        animateValue("nextUpTv", o.nextup_tv_count ?? 0);
+        animateValue("nextUpAnime", o.nextup_anime_count ?? 0);
+        animateValue("seriesRemaining", o.series_remaining ?? 0);
+        animateValue("unwatchedMovies", o.unwatched_movies ?? 0);
+        animateValue("airingTonight", o.airing_tonight_count ?? 0);
+        animateValue("radarrMissing", o.radarr_missing_count ?? 0);
+
+        const t = j.time_stats || {};
+        animateValue("currentStreak", t.current_streak ?? 0);
+        animateValue("longestStreak", t.longest_streak ?? 0);
+        document.getElementById("avgMovieRuntime").textContent = `${Number(t.average_movie_runtime ?? 0).toFixed(1)}m`;
+        document.getElementById("avgEpisodeRuntime").textContent = `${Number(t.average_episode_runtime ?? 0).toFixed(1)}m`;
+        animateValue("startedSeries", t.started_series ?? 0);
+        animateValue("finishedSeries", t.finished_series ?? 0);
+        document.getElementById("completionRate").textContent = `${Number(t.completion_rate ?? 0).toFixed(1)}%`;
+        document.getElementById("bestWatchDay").textContent = t.best_day || "—";
+
+        const heatmapRows = j.heatmap || [];
+        renderHeatmap(heatmapRows);
+        renderWeekdayBreakdown(j.weekday_counts || {});
+
+        const totalPlays = Object.values(j.weekday_counts || {}).reduce((sum, v) => sum + Number(v || 0), 0);
+        const activeDays = heatmapRows.filter(x => Number(x.count || 0) > 0).length;
+
+        animateValue("activityTotalPlays", totalPlays);
+        animateValue("activityActiveDays", activeDays);
+        animateValue("activityCurrentStreak", t.current_streak ?? 0);
+        animateValue("activityLongestStreak", t.longest_streak ?? 0);
+
+        renderBarList(document.getElementById("topShowsList"), j.top_shows || [], row => `${row.count ?? 0} watched`, "", "top_shows");
+        renderBarList(document.getElementById("topAnimeList"), j.top_anime || [], row => `${row.count ?? 0} watched`, "anime", "top_anime");
+        renderBarList(document.getElementById("topGenresList"), j.top_genres || [], row => `${row.count ?? 0} plays`, "genre", "top_genres");
+        renderQueueHealth(document.getElementById("queueHealthList"), j.queue_health_rows || []);
+        renderCurrentActivity(document.getElementById("currentActivityList"), j.current_sections || {});
+
+        const watchedMovies = Number(o.watched_movies ?? 0);
+        const watchedTvEpisodes = Number(o.watched_tv_episodes ?? 0);
+        const watchedAnimeEpisodes = Number(o.watched_anime_episodes ?? 0);
+        const watchedTotal = watchedMovies + watchedTvEpisodes + watchedAnimeEpisodes;
+
+        const moviesPct = watchedTotal > 0 ? (watchedMovies / watchedTotal) * 100 : 0;
+        const tvPct = watchedTotal > 0 ? (watchedTvEpisodes / watchedTotal) * 100 : 0;
+        const animePct = watchedTotal > 0 ? (watchedAnimeEpisodes / watchedTotal) * 100 : 0;
+
+        document.getElementById("splitMoviesMeta").textContent = `${watchedMovies} • ${moviesPct.toFixed(0)}%`;
+        document.getElementById("splitTvMeta").textContent = `${watchedTvEpisodes} • ${tvPct.toFixed(0)}%`;
+        document.getElementById("splitAnimeMeta").textContent = `${watchedAnimeEpisodes} • ${animePct.toFixed(0)}%`;
+        document.getElementById("watchSplitTotal").textContent = `${watchedTotal}`;
+
+        const moviesDeg = watchedTotal > 0 ? (watchedMovies / watchedTotal) * 360 : 0;
+        const tvDeg = watchedTotal > 0 ? (watchedTvEpisodes / watchedTotal) * 360 : 0;
+
+        const donut = document.getElementById("watchSplitDonut");
+        if (donut){
+          animateDonut(donut, moviesDeg, tvDeg, 900);
+        }
+      }catch(e){
+        console.error(e);
+      }
+    }
+
+    document.querySelectorAll('#statsWindowFilters .filterPill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const w = String(btn.getAttribute('data-window') || 'lifetime');
+        loadStats(w);
+      });
+    });
+
+    (async function initStatsPage(){
+      try{
+        const r = await fetch("/settings/api", { cache: "no-store" });
+        const settings = await r.json().catch(() => ({}));
+        applyStatsLayoutFromSettings(settings || {});
+      }catch(err){
+        console.warn("Failed to load stats layout settings", err);
+      }
+      loadStats();
+    })();
+  
+    function applyStatsLayoutFromSettings(settings){
+      try{
+        const wrap = document.querySelector(".wrap");
+        if (!wrap) return;
+
+        const order = String(settings.stats_layout_order || "")
+          .split(",")
+          .map(s => s.trim())
+          .filter(Boolean);
+
+        const hidden = new Set(
+          String(settings.stats_layout_hidden || "")
+            .split(",")
+            .map(s => s.trim())
+            .filter(Boolean)
+        );
+
+        const topbar = wrap.querySelector(".topbar");
+
+        const sectionMap = {
+          overview: wrap.querySelector('[data-stats-section="overview"]'),
+          watch_window: wrap.querySelector('[data-stats-section="watch_window"]'),
+          watch_activity: wrap.querySelector('[data-stats-section="watch_activity"]'),
+          top_shows: wrap.querySelector('[data-stats-section="top_pair_one"]'),
+          top_genres: wrap.querySelector('[data-stats-section="top_pair_one"]'),
+          top_anime: wrap.querySelector('[data-stats-section="top_pair_two"]'),
+          queue_health: wrap.querySelector('[data-stats-section="top_pair_two"]'),
+          current_activity: wrap.querySelector('[data-stats-section="top_pair_three"]'),
+          watch_split: wrap.querySelector('[data-stats-section="top_pair_three"]'),
+        };
+
+        const pairOne = wrap.querySelector('[data-stats-section="top_pair_one"]');
+        const pairTwo = wrap.querySelector('[data-stats-section="top_pair_two"]');
+        const pairThree = wrap.querySelector('[data-stats-section="top_pair_three"]');
+
+        const pairOneCards = pairOne ? pairOne.querySelectorAll(".card") : [];
+        const pairTwoCards = pairTwo ? pairTwo.querySelectorAll(".card") : [];
+        const pairThreeCards = pairThree ? pairThree.querySelectorAll(".card") : [];
+
+        if (pairOneCards[0]) pairOneCards[0].style.display = hidden.has("top_shows") ? "none" : "";
+        if (pairOneCards[1]) pairOneCards[1].style.display = hidden.has("top_genres") ? "none" : "";
+        if (pairTwoCards[0]) pairTwoCards[0].style.display = hidden.has("top_anime") ? "none" : "";
+        if (pairTwoCards[1]) pairTwoCards[1].style.display = hidden.has("queue_health") ? "none" : "";
+        if (pairThreeCards[0]) pairThreeCards[0].style.display = hidden.has("current_activity") ? "none" : "";
+        if (pairThreeCards[1]) pairThreeCards[1].style.display = hidden.has("watch_split") ? "none" : "";
+
+        if (sectionMap.overview) sectionMap.overview.style.display = hidden.has("overview") ? "none" : "";
+        if (sectionMap.watch_window) sectionMap.watch_window.style.display = hidden.has("watch_window") ? "none" : "";
+        if (sectionMap.watch_activity) sectionMap.watch_activity.style.display = hidden.has("watch_activity") ? "none" : "";
+
+        if (pairOne) pairOne.style.display = (hidden.has("top_shows") && hidden.has("top_genres")) ? "none" : "";
+        if (pairTwo) pairTwo.style.display = (hidden.has("top_anime") && hidden.has("queue_health")) ? "none" : "";
+        if (pairThree) pairThree.style.display = (hidden.has("current_activity") && hidden.has("watch_split")) ? "none" : "";
+
+        const uniqueNodes = [];
+        order.forEach(key => {
+          const node = sectionMap[key];
+          if (node && !uniqueNodes.includes(node)){
+            uniqueNodes.push(node);
+          }
+        });
+
+        uniqueNodes.forEach(node => {
+          if (node && topbar && node.parentNode === wrap){
+            wrap.insertBefore(node, null);
+          }
+        });
+
+      }catch(e){
+        console.warn("Stats layout apply failed", e);
+      }
+    }
+
+</script>
+  <script>
+    (function(){
+      const menu = document.getElementById("userMenu");
+      const btn = document.getElementById("userMenuBtn");
+      if (!menu || !btn) return;
+
+      function closeMenu(){
+        menu.classList.remove("open");
+        btn.setAttribute("aria-expanded", "false");
+      }
+
+      function openMenu(){
+        menu.classList.add("open");
+        btn.setAttribute("aria-expanded", "true");
+      }
+
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        menu.classList.contains("open") ? closeMenu() : openMenu();
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!menu.contains(e.target)) closeMenu();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeMenu();
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,903 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>QueueDeck Admin Settings</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" />
+
+    <style>
+      :root{
+        --bg0:#07090c;
+        --bg1:#0b0f14;
+        --card: rgba(255,255,255,.055);
+        --border: rgba(255,255,255,.10);
+        --text: rgba(255,255,255,.92);
+        --muted: rgba(255,255,255,.64);
+        --accent:#7c5cff;
+        --accent2:#4ea1ff;
+        --shadow: 0 20px 60px rgba(0,0,0,.55);
+      }
+
+      *{ box-sizing:border-box; }
+      html,body{ margin:0; min-height:100%; }
+      body{
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(900px 600px at 15% 0%, rgba(124,92,255,.14), transparent 60%),
+          radial-gradient(900px 700px at 100% 0%, rgba(78,161,255,.10), transparent 55%),
+          linear-gradient(180deg, var(--bg0), var(--bg1));
+        padding: 28px;
+      }
+
+      .wrap{ max-width: 1180px; margin: 0 auto; }
+
+      .topbar{
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-start;
+        gap:16px;
+        margin-bottom:18px;
+        flex-wrap:wrap;
+      }
+
+      .brand{
+        display:flex;
+        align-items:flex-start;
+        gap:14px;
+      }
+
+      .logo{
+        width:40px;
+        height:40px;
+        border-radius:12px;
+        display:grid;
+        place-items:center;
+        border:1px solid rgba(255,255,255,.12);
+        background: rgba(255,255,255,.05);
+        box-shadow: var(--shadow);
+        overflow:hidden;
+      }
+
+      .logo img{
+        width:26px;
+        height:26px;
+        display:block;
+      }
+
+      h1{
+        margin:0;
+        font-size:22px;
+        line-height:1.1;
+        font-weight:900;
+        letter-spacing:.2px;
+      }
+
+      .sub{
+        margin:6px 0 0;
+        color:var(--muted);
+        font-size:14px;
+        line-height:1.35;
+      }
+
+      .top-links{
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;
+        align-items:center;
+      }
+
+      .btn, button{
+        border:none;
+        border-radius:16px;
+        padding:12px 18px;
+        min-height:46px;
+        font-weight:800;
+        color:#fff;
+        cursor:pointer;
+        text-decoration:none;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        font-size:14px;
+        line-height:1;
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,.08),
+          0 10px 26px rgba(0,0,0,.22);
+      }
+
+      .btn.secondary, button.secondary{
+        background: rgba(255,255,255,.05);
+        border:1px solid rgba(255,255,255,.10);
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,.04),
+          0 8px 22px rgba(0,0,0,.18);
+      }
+
+      .btn.secondary:hover, button.secondary:hover{
+        background: rgba(255,255,255,.09);
+        border-color: rgba(255,255,255,.16);
+        transform: translateY(-1px);
+      }
+
+      .card{
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+        padding: 22px;
+        margin-bottom: 18px;
+      }
+
+      .statusRow{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        flex-wrap:wrap;
+        margin-bottom:14px;
+      }
+
+      .status{
+        flex:1 1 260px;
+        min-width:240px;
+        padding:11px 14px;
+        border-radius:12px;
+        border:1px solid rgba(255,255,255,.10);
+        background: rgba(0,0,0,.18);
+        color: rgba(255,255,255,.84);
+        font-size:13px;
+      }
+
+      .status.ok{
+        border-color: rgba(80,200,120,.35);
+        background: rgba(80,200,120,.12);
+      }
+
+      .status.bad{
+        border-color: rgba(255,110,110,.35);
+        background: rgba(255,110,110,.12);
+      }
+
+      .miniCard{
+        padding:18px;
+        border-radius:16px;
+        border:1px solid rgba(255,255,255,.08);
+        background: rgba(0,0,0,.12);
+      }
+
+      .miniCardTitle{
+        font-size:16px;
+        font-weight:900;
+        margin-bottom:6px;
+      }
+
+      .miniCardSub{
+        color:var(--muted);
+        font-size:13px;
+        line-height:1.4;
+        margin-bottom:14px;
+      }
+
+      .adminSettingsGrid{
+        display:grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap:14px;
+      }
+
+      .adminField, .field{
+        display:flex;
+        flex-direction:column;
+        gap:8px;
+      }
+
+      .sliderHead{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+      }
+
+      .sliderValue{
+        min-width:56px;
+        text-align:right;
+        font-size:12px;
+        font-weight:900;
+        color: rgba(255,255,255,.78);
+        padding:6px 8px;
+        border-radius:999px;
+        background: rgba(255,255,255,.06);
+        border:1px solid rgba(255,255,255,.08);
+      }
+
+      input[type="range"]{
+        width:100%;
+        padding:0;
+        background:transparent;
+        border:none;
+        box-shadow:none;
+      }
+
+      .adminField.full{
+        grid-column: 1 / -1;
+      }
+
+      label{
+        font-size:12px;
+        font-weight:800;
+        color:rgba(255,255,255,.85);
+        letter-spacing:.2px;
+      }
+
+      input, textarea{
+        width:100%;
+        border:1px solid rgba(255,255,255,.14);
+        background: rgba(0,0,0,.28);
+        color:#fff;
+        border-radius:14px;
+        padding:12px 14px;
+        outline:none;
+      }
+
+      input:focus, textarea:focus{
+        border-color:rgba(120,140,255,.42);
+        box-shadow:0 0 0 3px rgba(120,140,255,.12);
+      }
+
+      .secretRow{
+        display:grid;
+        grid-template-columns: 1fr auto;
+        gap:8px;
+        align-items:center;
+      }
+
+      .adminHint{
+        font-size:12px;
+        color: rgba(255,255,255,.58);
+        line-height:1.35;
+      }
+
+      .feedEditor{
+        display:grid;
+        gap:10px;
+      }
+
+      .feedHeader, .feedRow{
+        display:grid;
+        grid-template-columns: 180px 1fr auto;
+        gap:10px;
+        align-items:center;
+      }
+
+      .feedHeader{
+        font-size:12px;
+        color:rgba(255,255,255,.60);
+        font-weight:800;
+      }
+
+      .feedRow input{
+        min-width:0;
+      }
+
+      .feedEmpty{
+        padding:12px 14px;
+        border-radius:14px;
+        border:1px dashed rgba(255,255,255,.12);
+        background: rgba(255,255,255,.03);
+        color: rgba(255,255,255,.55);
+        font-size:13px;
+      }
+
+      .feedToolbar{
+        margin-top:10px;
+      }
+
+      .userMenu{
+        position:relative;
+        display:flex;
+        align-items:center;
+        flex:0 0 auto;
+      }
+
+      .userMenuBtn{
+        display:inline-flex;
+        align-items:center;
+        gap:10px;
+        min-height:44px;
+        padding:8px 12px 8px 8px;
+        border-radius:999px;
+        border:1px solid rgba(255,255,255,.10);
+        background: rgba(255,255,255,.05);
+        color:#fff;
+        cursor:pointer;
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,.04),
+          0 8px 22px rgba(0,0,0,.18);
+      }
+
+      .userAvatar{
+        width:30px;
+        height:30px;
+        border-radius:999px;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        font-size:13px;
+        font-weight:900;
+        color:#fff;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+      }
+
+      .userMenuName{
+        font-size:13px;
+        font-weight:800;
+        color: rgba(255,255,255,.92);
+        white-space:nowrap;
+      }
+
+      .userMenuChevron{
+        font-size:11px;
+        color: rgba(255,255,255,.72);
+        transition: transform .18s ease;
+      }
+
+      .userMenu.open .userMenuChevron{ transform: rotate(180deg); }
+
+      .userDropdown{
+        position:absolute;
+        right:0;
+        top:calc(100% + 10px);
+        min-width:220px;
+        border:1px solid rgba(255,255,255,.12);
+        background: rgba(10,12,18,.94);
+        backdrop-filter: blur(10px);
+        border-radius:16px;
+        box-shadow: 0 24px 70px rgba(0,0,0,.55);
+        padding:8px;
+        display:none;
+        z-index:30;
+      }
+
+      .userMenu.open .userDropdown{ display:block; }
+
+      .userDropdownHead{
+        padding:10px 12px 8px;
+        border-bottom:1px solid rgba(255,255,255,.08);
+        margin-bottom:6px;
+      }
+
+      .userDropdownTitle{
+        font-size:13px;
+        font-weight:900;
+        color: rgba(255,255,255,.94);
+      }
+
+      .userDropdownSub{
+        margin-top:3px;
+        font-size:12px;
+        color: rgba(255,255,255,.62);
+      }
+
+      .userDropdown a{
+        display:flex;
+        align-items:center;
+        padding:10px 12px;
+        border-radius:12px;
+        font-size:13px;
+        font-weight:700;
+        color: rgba(255,255,255,.88);
+        text-decoration:none;
+      }
+
+      .userDropdown a:hover{
+        background: rgba(255,255,255,.06);
+        color:#fff;
+      }
+
+      .userDropdown a.danger{
+        color: rgba(255,130,130,.95);
+      }
+
+      @media (max-width: 900px){
+        .adminSettingsGrid{ grid-template-columns: 1fr; }
+      }
+
+      @media (max-width:760px){
+        .userMenuName{ display:none; }
+        .userMenuBtn{ padding-right:10px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo"><img src="/favicon.svg" alt="QueueDeck" /></div>
+          <div>
+            <h1>QueueDeck Admin Settings</h1>
+            <div class="sub">Global integrations and Discover controls. These affect all users.</div>
+          </div>
+        </div>
+
+        <div class="top-links">
+          <a class="btn secondary" href="/admin/users">User Management</a>
+
+          {% set username = (me.username if me and me.username else 'User') %}
+          {% set initial = (username[:1] | upper) %}
+          <div class="userMenu" id="userMenu">
+            <button class="userMenuBtn" id="userMenuBtn" type="button" aria-haspopup="menu" aria-expanded="false">
+              <span class="userAvatar">{{ initial }}</span>
+              <span class="userMenuName">{{ username }}</span>
+              <span class="userMenuChevron">▾</span>
+            </button>
+
+            <div class="userDropdown" id="userDropdown" role="menu">
+              <div class="userDropdownHead">
+                <div class="userDropdownTitle">{{ username }}</div>
+                <div class="userDropdownSub">QueueDeck admin</div>
+              </div>
+              <a href="/">Dashboard</a>
+              <a href="/settings">Preferences</a>
+              <a href="/stats">Statistics</a>
+              <a href="/hidden">Hidden Items</a>
+              <a href="/admin/settings">Admin Settings</a>
+              <a class="danger" href="/logout">Log out</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="statusRow">
+          <button class="btn" id="saveBtn" type="button">Save Admin Settings</button>
+          <button class="btn secondary" id="reloadBtn" type="button">Reload</button>
+          <div class="status" id="statusBox">Loading admin settings...</div>
+        </div>
+
+        <div class="miniCard">
+          <div class="miniCardTitle">Discover Providers</div>
+          <div class="miniCardSub">Global provider settings for the Discover page.</div>
+
+          <div class="adminSettingsGrid">
+            <div class="adminField">
+              <label for="tmdb_bearer_token">TMDb Bearer Token</label>
+              <div class="secretRow">
+                <input id="tmdb_bearer_token" type="password" autocomplete="new-password" placeholder="Paste TMDb Read Access Token" />
+                <button class="btn secondary revealBtn" type="button" data-reveal-target="tmdb_bearer_token">Show</button>
+              </div>
+              <div class="adminHint">Recommended. Used globally for Discover.</div>
+            </div>
+
+            <div class="adminField">
+              <label for="tmdb_api_key">TMDb API Key (optional)</label>
+              <div class="secretRow">
+                <input id="tmdb_api_key" type="password" autocomplete="new-password" placeholder="Optional fallback API key" />
+                <button class="btn secondary revealBtn" type="button" data-reveal-target="tmdb_api_key">Show</button>
+              </div>
+              <div class="adminHint">Optional fallback if you prefer a v3 API key.</div>
+            </div>
+
+            <div class="adminField">
+              <label for="trakt_client_id">Trakt Client ID</label>
+              <div class="secretRow">
+                <input id="trakt_client_id" type="password" autocomplete="new-password" placeholder="Paste Trakt Client ID" />
+                <button class="btn secondary revealBtn" type="button" data-reveal-target="trakt_client_id">Show</button>
+              </div>
+              <div class="adminHint">Used for Trakt trending discovery.</div>
+            </div>
+
+            <div class="adminField full">
+              <label for="letterboxd_rss_urls">Letterboxd RSS Feeds</label>
+
+              <textarea id="letterboxd_rss_urls" rows="5" placeholder="Remy | https://letterboxd.com/remy/rss/&#10;Horror List | https://letterboxd.com/some-list/rss/" style="display:none;"></textarea>
+
+              <div id="letterboxdFeedsEditor" class="feedEditor"></div>
+
+              <div class="feedToolbar">
+                <button class="btn secondary" type="button" id="addLetterboxdFeed">+ Add Feed</button>
+              </div>
+
+              <div class="adminHint">Add one feed per row. QueueDeck still saves them in the same <b>Label | URL</b> format behind the scenes.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="miniCard" style="margin-top:16px;">
+          <div class="miniCardTitle">Discover Scoring & Weights</div>
+          <div class="miniCardSub">Global scoring behavior for the Discover aggregate view.</div>
+
+          <div class="adminSettingsGrid">
+            <div class="field">
+              <div class="sliderHead">
+                <label for="discover_weight_tmdb">TMDb Trending Weight</label>
+                <div class="sliderValue" id="val_discover_weight_tmdb">1.00</div>
+              </div>
+              <input id="discover_weight_tmdb" type="range" min="0" max="2" step="0.01" value="1.0" />
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="discover_weight_tmdb_popular">TMDb Popular Weight</label>
+                <div class="sliderValue" id="val_discover_weight_tmdb_popular">0.95</div>
+              </div>
+              <input id="discover_weight_tmdb_popular" type="range" min="0" max="2" step="0.01" value="0.95" />
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="discover_weight_trakt">Trakt Trending Weight</label>
+                <div class="sliderValue" id="val_discover_weight_trakt">1.00</div>
+              </div>
+              <input id="discover_weight_trakt" type="range" min="0" max="2" step="0.01" value="1.0" />
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="discover_weight_trakt_popular">Trakt Popular Weight</label>
+                <div class="sliderValue" id="val_discover_weight_trakt_popular">0.90</div>
+              </div>
+              <input id="discover_weight_trakt_popular" type="range" min="0" max="2" step="0.01" value="0.90" />
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="discover_weight_letterboxd">Letterboxd Weight</label>
+                <div class="sliderValue" id="val_discover_weight_letterboxd">0.58</div>
+              </div>
+              <input id="discover_weight_letterboxd" type="range" min="0" max="2" step="0.01" value="0.58" />
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="discover_weight_tvmaze">TVMaze Weight</label>
+                <div class="sliderValue" id="val_discover_weight_tvmaze">0.80</div>
+              </div>
+              <input id="discover_weight_tvmaze" type="range" min="0" max="2" step="0.01" value="0.80" />
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="discover_weight_anilist">AniList Weight</label>
+                <div class="sliderValue" id="val_discover_weight_anilist">0.92</div>
+              </div>
+              <input id="discover_weight_anilist" type="range" min="0" max="2" step="0.01" value="0.92" />
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="discover_bonus_2">Bonus 2 Sources</label>
+                <div class="sliderValue" id="val_discover_bonus_2">0.08</div>
+              </div>
+              <input id="discover_bonus_2" type="range" min="0" max="2" step="0.01" value="0.08" />
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="discover_bonus_3">Bonus 3 Sources</label>
+                <div class="sliderValue" id="val_discover_bonus_3">0.18</div>
+              </div>
+              <input id="discover_bonus_3" type="range" min="0" max="2" step="0.01" value="0.18" />
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="discover_bonus_4">Bonus 4 Sources</label>
+                <div class="sliderValue" id="val_discover_bonus_4">0.28</div>
+              </div>
+              <input id="discover_bonus_4" type="range" min="0" max="2" step="0.01" value="0.28" />
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="discover_bonus_5">Bonus 5 Sources</label>
+                <div class="sliderValue" id="val_discover_bonus_5">0.34</div>
+              </div>
+              <input id="discover_bonus_5" type="range" min="0" max="2" step="0.01" value="0.34" />
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="discover_bonus_6">Bonus 6 Sources</label>
+                <div class="sliderValue" id="val_discover_bonus_6">0.40</div>
+              </div>
+              <input id="discover_bonus_6" type="range" min="0" max="2" step="0.01" value="0.40" />
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="discover_hot_threshold">HOT Threshold</label>
+                <div class="sliderValue" id="val_discover_hot_threshold">0.72</div>
+              </div>
+              <input id="discover_hot_threshold" type="range" min="0" max="2" step="0.01" value="0.72" />
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="discover_enrich_scale">Enrichment Scale (%)</label>
+                <div class="sliderValue" id="val_discover_enrich_scale">100</div>
+              </div>
+              <input id="discover_enrich_scale" type="range" min="0" max="100" step="1" value="100" />
+            </div>
+
+            <div class="adminField full">
+              <label for="discover_title_overrides">Title Override Rules</label>
+              <textarea id="discover_title_overrides" rows="6" placeholder="Original Title | Override Title"></textarea>
+              <div class="adminHint">Used when QueueDeck needs help matching items to requestable TMDb entries.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const fields = [
+        "tmdb_bearer_token",
+        "tmdb_api_key",
+        "trakt_client_id",
+        "letterboxd_rss_urls",
+        "discover_weight_tmdb",
+        "discover_weight_tmdb_popular",
+        "discover_weight_trakt",
+        "discover_weight_trakt_popular",
+        "discover_weight_letterboxd",
+        "discover_weight_tvmaze",
+        "discover_weight_anilist",
+        "discover_bonus_2",
+        "discover_bonus_3",
+        "discover_bonus_4",
+        "discover_bonus_5",
+        "discover_bonus_6",
+        "discover_hot_threshold",
+        "discover_enrich_scale",
+        "discover_title_overrides",
+      ];
+
+      const statusBox = document.getElementById("statusBox");
+      const letterboxdFeedsField = document.getElementById("letterboxd_rss_urls");
+      const letterboxdFeedsEditor = document.getElementById("letterboxdFeedsEditor");
+      const addLetterboxdFeedBtn = document.getElementById("addLetterboxdFeed");
+
+      function setStatus(text, kind){
+        statusBox.className = "status" + (kind ? (" " + kind) : "");
+        statusBox.textContent = text;
+      }
+
+      const sliderFields = [
+        "discover_weight_tmdb",
+        "discover_weight_tmdb_popular",
+        "discover_weight_trakt",
+        "discover_weight_trakt_popular",
+        "discover_weight_letterboxd",
+        "discover_weight_tvmaze",
+        "discover_weight_anilist",
+        "discover_bonus_2",
+        "discover_bonus_3",
+        "discover_bonus_4",
+        "discover_bonus_5",
+        "discover_bonus_6",
+        "discover_hot_threshold",
+        "discover_enrich_scale",
+      ];
+
+      function syncSliderValue(id){
+        const input = document.getElementById(id);
+        const out = document.getElementById("val_" + id);
+        if (!input || !out) return;
+
+        if (id === "discover_enrich_scale"){
+          out.textContent = String(input.value || "0");
+        } else {
+          out.textContent = Number(input.value || 0).toFixed(2);
+        }
+      }
+
+      function bindSliderValues(){
+        sliderFields.forEach(id => {
+          const input = document.getElementById(id);
+          if (!input) return;
+          input.addEventListener("input", () => syncSliderValue(id));
+          syncSliderValue(id);
+        });
+      }
+
+      function parseLetterboxdFeeds(raw){
+        return String(raw || "")
+          .split(/\r?\n/)
+          .map(line => line.trim())
+          .filter(Boolean)
+          .map(line => {
+            const parts = line.split("|");
+            if (parts.length >= 2){
+              return {
+                label: String(parts[0] || "").trim(),
+                url: String(parts.slice(1).join("|") || "").trim(),
+              };
+            }
+            return { label: "", url: line };
+          });
+      }
+
+      function readLetterboxdFeedRows(){
+        if (!letterboxdFeedsEditor) return [];
+        return [...letterboxdFeedsEditor.querySelectorAll(".feedRow")].map(row => ({
+          label: String(row.querySelector('[data-feed-field="label"]')?.value || "").trim(),
+          url: String(row.querySelector('[data-feed-field="url"]')?.value || "").trim(),
+        }));
+      }
+
+      function syncLetterboxdFeedsHiddenField(){
+        if (!letterboxdFeedsField) return;
+        const rows = readLetterboxdFeedRows()
+          .filter(feed => feed.label || feed.url)
+          .map(feed => `${feed.label} | ${feed.url}`.trim());
+        letterboxdFeedsField.value = rows.join("\n");
+        renderLetterboxdFeedsEmptyState();
+      }
+
+      function renderLetterboxdFeedsEmptyState(){
+        if (!letterboxdFeedsEditor) return;
+        const rows = letterboxdFeedsEditor.querySelectorAll(".feedRow");
+        const existing = letterboxdFeedsEditor.querySelector(".feedEmpty");
+
+        if (!rows.length){
+          if (!existing){
+            const empty = document.createElement("div");
+            empty.className = "feedEmpty";
+            empty.textContent = "No Letterboxd feeds added yet.";
+            letterboxdFeedsEditor.appendChild(empty);
+          }
+        } else if (existing){
+          existing.remove();
+        }
+      }
+
+      function makeLetterboxdFeedRow(feed = {}){
+        const row = document.createElement("div");
+        row.className = "feedRow";
+        row.innerHTML = `
+          <input data-feed-field="label" type="text" placeholder="Label" value="${String(feed.label || "").replace(/"/g, '&quot;')}" />
+          <input data-feed-field="url" type="text" placeholder="https://letterboxd.com/.../rss/" value="${String(feed.url || "").replace(/"/g, '&quot;')}" />
+          <button class="btn secondary" type="button" data-feed-remove="1">Remove</button>
+        `;
+
+        row.querySelectorAll("input").forEach(input => {
+          input.addEventListener("input", syncLetterboxdFeedsHiddenField);
+        });
+
+        row.querySelector('[data-feed-remove="1"]').addEventListener("click", () => {
+          row.remove();
+          renderLetterboxdFeedsEmptyState();
+          syncLetterboxdFeedsHiddenField();
+        });
+
+        return row;
+      }
+
+      function renderLetterboxdFeedsEditor(){
+        if (!letterboxdFeedsEditor || !letterboxdFeedsField) return;
+
+        const rows = parseLetterboxdFeeds(letterboxdFeedsField.value || "");
+        letterboxdFeedsEditor.innerHTML = `
+          <div class="feedHeader">
+            <div>Label</div>
+            <div>RSS URL</div>
+            <div></div>
+          </div>
+        `;
+
+        rows.forEach(feed => {
+          letterboxdFeedsEditor.appendChild(makeLetterboxdFeedRow(feed));
+        });
+
+        renderLetterboxdFeedsEmptyState();
+        syncLetterboxdFeedsHiddenField();
+      }
+
+      function addLetterboxdFeedRow(feed = {}){
+        if (!letterboxdFeedsEditor) return;
+        const empty = letterboxdFeedsEditor.querySelector(".feedEmpty");
+        if (empty) empty.remove();
+        letterboxdFeedsEditor.appendChild(makeLetterboxdFeedRow(feed));
+        syncLetterboxdFeedsHiddenField();
+      }
+
+      if (addLetterboxdFeedBtn){
+        addLetterboxdFeedBtn.addEventListener("click", () => {
+          addLetterboxdFeedRow({ label: "", url: "" });
+        });
+      }
+
+      async function load(){
+        try{
+          const r = await fetch("/settings/api", { credentials:"same-origin" });
+          const data = await r.json();
+
+          fields.forEach(k => {
+            const el = document.getElementById(k);
+            if (el) el.value = data[k] || "";
+          });
+
+          renderLetterboxdFeedsEditor();
+          bindSliderValues();
+          setStatus("Admin settings loaded.", "ok");
+        }catch(e){
+          console.error(e);
+          setStatus("Failed to load admin settings.", "bad");
+        }
+      }
+
+      async function save(){
+        try{
+          syncLetterboxdFeedsHiddenField();
+
+          const payload = {};
+          fields.forEach(k => {
+            const el = document.getElementById(k);
+            payload[k] = el ? String(el.value || "").trim() : "";
+          });
+
+          const r = await fetch("/settings/api", {
+            method:"POST",
+            headers:{ "Content-Type":"application/json" },
+            credentials:"same-origin",
+            body: JSON.stringify(payload)
+          });
+
+          const data = await r.json().catch(() => ({}));
+          if (!r.ok || !data.ok){
+            throw new Error(data.error || ("HTTP " + r.status));
+          }
+
+          setStatus("Admin settings saved.", "ok");
+        }catch(e){
+          console.error(e);
+          setStatus("Failed to save admin settings.", "bad");
+        }
+      }
+
+      document.getElementById("saveBtn").addEventListener("click", save);
+      document.getElementById("reloadBtn").addEventListener("click", load);
+
+      document.querySelectorAll(".revealBtn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const target = document.getElementById(btn.getAttribute("data-reveal-target") || "");
+          if (!target) return;
+          const isPw = target.type === "password";
+          target.type = isPw ? "text" : "password";
+          btn.textContent = isPw ? "Hide" : "Show";
+        });
+      });
+
+      (function(){
+        const menu = document.getElementById("userMenu");
+        const btn = document.getElementById("userMenuBtn");
+        if (!menu || !btn) return;
+
+        function closeMenu(){
+          menu.classList.remove("open");
+          btn.setAttribute("aria-expanded", "false");
+        }
+
+        function openMenu(){
+          menu.classList.add("open");
+          btn.setAttribute("aria-expanded", "true");
+        }
+
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          menu.classList.contains("open") ? closeMenu() : openMenu();
+        });
+
+        document.addEventListener("click", (e) => {
+          if (!menu.contains(e.target)) closeMenu();
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") closeMenu();
+        });
+      })();
+
+      load();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QueueDeck • User Connections</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" />
+  <style>
+    :root{
+      --bg0:#07090c;
+      --bg1:#0b0f14;
+      --card: rgba(255,255,255,.055);
+      --border: rgba(255,255,255,.10);
+      --muted: rgba(255,255,255,.62);
+      --text: rgba(255,255,255,.92);
+      --accent:#a46bff;
+      --shadow: 0 20px 60px rgba(0,0,0,.55);
+      --r: 18px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      color:var(--text);
+      font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background:
+        radial-gradient(1200px 700px at 20% 0%, rgba(164,107,255,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+    }
+    .wrap{
+      max-width: 1180px;
+      margin: 28px auto;
+      padding: 0 18px 40px;
+    }
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:16px;
+      margin-bottom:18px;
+      flex-wrap:wrap;
+    }
+    .title h1{
+      margin:0;
+      font-size:28px;
+      line-height:1.1;
+    }
+    .title .sub{
+      margin-top:6px;
+      color:var(--muted);
+    }
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      padding:10px 14px;
+      border-radius:12px;
+      text-decoration:none;
+      cursor:pointer;
+      font-weight:700;
+    }
+    .btn.primary{
+      background:linear-gradient(180deg, rgba(164,107,255,.24), rgba(164,107,255,.14));
+      border-color: rgba(164,107,255,.35);
+    }
+    .btn.danger{
+      border-color: rgba(255,90,90,.28);
+      background: rgba(255,90,90,.10);
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--r);
+      box-shadow:var(--shadow);
+      padding:18px;
+      margin-bottom:18px;
+      backdrop-filter: blur(10px);
+    }
+    .sectionTitle{
+      margin:0 0 14px 0;
+      font-size:18px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap:14px;
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:7px;
+    }
+    .field.full{
+      grid-column: 1 / -1;
+    }
+    label{
+      font-size:12px;
+      font-weight:800;
+      color:rgba(255,255,255,.85);
+      letter-spacing:.2px;
+    }
+    .labelRow{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .helpDot{
+      width:18px;
+      height:18px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:11px;
+      font-weight:900;
+      color:rgba(255,255,255,.92);
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      cursor:help;
+      position:relative;
+      line-height:1;
+    }
+    .helpDot .tip{
+      position:absolute;
+      left:0;
+      top:calc(100% + 8px);
+      width:320px;
+      max-width:min(320px, 75vw);
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(10,13,18,.96);
+      color:rgba(255,255,255,.86);
+      font-size:12px;
+      line-height:1.45;
+      box-shadow:0 16px 40px rgba(0,0,0,.45);
+      opacity:0;
+      transform:translateY(4px);
+      pointer-events:none;
+      transition:opacity .14s ease, transform .14s ease;
+      z-index:30;
+      text-align:left;
+      font-weight:500;
+    }
+    .helpDot:hover .tip,
+    .helpDot:focus-within .tip{
+      opacity:1;
+      transform:translateY(0);
+      pointer-events:auto;
+    }
+    input, textarea, select{
+      width:100%;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.18);
+      color:var(--text);
+      padding:10px 12px;
+      font-size:13px;
+      outline:none;
+    }
+    textarea{
+      min-height:90px;
+      resize:vertical;
+    }
+    .hint{
+      color:var(--muted);
+      font-size:12px;
+    }
+    .inlineFieldRow{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .inlineFieldRow > *:first-child{
+      flex:1 1 auto;
+    }
+    .meta{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap:12px;
+      margin-bottom:18px;
+    }
+    .pill{
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.04);
+    }
+    .pill .k{
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:4px;
+    }
+    .pill .v{
+      font-weight:800;
+      font-size:14px;
+    }
+    .flash{
+      margin-bottom:14px;
+      padding:12px 14px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.05);
+    }
+    .bottomActions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    @media (max-width: 900px){
+      .grid, .meta{ grid-template-columns: 1fr; }
+    }
+  
+    .testResults{
+      margin-top:14px;
+      display:grid;
+      gap:10px;
+    }
+
+    .testCard{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      border-radius:14px;
+      padding:12px 14px;
+    }
+
+    .testCard.ok{
+      border-color: rgba(80,200,120,.35);
+      background: rgba(80,200,120,.10);
+    }
+
+    .testCard.bad{
+      border-color: rgba(255,80,80,.35);
+      background: rgba(255,80,80,.10);
+    }
+
+    .testTitle{
+      font-size:13px;
+      font-weight:900;
+      margin:0 0 4px;
+      text-transform:capitalize;
+    }
+
+    .testMeta{
+      font-size:12px;
+      color:rgba(255,255,255,.78);
+      line-height:1.45;
+      word-break:break-word;
+    }
+
+
+    .secretRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+
+    .secretRow input{
+      flex:1 1 auto;
+      min-width:0;
+    }
+
+    .revealBtn{
+      flex:0 0 auto;
+      min-width:88px;
+    }
+
+
+  .destEditor{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-top:10px;
+  }
+
+  .destHeader,
+  .destRow{
+    display:grid;
+    grid-template-columns: minmax(150px,1.3fr) minmax(180px,1.6fr) 90px 90px 56px;
+    gap:10px;
+    align-items:center;
+  }
+
+  .destHeader{
+    padding:0 2px;
+    color:rgba(255,255,255,.62);
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.2px;
+  }
+
+  .destRow{
+    padding:10px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.04);
+  }
+
+  .destCell input{
+    width:100%;
+    min-height:42px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.05);
+    color:rgba(255,255,255,.92);
+    padding:10px 12px;
+    box-sizing:border-box;
+    font:inherit;
+  }
+
+  .destCell input::placeholder{
+    color:rgba(255,255,255,.42);
+  }
+
+  .destCell input:focus{
+    outline:none;
+    border-color:rgba(120,140,255,.42);
+    box-shadow:0 0 0 3px rgba(120,140,255,.12);
+  }
+
+  .destDelete{
+    min-height:42px;
+    min-width:42px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.05);
+    color:#fff;
+    cursor:pointer;
+    font-size:18px;
+    line-height:1;
+  }
+
+  .destDelete:hover{
+    background:rgba(255,255,255,.10);
+    border-color:rgba(255,255,255,.16);
+  }
+
+  .destToolbar{
+    margin-top:10px;
+  }
+
+  .destEmpty{
+    padding:14px;
+    border-radius:14px;
+    border:1px dashed rgba(255,255,255,.14);
+    background:rgba(255,255,255,.03);
+    color:rgba(255,255,255,.68);
+    font-size:13px;
+  }
+
+  @media (max-width: 900px){
+    .destHeader{
+      display:none;
+    }
+    .destRow{
+      grid-template-columns: 1fr;
+    }
+  }
+
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title">
+        <h1>Connections • {{ target_user["username"] }}</h1>
+        <div class="sub">Admin-managed per-user integrations and mappings.</div>
+      </div>
+      <div class="actions">
+        <a class="btn" href="/admin/users">Back to Users</a>
+      </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="meta">
+      <div class="pill">
+        <div class="k">User ID</div>
+        <div class="v">{{ target_user["id"] }}</div>
+      </div>
+      <div class="pill">
+        <div class="k">Admin</div>
+        <div class="v">{{ "Yes" if target_user["is_admin"] else "No" }}</div>
+      </div>
+      <div class="pill">
+        <div class="k">Active</div>
+        <div class="v">{{ "Yes" if target_user["is_active"] else "No" }}</div>
+      </div>
+      <div class="pill">
+        <div class="k">Last Login</div>
+        <div class="v">{{ target_user["last_login_at"] or "Never" }}</div>
+      </div>
+    </div>
+
+    <form method="post" action="/admin/users/{{ target_user['id'] }}/connections">
+      <div class="card">
+        <h2 class="sectionTitle">Jellyfin</h2>
+        <div class="grid">
+          <div class="field full">
+            <label for="jellyfin_url">Jellyfin URL</label>
+            <input id="jellyfin_url" name="jellyfin_url" value="{{ settings.get('jellyfin_url','') }}" />
+          </div>
+          <div class="field full">
+            <label for="jellyfin_api_key">Jellyfin API Key</label>
+            <div class="secretRow">
+              <input id="jellyfin_api_key" name="jellyfin_api_key" type="password" autocomplete="new-password" value="{{ settings.get('jellyfin_api_key','') }}" />
+              <button class="btn secondary revealBtn" type="button" data-reveal-target="jellyfin_api_key">Show</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="jellyfin_user">Jellyfin User</label>
+            <div class="inlineFieldRow">
+              <select id="jellyfin_user" name="jellyfin_user">
+                <option value="">Select Jellyfin user…</option>
+              </select>
+              <button class="btn" type="button" id="refreshJellyfinUsersBtn">Refresh Users</button>
+            </div>
+            <div class="hint">Loads users directly from Jellyfin using the URL + API key above.</div>
+          </div>
+          <div class="field">
+            <div class="labelRow">
+              <label for="mytv_view_id">Additional TV Library</label>
+              <span class="helpDot">?
+                <span class="tip">Optional. Use this if you want another Jellyfin TV library to show up in QueueDeck sections like Next Up / Continue Watching in addition to the main library for this user.</span>
+              </span>
+            </div>
+            <div class="inlineFieldRow">
+              <select id="mytv_view_id" name="mytv_view_id">
+                <option value="">Select Jellyfin library…</option>
+              </select>
+              <button class="btn" type="button" id="refreshJellyfinViewsBtn">Refresh Libraries</button>
+            </div>
+            <div class="hint">Loads Jellyfin libraries for the selected Jellyfin user above.</div>
+          </div>
+          <div class="field full">
+            <div class="labelRow">
+              <label for="anime_paths">Anime Path(s)</label>
+              <span class="helpDot">?
+                <span class="tip">Used to help QueueDeck treat matching shows as anime. Enter one or more library / filesystem paths, one per line. Example: <b>/mnt/media/anime</b></span>
+              </span>
+            </div>
+            <textarea id="anime_paths" name="anime_paths" placeholder="/mnt/media/anime">{{ settings.get('anime_paths','') }}</textarea>
+            <div class="hint">One path per line. Example: <b>/mnt/media/anime</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="sectionTitle">Sonarr / Radarr / Seerr</h2>
+        <div class="grid">
+          <div class="field">
+            <label for="sonarr_url">Sonarr URL</label>
+            <input id="sonarr_url" name="sonarr_url" value="{{ settings.get('sonarr_url','') }}" />
+          </div>
+          <div class="field">
+            <label for="sonarr_api_key">Sonarr API Key</label>
+            <div class="secretRow">
+              <input id="sonarr_api_key" name="sonarr_api_key" type="password" autocomplete="new-password" value="{{ settings.get('sonarr_api_key','') }}" />
+              <button class="btn secondary revealBtn" type="button" data-reveal-target="sonarr_api_key">Show</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="radarr_url">Radarr URL</label>
+            <input id="radarr_url" name="radarr_url" value="{{ settings.get('radarr_url','') }}" />
+          </div>
+          <div class="field">
+            <label for="radarr_api_key">Radarr API Key</label>
+            <div class="secretRow">
+              <input id="radarr_api_key" name="radarr_api_key" type="password" autocomplete="new-password" value="{{ settings.get('radarr_api_key','') }}" />
+              <button class="btn secondary revealBtn" type="button" data-reveal-target="radarr_api_key">Show</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="seerr_url">Seerr URL</label>
+            <input id="seerr_url" name="seerr_url" value="{{ settings.get('seerr_url','') }}" />
+          </div>
+          <div class="field">
+            <label for="seerr_api_key">Seerr API Key</label>
+            <div class="secretRow">
+              <input id="seerr_api_key" name="seerr_api_key" type="password" autocomplete="new-password" value="{{ settings.get('seerr_api_key','') }}" />
+              <button class="btn secondary revealBtn" type="button" data-reveal-target="seerr_api_key">Show</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="seerr_user_id">Seerr Request User</label>
+            <div class="inlineFieldRow">
+              <select id="seerr_user_id" name="seerr_user_id">
+                <option value="">Use API/default behavior</option>
+              </select>
+              <button class="btn" type="button" id="refreshSeerrUsersBtn">Refresh Seerr Users</button>
+            </div>
+            <div class="hint">Used for Your Recent Requests and Seerr request ownership.</div>
+          </div>
+          <div class="field full">
+            <div class="labelRow">
+              <label for="seerr_tv_destinations">Seerr TV Destinations</label>
+              <span class="helpDot">?
+                <span class="tip">Add one TV destination per row. QueueDeck still saves the same underlying format behind the scenes: <b>Name | Root Folder | Quality Profile ID | Server ID</b>.<br><br><b>Profile ID</b>: in Sonarr, go to <b>Settings → Profiles</b>.<br><br><b>Server ID</b> is usually <b>0</b> unless you use multiple Sonarr servers.</span>
+              </span>
+            </div>
+
+            <textarea id="seerr_tv_destinations" name="seerr_tv_destinations" style="display:none;">{{ settings.get('seerr_tv_destinations','') }}</textarea>
+
+            <div id="seerrTvDestinationsEditor" class="destEditor"></div>
+
+            <div class="destToolbar">
+              <button class="btn secondary" type="button" id="addSeerrTvDestination">+ Add Destination</button>
+            </div>
+
+            <div class="hint">Add one destination per row instead of typing pipe separators manually.</div>
+          </div>
+        </div>
+
+        <div class="bottomActions">
+          <button class="btn primary" type="submit">Save Connections</button>
+          <button class="btn secondary" type="button" id="testConnectionsBtn">Test Connections</button>
+        </div>
+      </div>
+      <div class="testResults" id="testResults" style="display:none;"></div>
+    </form>
+
+    <div class="card">
+      <h2 class="sectionTitle">Maintenance</h2>
+      <div class="hint" style="margin-bottom:12px;">
+        This clears both admin-managed connection settings and user-saved preferences for this QueueDeck user.
+      </div>
+      <form method="post" action="/admin/users/{{ target_user['id'] }}/connections/clear-data" onsubmit="return confirm('Clear all saved data for this user?');">
+        <button class="btn danger" type="submit">Clear User Data</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    async function loadJellyfinViews(selectedValue){
+      const sel = document.getElementById("mytv_view_id");
+      if (!sel) return;
+
+      const jellyfinUrl = String(document.getElementById("jellyfin_url")?.value || "").trim();
+      const jellyfinApiKey = String(document.getElementById("jellyfin_api_key")?.value || "").trim();
+      const jellyfinUser = String(document.getElementById("jellyfin_user")?.value || "").trim();
+      const current = String(selectedValue || sel.value || "").trim();
+
+      sel.innerHTML = '<option value="">Select Jellyfin library…</option>';
+
+      if (!jellyfinUrl || !jellyfinApiKey || !jellyfinUser){
+        if (current){
+          const opt = document.createElement("option");
+          opt.value = current;
+          opt.textContent = current;
+          opt.selected = true;
+          sel.appendChild(opt);
+        }
+        return;
+      }
+
+      try{
+        const r = await fetch("/admin/users/{{ target_user['id'] }}/connections/jellyfin/views", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jellyfin_url: jellyfinUrl,
+            jellyfin_api_key: jellyfinApiKey,
+            jellyfin_user: jellyfinUser
+          }),
+        });
+
+        const j = await r.json().catch(() => ({}));
+        console.log("Jellyfin views fetch:", r.status, j);
+
+        if (!r.ok || !j.ok || !Array.isArray(j.views)){
+          if (current){
+            const opt = document.createElement("option");
+            opt.value = current;
+            opt.textContent = current;
+            opt.selected = true;
+            sel.appendChild(opt);
+          }
+          return;
+        }
+
+        j.views.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = String(v.id ?? "");
+          const extra = [v.collection_type, v.type].filter(Boolean).join(" • ");
+          opt.textContent = String(v.name ?? "") + (extra ? " (" + extra + ")" : "");
+          if (String(opt.value) === current) opt.selected = true;
+          sel.appendChild(opt);
+        });
+
+        if (current && !Array.from(sel.options).some(o => o.value === current)){
+          const opt = document.createElement("option");
+          opt.value = current;
+          opt.textContent = current + " (saved)";
+          opt.selected = true;
+          sel.appendChild(opt);
+        }
+      }catch(e){
+        console.error("Jellyfin views fetch failed:", e);
+        if (current){
+          const opt = document.createElement("option");
+          opt.value = current;
+          opt.textContent = current;
+          opt.selected = true;
+          sel.appendChild(opt);
+        }
+      }
+    }
+
+    async function loadSeerrUsers(selectedValue){
+      const sel = document.getElementById("seerr_user_id");
+      if (!sel) return;
+
+      const seerrUrl = String(document.getElementById("seerr_url")?.value || "").trim();
+      const seerrApiKey = String(document.getElementById("seerr_api_key")?.value || "").trim();
+      const current = String(selectedValue || sel.value || "").trim();
+
+      sel.innerHTML = '<option value="">Use API/default behavior</option>';
+
+      if (!seerrUrl || !seerrApiKey){
+        if (current){
+          const opt = document.createElement("option");
+          opt.value = current;
+          opt.textContent = current + " (saved)";
+          opt.selected = true;
+          sel.appendChild(opt);
+        }
+        return;
+      }
+
+      try{
+        const r = await fetch("/admin/users/{{ target_user['id'] }}/connections/seerr/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            seerr_url: seerrUrl,
+            seerr_api_key: seerrApiKey
+          }),
+        });
+
+        const j = await r.json().catch(() => ({}));
+        console.log("Seerr users fetch:", r.status, j);
+
+        if (!r.ok || !j.ok || !Array.isArray(j.users)){
+          if (current){
+            const opt = document.createElement("option");
+            opt.value = current;
+            opt.textContent = current + " (saved)";
+            opt.selected = true;
+            sel.appendChild(opt);
+          }
+          return;
+        }
+
+        const realIds = new Set();
+
+        j.users.forEach(u => {
+          const idVal = String(u.id ?? "").trim();
+          if (!idVal) return;
+          realIds.add(idVal);
+
+          const opt = document.createElement("option");
+          opt.value = idVal;
+          opt.textContent = (u.displayName || ("User " + u.id)) + (u.email ? " (" + u.email + ")" : "");
+          if (idVal === current) opt.selected = true;
+          sel.appendChild(opt);
+        });
+
+        if (current && realIds.has(current)) {
+          const match = Array.from(sel.options).find(o => o.value === current);
+          if (match) match.selected = true;
+        }
+      }catch(e){
+        console.error("Seerr users fetch failed:", e);
+        if (current){
+          const opt = document.createElement("option");
+          opt.value = current;
+          opt.textContent = current + " (saved)";
+          opt.selected = true;
+          sel.appendChild(opt);
+        }
+      }
+    }
+
+    async function loadJellyfinUsers(selectedValue){
+      const sel = document.getElementById("jellyfin_user");
+      if (!sel) return;
+
+      const jellyfinUrl = String(document.getElementById("jellyfin_url")?.value || "").trim();
+      const jellyfinApiKey = String(document.getElementById("jellyfin_api_key")?.value || "").trim();
+      const current = String(selectedValue || sel.value || "").trim();
+
+      sel.innerHTML = '<option value="">Select Jellyfin user…</option>';
+
+      if (!jellyfinUrl || !jellyfinApiKey){
+        if (current){
+          const opt = document.createElement("option");
+          opt.value = current;
+          opt.textContent = current;
+          opt.selected = true;
+          sel.appendChild(opt);
+        }
+        return;
+      }
+
+      try{
+        const r = await fetch("/admin/users/{{ target_user['id'] }}/connections/jellyfin/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jellyfin_url: jellyfinUrl,
+            jellyfin_api_key: jellyfinApiKey
+          }),
+        });
+
+        const j = await r.json().catch(() => ({}));
+        console.log("Jellyfin users fetch:", r.status, j);
+
+        if (!r.ok || !j.ok || !Array.isArray(j.users)){
+          if (current){
+            const opt = document.createElement("option");
+            opt.value = current;
+            opt.textContent = current;
+            opt.selected = true;
+            sel.appendChild(opt);
+          }
+          return;
+        }
+
+        j.users.forEach(u => {
+          const opt = document.createElement("option");
+          opt.value = String(u.name ?? "");
+          opt.textContent = String(u.name ?? "") + (u.is_disabled ? " (disabled)" : "");
+          if (String(opt.value) === current) opt.selected = true;
+          sel.appendChild(opt);
+        });
+
+        if (current && !Array.from(sel.options).some(o => o.value === current)){
+          const opt = document.createElement("option");
+          opt.value = current;
+          opt.textContent = current + " (saved)";
+          opt.selected = true;
+          sel.appendChild(opt);
+        }
+
+        await loadJellyfinViews(document.getElementById("mytv_view_id")?.value || "{{ settings.get('mytv_view_id','') }}");
+      }catch(e){
+        console.error("Jellyfin users fetch failed:", e);
+        if (current){
+          const opt = document.createElement("option");
+          opt.value = current;
+          opt.textContent = current;
+          opt.selected = true;
+          sel.appendChild(opt);
+        }
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const refreshBtn = document.getElementById("refreshJellyfinUsersBtn");
+      const refreshViewsBtn = document.getElementById("refreshJellyfinViewsBtn");
+      const refreshSeerrUsersBtn = document.getElementById("refreshSeerrUsersBtn");
+      const jellyfinUrlEl = document.getElementById("jellyfin_url");
+      const jellyfinApiKeyEl = document.getElementById("jellyfin_api_key");
+      const jellyfinUserEl = document.getElementById("jellyfin_user");
+      const seerrUrlEl = document.getElementById("seerr_url");
+      const seerrApiKeyEl = document.getElementById("seerr_api_key");
+
+      if (refreshBtn){
+        refreshBtn.addEventListener("click", async () => {
+          const oldText = refreshBtn.textContent;
+          refreshBtn.disabled = true;
+          refreshBtn.textContent = "Loading…";
+          try{
+            await loadJellyfinUsers(
+              document.getElementById("jellyfin_user")?.value || "{{ settings.get('jellyfin_user','') }}"
+            );
+          }finally{
+            refreshBtn.disabled = false;
+            refreshBtn.textContent = oldText;
+          }
+        });
+      }
+
+      if (refreshViewsBtn){
+        refreshViewsBtn.addEventListener("click", async () => {
+          const oldText = refreshViewsBtn.textContent;
+          refreshViewsBtn.disabled = true;
+          refreshViewsBtn.textContent = "Loading…";
+          try{
+            await loadJellyfinViews(
+              document.getElementById("mytv_view_id")?.value || "{{ settings.get('mytv_view_id','') }}"
+            );
+          }finally{
+            refreshViewsBtn.disabled = false;
+            refreshViewsBtn.textContent = oldText;
+          }
+        });
+      }
+
+      if (refreshSeerrUsersBtn){
+        refreshSeerrUsersBtn.addEventListener("click", async () => {
+          const oldText = refreshSeerrUsersBtn.textContent;
+          refreshSeerrUsersBtn.disabled = true;
+          refreshSeerrUsersBtn.textContent = "Loading…";
+          try{
+            await loadSeerrUsers(
+              document.getElementById("seerr_user_id")?.value || "{{ settings.get('seerr_user_id','') }}"
+            );
+          }finally{
+            refreshSeerrUsersBtn.disabled = false;
+            refreshSeerrUsersBtn.textContent = oldText;
+          }
+        });
+      }
+
+      if (jellyfinUrlEl){
+        jellyfinUrlEl.addEventListener("change", () =>
+          loadJellyfinUsers(document.getElementById("jellyfin_user")?.value || "").catch(console.error)
+        );
+        jellyfinUrlEl.addEventListener("blur", () =>
+          loadJellyfinUsers(document.getElementById("jellyfin_user")?.value || "").catch(console.error)
+        );
+      }
+
+      if (jellyfinApiKeyEl){
+        jellyfinApiKeyEl.addEventListener("change", () =>
+          loadJellyfinUsers(document.getElementById("jellyfin_user")?.value || "").catch(console.error)
+        );
+        jellyfinApiKeyEl.addEventListener("blur", () =>
+          loadJellyfinUsers(document.getElementById("jellyfin_user")?.value || "").catch(console.error)
+        );
+      }
+
+      if (jellyfinUserEl){
+        jellyfinUserEl.addEventListener("change", () =>
+          loadJellyfinViews(document.getElementById("mytv_view_id")?.value || "").catch(console.error)
+        );
+      }
+
+      if (seerrUrlEl){
+        seerrUrlEl.addEventListener("change", () =>
+          loadSeerrUsers(document.getElementById("seerr_user_id")?.value || "").catch(console.error)
+        );
+        seerrUrlEl.addEventListener("blur", () =>
+          loadSeerrUsers(document.getElementById("seerr_user_id")?.value || "").catch(console.error)
+        );
+      }
+
+      if (seerrApiKeyEl){
+        seerrApiKeyEl.addEventListener("change", () =>
+          loadSeerrUsers(document.getElementById("seerr_user_id")?.value || "").catch(console.error)
+        );
+        seerrApiKeyEl.addEventListener("blur", () =>
+          loadSeerrUsers(document.getElementById("seerr_user_id")?.value || "").catch(console.error)
+        );
+      }
+
+      await loadJellyfinUsers("{{ settings.get('jellyfin_user','') }}");
+      await loadJellyfinViews("{{ settings.get('mytv_view_id','') }}");
+      await loadSeerrUsers("{{ settings.get('seerr_user_id','') }}");
+    });
+  
+      function renderTestResults(results){
+        const box = document.getElementById("testResults");
+        if (!box) return;
+
+        if (!Array.isArray(results) || !results.length){
+          box.style.display = "none";
+          box.innerHTML = "";
+          return;
+        }
+
+        box.style.display = "grid";
+        box.innerHTML = results.map(r => {
+          const ok = !!r.ok;
+          const meta = [];
+
+          if (r.version) meta.push("Version: " + r.version);
+          if (r.user) meta.push("User: " + r.user);
+          if (r.error) meta.push("Error: " + r.error);
+
+          return `
+            <div class="testCard ${ok ? "ok" : "bad"}">
+              <div class="testTitle">${ok ? "✓" : "✕"} ${String(r.service || "service")}</div>
+              <div class="testMeta">${meta.join("<br>") || (ok ? "Connection successful." : "Connection failed.")}</div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      async function testConnections(){
+        const btn = document.getElementById("testConnectionsBtn");
+        const oldText = btn ? btn.textContent : "Test Connections";
+
+        try{
+          if (btn){
+            btn.disabled = true;
+            btn.textContent = "Testing…";
+          }
+
+          const r = await fetch("/admin/users/{{ target_user['id'] }}/connections/test", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+          });
+
+          const j = await r.json().catch(() => ({}));
+
+          if (!r.ok || !j.ok){
+            renderTestResults([{
+              ok: false,
+              service: "connections",
+              error: j.error || ("HTTP " + r.status)
+            }]);
+            return;
+          }
+
+          renderTestResults(j.results || []);
+        }catch(e){
+          renderTestResults([{
+            ok: false,
+            service: "connections",
+            error: e.message || String(e)
+          }]);
+        }finally{
+          if (btn){
+            btn.disabled = false;
+            btn.textContent = oldText;
+          }
+        }
+      }
+
+      const testConnectionsBtn = document.getElementById("testConnectionsBtn");
+      if (testConnectionsBtn){ testConnectionsBtn.addEventListener("click", testConnections); }
+    
+      document.querySelectorAll("[data-reveal-target]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const targetId = btn.getAttribute("data-reveal-target");
+          const input = targetId ? document.getElementById(targetId) : null;
+          if (!input) return;
+
+          const showing = input.type === "text";
+          input.type = showing ? "password" : "text";
+          btn.textContent = showing ? "Show" : "Hide";
+        });
+      });
+
+    
+document.addEventListener("DOMContentLoaded", () => {
+  const seerrField = document.getElementById("seerr_tv_destinations");
+  const seerrEditor = document.getElementById("seerrTvDestinationsEditor");
+  const addSeerrBtn = document.getElementById("addSeerrTvDestination");
+
+  if (!seerrField || !seerrEditor) return;
+
+  function escAttr(v){
+    return String(v ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function parseSeerr(raw){
+    raw = String(raw || "").replace(/\r\n/g, "\n").trim();
+    if (!raw) return [];
+
+    return raw
+      .split("\n")
+      .map(line => String(line || "").trim())
+      .filter(Boolean)
+      .map(line => {
+        const parts = line.split("|").map(x => String(x || "").trim());
+        return {
+          label: parts[0] || "",
+          root: parts[1] || "",
+          profile: parts[2] || "",
+          server: parts[3] || "",
+        };
+      });
+  }
+
+  function serializeSeerr(rows){
+    return (rows || [])
+      .map(r => ({
+        label: String(r.label || "").trim(),
+        root: String(r.root || "").trim(),
+        profile: String(r.profile || "").trim(),
+        server: String(r.server || "").trim(),
+      }))
+      .filter(r => r.label || r.root || r.profile || r.server)
+      .map(r => `${r.label} | ${r.root} | ${r.profile} | ${r.server}`)
+      .join("\n");
+  }
+
+  function collectRows(){
+    return [...seerrEditor.querySelectorAll(".destRow")].map(row => ({
+      label: row.querySelector('[data-f="label"]')?.value || "",
+      root: row.querySelector('[data-f="root"]')?.value || "",
+      profile: row.querySelector('[data-f="profile"]')?.value || "",
+      server: row.querySelector('[data-f="server"]')?.value || "",
+    }));
+  }
+
+  function syncSeerr(){
+    seerrField.value = serializeSeerr(collectRows());
+  }
+
+  function renderEmpty(){
+    const rows = seerrEditor.querySelectorAll(".destRow");
+    const existing = seerrEditor.querySelector(".destEmpty");
+
+    if (!rows.length){
+      if (!existing){
+        const empty = document.createElement("div");
+        empty.className = "destEmpty";
+        empty.textContent = "No TV destinations added yet.";
+        seerrEditor.appendChild(empty);
+      }
+    } else if (existing){
+      existing.remove();
+    }
+  }
+
+  function buildRow(d = {}){
+    const row = document.createElement("div");
+    row.className = "destRow";
+    row.innerHTML = `
+      <div class="destCell"><input data-f="label" type="text" placeholder="MyTv" value="${escAttr(d.label || "")}"></div>
+      <div class="destCell"><input data-f="root" type="text" placeholder="/tv" value="${escAttr(d.root || "")}"></div>
+      <div class="destCell"><input data-f="profile" type="number" placeholder="4" value="${escAttr(d.profile || "")}"></div>
+      <div class="destCell"><input data-f="server" type="number" placeholder="0" value="${escAttr(d.server || "")}"></div>
+      <div class="destCell"><button type="button" class="destDelete" title="Remove destination">×</button></div>
+    `;
+
+    row.querySelectorAll("input").forEach(input => {
+      input.addEventListener("input", syncSeerr);
+    });
+
+    row.querySelector(".destDelete").addEventListener("click", () => {
+      row.remove();
+      renderEmpty();
+      syncSeerr();
+    });
+
+    return row;
+  }
+
+  function renderSeerr(){
+    const rows = parseSeerr(seerrField.value || "");
+
+    seerrEditor.innerHTML = `
+      <div class="destHeader">
+        <div>Label</div>
+        <div>Root Folder</div>
+        <div>Profile</div>
+        <div>Server</div>
+        <div></div>
+      </div>
+    `;
+
+    rows.forEach(r => {
+      seerrEditor.appendChild(buildRow(r));
+    });
+
+    renderEmpty();
+    syncSeerr();
+  }
+
+  if (addSeerrBtn){
+    addSeerrBtn.addEventListener("click", () => {
+      const empty = seerrEditor.querySelector(".destEmpty");
+      if (empty) empty.remove();
+      seerrEditor.appendChild(buildRow({}));
+      syncSeerr();
+    });
+  }
+
+  const form = seerrField.closest("form");
+  if (form){
+    form.addEventListener("submit", syncSeerr);
+  }
+
+  renderSeerr();
+});
+
+</script>
+</body>
+</html>

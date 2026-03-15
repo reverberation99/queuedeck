@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QueueDeck • First Run Setup</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" />
+
+  <style>
+    :root{
+      --bg0:#07090c;
+      --bg1:#0b0f14;
+      --card: rgba(255,255,255,.055);
+      --border: rgba(255,255,255,.10);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.62);
+      --danger:#ff7b7b;
+      --accent:#7c5cff;
+      --accent2:#4ea1ff;
+      --ok:#88e7b3;
+      --shadow: 0 20px 60px rgba(0,0,0,.55);
+      --r: 18px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; }
+    body{
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(900px 600px at 15% 0%, rgba(124,92,255,.15), transparent 60%),
+        radial-gradient(900px 700px at 100% 0%, rgba(78,161,255,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+
+    .card{
+      width:min(100%, 460px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      padding: 26px;
+    }
+
+    .eyebrow{
+      color: var(--ok);
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    h1{
+      margin:0;
+      font-size: 28px;
+      line-height:1.1;
+    }
+
+    .sub{
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .notice{
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(136,231,179,.22);
+      background: rgba(136,231,179,.08);
+      color: #d7ffe7;
+      font-size: 14px;
+    }
+
+    .error{
+      background: rgba(255,123,123,.10);
+      color: #ffd0d0;
+      border: 1px solid rgba(255,123,123,.25);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin: 16px 0 14px;
+      font-size: 14px;
+    }
+
+    form{
+      margin-top: 18px;
+    }
+
+    label{
+      display:block;
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    input{
+      width:100%;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      outline:none;
+    }
+
+    input:focus{
+      border-color: rgba(124,92,255,.65);
+      box-shadow: 0 0 0 3px rgba(124,92,255,.16);
+    }
+
+    button{
+      width:100%;
+      border:none;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-weight: 700;
+      color: white;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 10px 24px rgba(78,161,255,.18);
+    }
+
+    button:hover{
+      filter: brightness(1.05);
+    }
+
+    .foot{
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="eyebrow">First Run Setup</div>
+    <h1>Create your admin account</h1>
+    <p class="sub">
+      QueueDeck did not find any users in the database. The first account you create here
+      will automatically become the administrator.
+    </p>
+
+    <div class="notice">
+      This only appears when the users table is empty.
+    </div>
+
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" autocomplete="off">
+      <label for="username">Admin username</label>
+      <input id="username" type="text" name="username" placeholder="Choose a username" required autofocus>
+
+      <label for="password">Password</label>
+      <input id="password" type="password" name="password" placeholder="Minimum 8 characters" required>
+
+      <label for="confirm_password">Confirm password</label>
+      <input id="confirm_password" type="password" name="confirm_password" placeholder="Re-enter password" required>
+
+      <button type="submit">Create admin and continue</button>
+    </form>
+
+    <div class="foot">
+      After setup, you will be sent to Settings.
+    </div>
+  </div>
+</body>
+</html>

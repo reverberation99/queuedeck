@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QueueDeck Preferences • Hidden Items</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=6" />
+
+  <style>
+    :root{
+      --bg0:#07090c;
+      --bg1:#0b0f14;
+      --card: rgba(255,255,255,.055);
+      --border: rgba(255,255,255,.10);
+      --muted: rgba(255,255,255,.62);
+      --text: rgba(255,255,255,.92);
+      --shadow: 0 20px 60px rgba(0,0,0,.55);
+      --r: 18px;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    html{
+      background: linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x: clip;
+      scrollbar-gutter: stable;
+    }
+    body{
+      margin:0;
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background:
+        radial-gradient(1200px 700px at 15% 0%, rgba(106,163,255,.14), transparent 55%),
+        radial-gradient(1000px 700px at 90% 30%, rgba(168,85,247,.14), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0));
+      overflow-x: clip;
+    }
+    html::before{
+      content:"";
+      position: fixed;
+      left: -320px; top: -320px; right: -320px; bottom: -320px;
+      pointer-events:none;
+      background:
+        radial-gradient(650px 420px at 15% 12%, rgba(106,163,255,.10), transparent 60%),
+        radial-gradient(780px 520px at 85% 20%, rgba(168,85,247,.10), transparent 60%);
+      filter: blur(18px);
+      opacity:.9;
+      z-index:0;
+      transform: translateZ(0);
+    }
+    .wrap{
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px 18px 48px;
+    }
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      margin-bottom:18px;
+      flex-wrap:wrap;
+    }
+    .brandHeader{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      min-width:0;
+    }
+    .logoBox{
+      width:46px;
+      height:46px;
+      border-radius:14px;
+      background: linear-gradient(
+        180deg,
+        rgba(255,255,255,.08),
+        rgba(255,255,255,.03)
+      );
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08),
+        0 10px 28px rgba(0,0,0,.40);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex:0 0 auto;
+      overflow:hidden;
+    }
+    .logoBox img{
+      width:28px;
+      height:28px;
+      display:block;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
+    }
+
+    .brandText h1{
+      margin:0;
+      font-size:22px;
+      font-weight:900;
+      letter-spacing:.2px;
+      line-height:1.1;
+    }
+    .brandText .sub{
+      margin-top:4px;
+      font-size:14px;
+      color: var(--muted);
+      line-height:1.35;
+      max-width: 720px;
+    }
+
+    .top-links{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .userMenu{
+      position:relative;
+      display:flex;
+      align-items:center;
+      flex:0 0 auto;
+    }
+
+    .userMenuBtn{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      min-height:44px;
+      padding:8px 12px 8px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      color:#fff;
+      cursor:pointer;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.04),
+        0 8px 22px rgba(0,0,0,.18);
+    }
+
+    .userMenuBtn:hover{
+      background: rgba(255,255,255,.09);
+      border-color: rgba(255,255,255,.16);
+    }
+
+    .userAvatar{
+      width:30px;
+      height:30px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+      font-weight:900;
+      color:#fff;
+      background: linear-gradient(135deg, #7c5cff, #4ea1ff);
+    }
+
+    .userMenuName{
+      font-size:13px;
+      font-weight:800;
+      color: rgba(255,255,255,.92);
+      white-space:nowrap;
+    }
+
+    .userMenuChevron{
+      font-size:11px;
+      color: rgba(255,255,255,.72);
+      transition: transform .18s ease;
+    }
+
+    .userMenu.open .userMenuChevron{ transform: rotate(180deg); }
+
+    .userDropdown{
+      position:absolute;
+      right:0;
+      top:calc(100% + 10px);
+      min-width:220px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(10,12,18,.94);
+      backdrop-filter: blur(10px);
+      border-radius:16px;
+      box-shadow: 0 24px 70px rgba(0,0,0,.55);
+      padding:8px;
+      display:none;
+      z-index:30;
+    }
+
+    .userMenu.open .userDropdown{ display:block; }
+
+    .userDropdownHead{
+      padding:10px 12px 8px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      margin-bottom:6px;
+    }
+
+    .userDropdownTitle{
+      font-size:13px;
+      font-weight:900;
+      color: rgba(255,255,255,.94);
+    }
+
+    .userDropdownSub{
+      margin-top:3px;
+      font-size:12px;
+      color: rgba(255,255,255,.62);
+    }
+
+    .userDropdown a{
+      display:flex;
+      align-items:center;
+      padding:10px 12px;
+      border-radius:12px;
+      font-size:13px;
+      font-weight:700;
+      color: rgba(255,255,255,.88);
+      text-decoration:none;
+    }
+
+    .userDropdown a:hover{
+      background: rgba(255,255,255,.06);
+      color:#fff;
+    }
+
+    .userDropdown a.danger{
+      color: rgba(255,130,130,.95);
+    }
+
+    @media (max-width:760px){
+      .userMenuName{ display:none; }
+      .userMenuBtn{ padding-right:10px; }
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:12px 18px;
+      min-height:46px;
+      border-radius:16px;
+      border:none;
+      background: linear-gradient(135deg, #7c5cff, #4ea1ff);
+      color:#fff;
+      font-weight:800;
+      font-size:14px;
+      line-height:1;
+      cursor:pointer;
+      user-select:none;
+      white-space:nowrap;
+      text-decoration:none;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08),
+        0 10px 26px rgba(0,0,0,.22);
+    }
+    .btn:hover{
+      transform: translateY(-1px);
+    }
+    .btn.secondary{
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.04),
+        0 8px 22px rgba(0,0,0,.18);
+      color:#fff;
+    }
+    .btn.secondary:hover{
+      background: rgba(255,255,255,.09);
+      border-color: rgba(255,255,255,.16);
+    }
+    .btn.primary{
+      background: linear-gradient(135deg, rgba(106,163,255,.90), rgba(168,85,247,.90));
+      border-color: rgba(255,255,255,.18);
+    }
+    .btn.danger{
+      border:1px solid rgba(239,68,68,.30);
+      background: rgba(255,255,255,.04);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.04),
+        0 8px 22px rgba(0,0,0,.18);
+    }
+
+    .panel{
+      margin-top: 16px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.05);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .panelHead{
+      padding: 14px 16px 12px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap: wrap;
+    }
+    .panelHead .title{
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: .2px;
+      margin:0;
+    }
+    .panelHead .hint{
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.25;
+    }
+    .controls{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap: wrap;
+    }
+    .search{
+      width: 280px;
+      max-width: 78vw;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+      color: var(--text);
+      padding: 9px 12px;
+      outline:none;
+      font-size: 12.5px;
+    }
+    .search:focus{
+      border-color: rgba(106,163,255,.40);
+      box-shadow: 0 0 0 3px rgba(106,163,255,.12);
+    }
+
+    .tabs{
+      display:flex;
+      gap:8px;
+      padding: 12px 16px 0;
+    }
+    .tab{
+      padding: 8px 12px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.12);
+      color: rgba(255,255,255,.84);
+      font-weight: 900;
+      font-size: 12px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .tab.active{
+      background: rgba(255,255,255,.10);
+      border-color: rgba(255,255,255,.16);
+    }
+
+    .list{
+      padding: 12px 16px 16px;
+      display:grid;
+      gap: 10px;
+    }
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.16);
+    }
+    .row .left{
+      min-width: 0;
+      flex: 1;
+    }
+    .title1{
+      font-size: 13.5px;
+      font-weight: 950;
+      letter-spacing: .2px;
+      margin-bottom: 4px;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 860px;
+    }
+    .subtitle{
+      font-size: 12px;
+      color: rgba(255,255,255,.70);
+      overflow:hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 860px;
+    }
+    .meta{
+      margin-top: 7px;
+      font-size: 12px;
+      color: var(--muted);
+      display:flex;
+      gap:10px;
+      flex-wrap: wrap;
+      align-items:center;
+    }
+    .mono{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 11.5px;
+      color: rgba(255,255,255,.75);
+    }
+    .pill{
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      font-size: 12px;
+      font-weight: 900;
+      color: rgba(255,255,255,.84);
+    }
+    .right{
+      display:flex;
+      gap:8px;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+    }
+
+    .status{
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.14);
+      color: rgba(255,255,255,.82);
+      font-size: 12.5px;
+      line-height: 1.25;
+    }
+    .status.ok{ border-color: rgba(34,197,94,.22); background: rgba(34,197,94,.08); }
+    .status.bad{ border-color: rgba(239,68,68,.22); background: rgba(239,68,68,.10); }
+
+    @media (max-width: 700px){
+      .topbar{ flex-wrap: wrap; }
+      .brandText .sub{ max-width: 92vw; }
+      .row{ flex-direction: column; align-items:flex-start; }
+      .right{ width: 100%; justify-content:flex-start; }
+      .title1,.subtitle{ max-width: 92vw; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brandHeader">
+        <div class="logoBox" aria-hidden="true"><img src="/favicon.svg?v=6" alt=""></div>
+        <div class="brandText" style="min-width:0">
+          <h1>Hidden Items</h1>
+          <div class="sub">Manage shows and episodes you have hidden or snoozed from your QueueDeck homepage.</div>
+        </div>
+      </div>
+      <div class="top-links">
+        {% set username = (me.username if me and me.username else 'User') %}
+        {% set initial = (username[:1] | upper) %}
+        <div class="userMenu" id="userMenu">
+          <button class="userMenuBtn" id="userMenuBtn" type="button" aria-haspopup="menu" aria-expanded="false">
+            <span class="userAvatar">{{ initial }}</span>
+            <span class="userMenuName">{{ username }}</span>
+            <span class="userMenuChevron">▾</span>
+          </button>
+
+          <div class="userDropdown" id="userDropdown" role="menu">
+            <div class="userDropdownHead">
+              <div class="userDropdownTitle">{{ username }}</div>
+              <div class="userDropdownSub">QueueDeck user</div>
+            </div>
+            <a href="/">Dashboard</a>
+              <a href="/settings">Preferences</a>
+            <a href="/stats">Statistics</a>
+            <a href="/hidden">Hidden Items</a>
+            {% if me and me.get("is_admin") %}<a href="/admin/settings">Admin Settings</a>{% endif %}
+            <a class="danger" href="/logout">Log out</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panelHead">
+        <div>
+          <div class="title">Manage Hidden Items</div>
+          <div class="hint">Hidden items stay off the dashboard until unhidden. Snoozed items return automatically when their timer expires, or you can restore them manually.</div>
+        </div>
+        <div class="controls">
+          <input id="search" class="search" placeholder="Search title / kind / id…" />
+          <button class="btn danger" id="unhideAllBtn" type="button">Unhide All</button>
+          <button class="btn danger" id="clearSnoozesBtn" type="button">Clear Snoozes</button>
+          <button class="btn secondary" id="reloadBtn" type="button">Reload</button>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" id="tabHidden">Hidden (<span id="countHidden">0</span>)</div>
+        <div class="tab" id="tabDiscover">Hidden Discover (<span id="countDiscover">0</span>)</div>
+        <div class="tab" id="tabStats">Stats Hidden (<span id="countStats">0</span>)</div>
+        <div class="tab" id="tabSnoozed">Snoozed (<span id="countSnoozed">0</span>)</div>
+      </div>
+
+      <div class="list" id="list"></div>
+      <div class="status" id="status">Loading…</div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (sel, root=document) => root.querySelector(sel);
+
+    let DATA = { now: 0, hidden: [], snoozed: [], stats_hidden: [] };
+    let MODE = "hidden"; // hidden | discover | stats | snoozed
+
+    function esc(s){
+      return String(s).replace(/[&<>"']/g, (c) => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[c]));
+    }
+
+    function setStatus(text, kind){
+      const el = $("#status");
+      el.className = "status" + (kind ? (" " + kind) : "");
+      el.textContent = text;
+    }
+
+    function fmtWhen(ts){
+      if (!ts) return "";
+      const d = new Date(ts * 1000);
+      if (isNaN(d.getTime())) return "";
+      return d.toLocaleString();
+    }
+
+    async function fetchJSON(url, opts={}){
+      const res = await fetch(url, { credentials:"same-origin", ...opts });
+      const ct = (res.headers.get("content-type") || "").toLowerCase();
+      if (!ct.includes("application/json")){
+        const t = await res.text();
+        throw new Error(`Not JSON. status=${res.status}. First bytes: ${t.slice(0,80)}`);
+      }
+      const j = await res.json().catch(()=> ({}));
+      if (!res.ok || j.ok === false){
+        throw new Error(j.error || ("HTTP " + res.status));
+      }
+      return j;
+    }
+
+    async function load(){
+      setStatus("Loading…");
+      try{
+        const [j, sj] = await Promise.all([
+          fetchJSON("/api/state/hidden?enrich=1", { cache: "no-store" }),
+          fetchJSON("/api/hidden/stats", { cache: "no-store" }).catch(() => ({ ok:true, items:[] }))
+        ]);
+
+        DATA = {
+          ...j,
+          stats_hidden: Array.isArray(sj.items) ? sj.items : []
+        };
+
+        const hiddenRows = (j.hidden || []);
+        const discoverRows = hiddenRows.filter(r => String(r.kind || "") === "discover_item");
+        const normalHiddenRows = hiddenRows.filter(r => {
+          const kind = String(r.kind || "");
+          return kind !== "discover_item" && !kind.startsWith("stats_");
+        });
+
+        $("#countHidden").textContent = String(normalHiddenRows.length);
+        $("#countDiscover").textContent = String(discoverRows.length);
+        $("#countStats").textContent = String((DATA.stats_hidden || []).length);
+        $("#countSnoozed").textContent = String((j.snoozed || []).length);
+        render();
+        setStatus("Ready.", "ok");
+      }catch(e){
+        console.error(e);
+        setStatus("Failed to load: " + e.message, "bad");
+      }
+    }
+
+    function matchesSearch(row, q){
+      if (!q) return true;
+      q = q.toLowerCase();
+      return (
+        String(row.title || "").toLowerCase().includes(q) ||
+        String(row.subtitle || "").toLowerCase().includes(q) ||
+        String(row.kind || "").toLowerCase().includes(q) ||
+        String(row.item_id || "").toLowerCase().includes(q)
+      );
+    }
+
+    function render(){
+      const q = ($("#search").value || "").trim();
+      const list = $("#list");
+      const hiddenRows = (DATA.hidden || []);
+      const rows = (
+        MODE === "hidden"
+          ? hiddenRows.filter(r => {
+              const kind = String(r.kind || "");
+              return kind !== "discover_item" && !kind.startsWith("stats_");
+            })
+          : MODE === "discover"
+            ? hiddenRows.filter(r => String(r.kind || "") === "discover_item")
+            : MODE === "stats"
+              ? (DATA.stats_hidden || [])
+              : (DATA.snoozed || [])
+      ).filter(r => matchesSearch(r, q));
+
+      if (!rows.length){
+        list.innerHTML = `<div class="row"><div class="left"><div class="title1">Nothing here</div><div class="subtitle"
+>Try switching tabs or clearing the search.</div></div></div>`;
+        return;
+      }
+
+      list.innerHTML = rows.map(r => {
+        const until = Number(r.snooze_until || 0);
+        const isSnoozed = MODE === "snoozed";
+        const isStats = MODE === "stats";
+
+        const t = (r.title || r.label || "").trim() || `${r.kind} • ${r.item_id}`;
+        const sub = (r.subtitle || "").trim();
+
+        const when = isSnoozed ? `Returns: ${esc(fmtWhen(until))}` : (r.updated_at ? `Updated: ${esc(r.updated_at)}` : "" );
+        const link = (r.link || "").trim();
+
+        return `
+          <div class="row" data-kind="${esc(r.kind)}" data-id="${esc(r.item_id)}">
+            <div class="left">
+              <div class="title1">${esc(t)}</div>
+              ${sub ? `<div class="subtitle">${esc(sub)}</div>` : ``}
+              <div class="meta">
+                <span class="pill">${isSnoozed ? "Snoozed" : "Hidden"}</span>
+                <span class="mono">${
+                  isStats ? `${esc(r.kind)} • ${esc(r.item_id)}` :
+                  r.kind === "radarr_movie" ? "Radarr movie" :
+                  r.kind === "sonarr_series" ? "Sonarr series" :
+                  r.kind === "sonarr_episode" ? "Sonarr episode" :
+                  r.kind === "discover_item" ? "Discover item" :
+                  `${esc(r.kind)} • ${esc(r.item_id)}`
+                }</span>
+                ${when ? `<span>${when}</span>` : ``}
+                ${link ? `<a class="btn secondary" href="${esc(link)}" target="_blank" rel="noopener">Open</a>` : ``}
+              </div>
+            </div>
+            <div class="right">
+              ${isSnoozed
+                ? `<button class="btn primary" type="button" data-act="unsnooze">Unsnooze</button>`
+                : `<button class="btn primary" type="button" data-act="${isStats ? "stats_unhide" : "unhide"}">Unhide</button>`
+              }
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      list.querySelectorAll("button[data-act]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const row = btn.closest(".row");
+          const kind = row.getAttribute("data-kind");
+          const item_id = row.getAttribute("data-id");
+          const act = btn.getAttribute("data-act");
+
+          try{
+            btn.disabled = true;
+            setStatus("Working…");
+
+            if (act === "unhide"){
+              await fetchJSON("/api/state/unhide", {
+                method:"POST",
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify({kind, item_id})
+              });
+            } else if (act === "stats_unhide"){
+              await fetchJSON("/api/action/stats_unhide", {
+                method:"POST",
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify({kind, item_id})
+              });
+            } else if (act === "unsnooze"){
+              await fetchJSON("/api/state/unsnooze", {
+                method:"POST",
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify({kind, item_id})
+              });
+            }
+
+            await load();
+            setStatus("Done ✅", "ok");
+          }catch(e){
+            console.error(e);
+            setStatus("Action failed: " + e.message, "bad");
+          }finally{
+            btn.disabled = false;
+          }
+        });
+      });
+    }
+
+    function setTab(mode){
+      MODE = mode;
+      $("#tabHidden").classList.toggle("active", MODE === "hidden");
+      $("#tabDiscover").classList.toggle("active", MODE === "discover");
+      $("#tabStats").classList.toggle("active", MODE === "stats");
+      $("#tabSnoozed").classList.toggle("active", MODE === "snoozed");
+      render();
+    }
+
+    $("#tabHidden").addEventListener("click", ()=> setTab("hidden"));
+    $("#tabDiscover").addEventListener("click", ()=> setTab("discover"));
+    $("#tabStats").addEventListener("click", ()=> setTab("stats"));
+    $("#tabSnoozed").addEventListener("click", ()=> setTab("snoozed"));
+    $("#search").addEventListener("input", render);
+    $("#reloadBtn").addEventListener("click", load);
+
+    $("#unhideAllBtn").addEventListener("click", async ()=>{
+      if (!confirm("Unhide ALL hidden items?")) return;
+      try{
+        setStatus("Unhiding all…");
+        await fetchJSON("/api/state/unhide_all", { method:"POST" });
+        await load();
+        setStatus("All hidden items restored ✅", "ok");
+      }catch(e){
+        console.error(e);
+        setStatus("Failed: " + e.message, "bad");
+      }
+    });
+
+    $("#clearSnoozesBtn").addEventListener("click", async ()=>{
+      if (!confirm("Clear ALL snoozes? (Everything returns immediately)")) return;
+      try{
+        setStatus("Clearing snoozes…");
+        await fetchJSON("/api/state/clear_snoozes", { method:"POST" });
+        await load();
+        setStatus("All snoozes cleared ✅", "ok");
+      }catch(e){
+        console.error(e);
+        setStatus("Failed: " + e.message, "bad");
+      }
+    });
+
+    load();
+  </script>
+
+
+  <script>
+    (function(){
+      const menu = document.getElementById("userMenu");
+      const btn = document.getElementById("userMenuBtn");
+      if (!menu || !btn) return;
+
+      function closeMenu(){
+        menu.classList.remove("open");
+        btn.setAttribute("aria-expanded", "false");
+      }
+
+      function openMenu(){
+        menu.classList.add("open");
+        btn.setAttribute("aria-expanded", "true");
+      }
+
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        menu.classList.contains("open") ? closeMenu() : openMenu();
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!menu.contains(e.target)) closeMenu();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeMenu();
+      });
+    })();
+  </script>
+</body>
+</html>

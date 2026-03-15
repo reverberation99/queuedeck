@@ -1,0 +1,2303 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>QueueDeck Preferences</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" />
+
+    <style>
+      :root{
+        --bg0:#07090c;
+        --bg1:#0b0f14;
+        --card: rgba(255,255,255,.055);
+        --border: rgba(255,255,255,.10);
+        --text: rgba(255,255,255,.92);
+        --muted: rgba(255,255,255,.64);
+        --accent:#7c5cff;
+        --accent2:#4ea1ff;
+        --shadow: 0 20px 60px rgba(0,0,0,.55);
+      }
+
+      *{ box-sizing:border-box; }
+      html,body{ margin:0; min-height:100%; }
+      body{
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(900px 600px at 15% 0%, rgba(124,92,255,.14), transparent 60%),
+          radial-gradient(900px 700px at 100% 0%, rgba(78,161,255,.10), transparent 55%),
+          linear-gradient(180deg, var(--bg0), var(--bg1));
+        padding: 28px;
+      }
+
+      .wrap{
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+
+      .topbar{
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-start;
+        gap:16px;
+        margin-bottom:18px;
+        flex-wrap:wrap;
+      }
+
+      .brand{
+        display:flex;
+        align-items:flex-start;
+        gap:14px;
+      }
+
+      .logo{
+        width:40px;
+        height:40px;
+        border-radius:12px;
+        display:grid;
+        place-items:center;
+        border:1px solid rgba(255,255,255,.12);
+        background: rgba(255,255,255,.05);
+        box-shadow: var(--shadow);
+        overflow:hidden;
+      }
+
+      .logo img{
+        width:26px;
+        height:26px;
+        display:block;
+      }
+
+      h1{
+        margin:0;
+        font-size:22px;
+        line-height:1.1;
+        font-weight:900;
+        letter-spacing:.2px;
+      }
+
+      .sub{
+        margin:6px 0 0;
+        color:var(--muted);
+        font-size:14px;
+        line-height:1.35;
+      }
+
+      .top-links{
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;
+        align-items:center;
+      }
+
+      .userMenu{
+        position:relative;
+        display:flex;
+        align-items:center;
+        flex:0 0 auto;
+      }
+
+      .userMenuBtn{
+        display:inline-flex;
+        align-items:center;
+        gap:10px;
+        min-height:44px;
+        padding:8px 12px 8px 8px;
+        border-radius:999px;
+        border:1px solid rgba(255,255,255,.10);
+        background: rgba(255,255,255,.05);
+        color:#fff;
+        cursor:pointer;
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,.04),
+          0 8px 22px rgba(0,0,0,.18);
+      }
+
+      .userMenuBtn:hover{
+        background: rgba(255,255,255,.09);
+        border-color: rgba(255,255,255,.16);
+        transform: translateY(-1px);
+      }
+
+      .userAvatar{
+        width:30px;
+        height:30px;
+        border-radius:999px;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        font-size:13px;
+        font-weight:900;
+        color:#fff;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+      }
+
+      .userMenuName{
+        font-size:13px;
+        font-weight:800;
+        color: rgba(255,255,255,.92);
+        white-space:nowrap;
+      }
+
+      .userMenuChevron{
+        font-size:11px;
+        color: rgba(255,255,255,.72);
+        transition: transform .18s ease;
+      }
+
+      .userMenu.open .userMenuChevron{ transform: rotate(180deg); }
+
+      .userDropdown{
+        position:absolute;
+        right:0;
+        top:calc(100% + 10px);
+        min-width:220px;
+        border:1px solid rgba(255,255,255,.12);
+        background: rgba(10,12,18,.94);
+        backdrop-filter: blur(10px);
+        border-radius:16px;
+        box-shadow: 0 24px 70px rgba(0,0,0,.55);
+        padding:8px;
+        display:none;
+        z-index:30;
+      }
+
+      .userMenu.open .userDropdown{ display:block; }
+
+      .userDropdownHead{
+        padding:10px 12px 8px;
+        border-bottom:1px solid rgba(255,255,255,.08);
+        margin-bottom:6px;
+      }
+
+      .userDropdownTitle{
+        font-size:13px;
+        font-weight:900;
+        color: rgba(255,255,255,.94);
+      }
+
+      .userDropdownSub{
+        margin-top:3px;
+        font-size:12px;
+        color: rgba(255,255,255,.62);
+      }
+
+      .userDropdown a{
+        display:flex;
+        align-items:center;
+        padding:10px 12px;
+        border-radius:12px;
+        font-size:13px;
+        font-weight:700;
+        color: rgba(255,255,255,.88);
+        text-decoration:none;
+      }
+
+      .userDropdown a:hover{
+        background: rgba(255,255,255,.06);
+        color:#fff;
+      }
+
+      .userDropdown a.danger{
+        color: rgba(255,130,130,.95);
+      }
+
+      @media (max-width:760px){
+        .userMenuName{ display:none; }
+        .userMenuBtn{ padding-right:10px; }
+      }
+
+      .btn, button{
+        border:none;
+        border-radius:16px;
+        padding:12px 18px;
+        min-height:46px;
+        font-weight:800;
+        color:#fff;
+        cursor:pointer;
+        text-decoration:none;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        font-size:14px;
+        line-height:1;
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,.08),
+          0 10px 26px rgba(0,0,0,.22);
+      }
+
+      .btn.secondary, button.secondary{
+        background: rgba(255,255,255,.05);
+        border:1px solid rgba(255,255,255,.10);
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,.04),
+          0 8px 22px rgba(0,0,0,.18);
+      }
+
+      .btn.secondary:hover, button.secondary:hover{
+        background: rgba(255,255,255,.09);
+        border-color: rgba(255,255,255,.16);
+        transform: translateY(-1px);
+      }
+
+      .btn:disabled, button:disabled{
+        opacity:.65;
+        cursor:not-allowed;
+      }
+
+      .card{
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+        padding: 22px;
+        margin-bottom: 18px;
+      }
+
+      .section-title{
+        margin:0 0 4px;
+        font-size:14px;
+        font-weight:900;
+      }
+
+      .section-sub{
+        color:var(--muted);
+        font-size:14px;
+        line-height:1.4;
+        margin-bottom:12px;
+      }
+
+      .accent-line{
+        height:1px;
+        background: linear-gradient(90deg, rgba(124,92,255,.35), rgba(78,161,255,.28), transparent);
+        margin: 10px 0 16px;
+      }
+
+      .statusRow{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        flex-wrap:wrap;
+        margin-bottom:14px;
+      }
+
+      .status{
+        flex:1 1 260px;
+        min-width:240px;
+        padding:11px 14px;
+        border-radius:12px;
+        border:1px solid rgba(255,255,255,.10);
+        background: rgba(0,0,0,.18);
+        color: rgba(255,255,255,.84);
+        font-size:13px;
+      }
+
+      .status.ok{
+        border-color: rgba(80,200,120,.35);
+        background: rgba(80,200,120,.12);
+        color:#d8ffe5;
+      }
+
+      .status.bad{
+        border-color: rgba(255,80,80,.35);
+        background: rgba(255,80,80,.12);
+        color:#ffd7d7;
+      }
+
+      .prefsNote{
+        margin-bottom: 16px;
+        padding: 13px 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(255,255,255,.10);
+        background: rgba(255,255,255,.04);
+        color: rgba(255,255,255,.86);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .limitsWrap{
+        padding: 4px 0 0;
+      }
+
+      .grid{
+        display:grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap:14px;
+      }
+
+      @media (max-width: 960px){
+        .grid{ grid-template-columns: 1fr; }
+      }
+
+      .field{
+        padding: 14px;
+        border-radius: 16px;
+        border: 1px solid rgba(255,255,255,.10);
+        background: rgba(0,0,0,.12);
+        min-height: 122px;
+      }
+
+      .sliderHead{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        margin-bottom:12px;
+      }
+
+      .sliderHead label{
+        font-size:13px;
+        font-weight:900;
+        letter-spacing:.2px;
+      }
+
+      .sliderValue{
+        min-width: 44px;
+        text-align:center;
+        padding: 5px 10px;
+        border-radius: 999px;
+        border:1px solid rgba(124,92,255,.28);
+        background: rgba(124,92,255,.12);
+        color: rgba(255,255,255,.96);
+        font-weight:900;
+        font-size:12px;
+      }
+
+      .rangeWrap{
+        padding: 4px 2px 0;
+      }
+
+      input[type="range"]{
+        -webkit-appearance:none;
+        appearance:none;
+        width:100%;
+        height:8px;
+        border-radius:999px;
+        background: var(--range-bg, rgba(255,255,255,.18));
+        outline:none;
+        border:1px solid rgba(255,255,255,.08);
+        box-shadow: inset 0 1px 2px rgba(0,0,0,.35);
+      }
+
+      input[type="range"]::-webkit-slider-runnable-track{
+        height:8px;
+        border-radius:999px;
+        background: transparent;
+      }
+
+      input[type="range"]::-webkit-slider-thumb{
+        -webkit-appearance:none;
+        appearance:none;
+        width:18px;
+        height:18px;
+        border-radius:50%;
+        border:2px solid rgba(255,255,255,.82);
+        background: linear-gradient(180deg, rgba(16,20,28,.96), rgba(32,38,52,.96));
+        box-shadow: 0 6px 18px rgba(0,0,0,.45);
+        margin-top: -6px;
+      }
+
+      input[type="range"]::-moz-range-track{
+        height:8px;
+        border-radius:999px;
+        background: transparent;
+      }
+
+      input[type="range"]::-moz-range-progress{
+        height:8px;
+        border-radius:999px;
+        background: transparent;
+      }
+
+      input[type="range"]::-moz-range-thumb{
+        width:18px;
+        height:18px;
+        border-radius:50%;
+        border:2px solid rgba(255,255,255,.82);
+        background: linear-gradient(180deg, rgba(16,20,28,.96), rgba(32,38,52,.96));
+        box-shadow: 0 6px 18px rgba(0,0,0,.45);
+      }
+
+      .checkRow{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        margin-top:12px;
+        padding:12px;
+        border-radius:14px;
+        border:1px solid rgba(255,255,255,.10);
+        background: rgba(255,255,255,.04);
+      }
+
+      .checkRow input[type="checkbox"]{
+        width:18px;
+        height:18px;
+        margin:0;
+        accent-color: rgb(124,92,255);
+        flex:0 0 auto;
+      }
+
+      .checkRow label{
+        margin:0;
+        font-size:13px;
+        font-weight:800;
+        line-height:1.2;
+        cursor:pointer;
+      }
+
+      .hint{
+        margin-top:10px;
+        color: rgba(255,255,255,.68);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .fineprint{
+        margin-top: 18px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(255,255,255,.10);
+        color: rgba(255,255,255,.76);
+        font-size: 13px;
+      }
+
+      .miniCard{
+        margin-top: 18px;
+        padding: 16px;
+        border-radius: 16px;
+        border: 1px solid rgba(255,255,255,.10);
+        background: rgba(0,0,0,.12);
+      }
+
+      .miniCardTitle{
+        font-size: 14px;
+        font-weight: 900;
+        margin: 0 0 4px;
+      }
+
+      .miniCardSub{
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+        margin-bottom: 12px;
+      }
+
+      .toggleGrid{
+        display:grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap:12px;
+        margin-top: 10px;
+      }
+
+      .toggleItem{
+        display:flex;
+        align-items:center;
+        gap:10px;
+        padding:12px 14px;
+        border-radius:14px;
+        border:1px solid rgba(255,255,255,.10);
+        background: rgba(255,255,255,.04);
+      }
+
+      .toggleItem input[type="checkbox"]{
+        width:18px;
+        height:18px;
+        margin:0;
+        accent-color: rgb(124,92,255);
+        flex:0 0 auto;
+      }
+
+      .toggleItem label{
+        margin:0;
+        font-size:13px;
+        font-weight:800;
+        line-height:1.25;
+        cursor:pointer;
+      }
+
+      @media (max-width: 960px){
+        .toggleGrid{ grid-template-columns: 1fr; }
+      }
+
+      .toggleHint{
+        margin-top:10px;
+        color: rgba(255,255,255,.68);
+        font-size:12px;
+        line-height:1.4;
+      }
+
+      .orderList{
+        display:flex;
+        flex-direction:column;
+        gap:10px;
+        margin-top:10px;
+      }
+
+      .orderItem{
+        display:flex;
+        align-items:center;
+        gap:12px;
+        padding:12px 14px;
+        border-radius:14px;
+        border:1px solid rgba(255,255,255,.10);
+        background: rgba(255,255,255,.04);
+        cursor:grab;
+        user-select:none;
+      }
+
+      .orderItem:active{
+        cursor:grabbing;
+      }
+
+      .orderItem.dragging{
+        opacity:.65;
+        border-color: rgba(124,92,255,.45);
+        background: rgba(124,92,255,.10);
+      }
+
+      .orderGrip{
+        width:18px;
+        text-align:center;
+        color: rgba(255,255,255,.55);
+        font-size:16px;
+        line-height:1;
+        flex:0 0 auto;
+      }
+
+      .orderText{
+        font-size:13px;
+        font-weight:800;
+        line-height:1.25;
+      }
+
+      .adminSettingsGrid{
+        display:grid;
+        grid-template-columns: 1fr;
+        gap:14px;
+        margin-top:10px;
+      }
+
+      .adminField{
+        padding:14px;
+        border-radius:16px;
+        border:1px solid rgba(255,255,255,.10);
+        background: rgba(0,0,0,.12);
+      }
+
+      .adminField label{
+        display:block;
+        margin-bottom:8px;
+        font-size:13px;
+        font-weight:800;
+      }
+
+      .labelRow{
+        display:flex;
+        align-items:center;
+        gap:8px;
+        margin-bottom:8px;
+      }
+
+      .labelRow label{
+        margin-bottom:0;
+      }
+
+      .helpDot{
+        position:relative;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        width:18px;
+        height:18px;
+        border-radius:999px;
+        border:1px solid rgba(255,255,255,.16);
+        background:rgba(255,255,255,.06);
+        color:rgba(255,255,255,.82);
+        font-size:11px;
+        font-weight:900;
+        cursor:help;
+        line-height:1;
+        user-select:none;
+      }
+
+      .helpDot .tip{
+        position:absolute;
+        left:50%;
+        top:calc(100% + 10px);
+        transform:translateX(-50%);
+        min-width:260px;
+        max-width:360px;
+        padding:10px 12px;
+        border-radius:12px;
+        border:1px solid rgba(255,255,255,.12);
+        background:rgba(11,15,20,.98);
+        color:rgba(255,255,255,.90);
+        font-size:12px;
+        line-height:1.45;
+        box-shadow:0 18px 40px rgba(0,0,0,.35);
+        opacity:0;
+        visibility:hidden;
+        pointer-events:none;
+        z-index:50;
+        white-space:normal;
+      }
+
+      .helpDot:hover .tip,
+      .helpDot:focus-within .tip{
+        opacity:1;
+        visibility:visible;
+      }
+
+      .adminField input{
+        width:100%;
+      }
+
+      .adminField textarea{
+        width:100%;
+        min-height:96px;
+        resize:none;
+        border-radius:12px;
+        border:1px solid rgba(255,255,255,.12);
+        background:rgba(255,255,255,.04);
+        color:rgba(255,255,255,.92);
+        padding:12px 14px;
+        font:inherit;
+        line-height:1.35;
+        box-sizing:border-box;
+      }
+
+      .adminField textarea::placeholder{
+        color:rgba(255,255,255,.42);
+      }
+
+      
+
+      .destEditor{
+        display:flex;
+        flex-direction:column;
+        gap:10px;
+        margin-top:8px;
+      }
+
+      .destHeader,
+      .destRow{
+        display:grid;
+        grid-template-columns: minmax(150px,1.3fr) minmax(180px,1.6fr) 90px 90px 56px;
+        gap:10px;
+        align-items:center;
+      }
+
+      .destHeader{
+        padding:0 2px;
+        color:rgba(255,255,255,.60);
+        font-size:12px;
+        font-weight:800;
+        letter-spacing:.2px;
+      }
+
+      .destRow{
+        padding:10px;
+        border-radius:14px;
+        border:1px solid rgba(255,255,255,.10);
+        background:rgba(255,255,255,.04);
+      }
+
+      .destCell input{
+        width:100%;
+        min-height:42px;
+        border-radius:12px;
+        border:1px solid rgba(255,255,255,.12);
+        background:rgba(255,255,255,.05);
+        color:rgba(255,255,255,.92);
+        padding:10px 12px;
+      }
+
+      .destDelete{
+        min-height:42px;
+        min-width:42px;
+        border-radius:12px;
+        border:1px solid rgba(255,255,255,.10);
+        background:rgba(255,255,255,.05);
+        color:#fff;
+        cursor:pointer;
+        font-size:18px;
+      }
+
+
+      /* Letterboxd RSS feed editor */
+
+      .feedEditor{
+        display:flex;
+        flex-direction:column;
+        gap:10px;
+        margin-top:8px;
+      }
+
+      .feedHeader,
+      .feedRow{
+        display:grid;
+        grid-template-columns: minmax(150px,1.1fr) minmax(280px,2fr) 56px;
+        gap:10px;
+        align-items:center;
+      }
+
+      .feedHeader{
+        padding:0 2px;
+        color:rgba(255,255,255,.60);
+        font-size:12px;
+        font-weight:800;
+        letter-spacing:.2px;
+      }
+
+      .feedRow{
+        padding:10px;
+        border-radius:14px;
+        border:1px solid rgba(255,255,255,.10);
+        background:rgba(255,255,255,.04);
+      }
+
+      .feedCell input{
+        width:100%;
+        min-height:42px;
+        border-radius:12px;
+        border:1px solid rgba(255,255,255,.12);
+        background:rgba(255,255,255,.05);
+        color:rgba(255,255,255,.92);
+        padding:10px 12px;
+      }
+
+      .feedDelete{
+        min-height:42px;
+        min-width:42px;
+        border-radius:12px;
+        border:1px solid rgba(255,255,255,.10);
+        background:rgba(255,255,255,.05);
+        color:#fff;
+        cursor:pointer;
+        font-size:18px;
+      }
+
+      .feedToolbar{
+        margin-top:10px;
+      }
+
+      .feedEmpty{
+        padding:14px;
+        border-radius:14px;
+        border:1px dashed rgba(255,255,255,.14);
+        background:rgba(255,255,255,.03);
+        color:rgba(255,255,255,.68);
+        font-size:13px;
+      }
+
+
+
+.adminField textarea:focus{
+        outline:none;
+        border-color:rgba(120,140,255,.42);
+        box-shadow:0 0 0 3px rgba(120,140,255,.12);
+      }
+
+      .adminField input{
+        width:100%;
+      }
+
+      
+      .adminCollapse{
+        margin-top: 6px;
+        border: 1px solid rgba(255,255,255,.10);
+        border-radius: 16px;
+        background: rgba(0,0,0,.12);
+        overflow: hidden;
+      }
+
+      .adminCollapseSummary{
+        cursor: pointer;
+        list-style: none;
+        padding: 14px 16px;
+        font-size: 14px;
+        font-weight: 800;
+        user-select: none;
+      }
+
+      .adminCollapseSummary::-webkit-details-marker{
+        display:none;
+      }
+
+      .adminCollapseSummary::after{
+        content: "▾";
+        float: right;
+        opacity: .8;
+      }
+
+      .adminCollapse:not([open]) .adminCollapseSummary::after{
+        content: "▸";
+      }
+
+      .adminCollapse .adminSettingsGrid{
+        padding: 0 14px 14px 14px;
+      }
+
+.adminHint{
+        margin-top:8px;
+        color: rgba(255,255,255,.68);
+        font-size:12px;
+        line-height:1.45;
+      }
+
+      code{
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+    
+.admin-section input[type="text"],
+.admin-section input[type="password"]{
+  background:#0b0f14;
+  color:var(--text);
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:10px;
+  padding:10px 12px;
+  width:100%;
+}
+
+.admin-section input:focus{
+  outline:none;
+  border-color:rgba(140,180,255,.6);
+  box-shadow:0 0 0 2px rgba(140,180,255,.25);
+}
+
+
+      .secretRow{
+        display:flex;
+        gap:10px;
+        align-items:center;
+      }
+
+      .secretRow input{
+        flex:1 1 auto;
+        min-width:0;
+      }
+
+      .revealBtn{
+        flex:0 0 auto;
+        min-width:88px;
+      }
+
+
+      #discover-providers .adminField input,
+      #discover-providers .adminField .secretRow input{
+        background: rgba(0,0,0,.28) !important;
+        color: var(--text) !important;
+        border: 1px solid rgba(255,255,255,.14) !important;
+        border-radius: 14px !important;
+        padding: 12px 14px !important;
+        box-shadow: none !important;
+      }
+
+      #discover-providers .adminField input::placeholder,
+      #discover-providers .adminField .secretRow input::placeholder{
+        color: rgba(255,255,255,.42) !important;
+      }
+
+      #discover-providers .adminField input:focus,
+      #discover-providers .adminField .secretRow input:focus{
+        outline: none !important;
+        border-color: rgba(124,92,255,.55) !important;
+        box-shadow: 0 0 0 3px rgba(124,92,255,.16) !important;
+      }
+
+</style>
+  </head>
+
+  <body>
+    <div class="wrap">
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo"><img src="/favicon.svg" alt="QueueDeck" /></div>
+          <div>
+            <h1>QueueDeck Preferences</h1>
+            <div class="sub">Personalize your QueueDeck homepage layout, limits, and behavior.</div>
+          </div>
+        </div>
+
+        <div class="top-links">            {% set username = (me.username if me and me.username else 'User') %}
+          {% set initial = (username[:1] | upper) %}
+          <div class="userMenu" id="userMenu">
+            <button class="userMenuBtn" id="userMenuBtn" type="button" aria-haspopup="menu" aria-expanded="false">
+              <span class="userAvatar">{{ initial }}</span>
+              <span class="userMenuName">{{ username }}</span>
+              <span class="userMenuChevron">▾</span>
+            </button>
+
+            <div class="userDropdown" id="userDropdown" role="menu">
+              <div class="userDropdownHead">
+                <div class="userDropdownTitle">{{ username }}</div>
+                <div class="userDropdownSub">QueueDeck user</div>
+              </div>
+              <a href="/">Dashboard</a>
+              <a href="/settings">Preferences</a>
+              <a href="/stats">Statistics</a>
+              <a href="/hidden">Hidden Items</a>
+              {% if me and me.get("is_admin") %}<a href="/admin/settings">Admin Settings</a>{% endif %}
+            <a class="danger" href="/logout">Log out</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Preferences</div>
+        <div class="section-sub">This page controls homepage behavior and carousel limits only.</div>
+        <div class="accent-line"></div>
+
+        <div class="statusRow">
+          <button class="btn" id="saveBtn" type="button">Save Preferences</button>
+          <button class="btn secondary" id="reloadBtn" type="button">Reload</button>
+          <div class="status" id="statusBox">Loading settings...</div>
+        </div>
+
+        <div class="prefsNote">
+          Service connections, Jellyfin users/libraries, Seerr request user, and API keys are now managed in the admin <b>Connections</b> page for each QueueDeck user.
+        </div>
+
+        <div class="limitsWrap">
+          <div class="section-title">Account Security</div>
+          <div class="section-sub">Change your QueueDeck password.</div>
+          <div class="accent-line"></div>
+
+          <div class="grid">
+            <div class="field">
+              <label for="current_password">Current Password</label>
+              <div class="secretRow">
+                <input id="current_password" type="password" autocomplete="current-password" />
+                <button class="btn secondary" type="button" data-reveal-target="current_password">Show</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="new_password">New Password</label>
+              <div class="secretRow">
+                <input id="new_password" type="password" autocomplete="new-password" />
+                <button class="btn secondary" type="button" data-reveal-target="new_password">Show</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="confirm_password">Confirm New Password</label>
+              <div class="secretRow">
+                <input id="confirm_password" type="password" autocomplete="new-password" />
+                <button class="btn secondary" type="button" data-reveal-target="confirm_password">Show</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="statusRow" style="margin-top:12px;">
+            <button class="btn" id="changePasswordBtn" type="button">Change Password</button>
+            <div class="status" id="pwStatus">Enter your current password and a new password.</div>
+          </div>
+        </div>
+
+        <div class="limitsWrap">
+          <div class="section-title">Carousel Limits</div>
+          <div class="section-sub">Higher numbers can slow the page. Safe range is 1–120. Saved with the main <b>Save Preferences</b> button above.</div>
+          <div class="accent-line"></div>
+
+          <div class="grid">
+            <div class="field">
+              <div class="sliderHead">
+                <label for="limit_continue_watching">Continue Watching</label>
+                <div class="sliderValue" id="val_limit_continue_watching">12</div>
+              </div>
+              <div class="rangeWrap">
+                <input id="limit_continue_watching" type="range" min="1" max="120" step="1" value="12" />
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="limit_nextup_tv">Next Up — TV</label>
+                <div class="sliderValue" id="val_limit_nextup_tv">60</div>
+              </div>
+              <div class="rangeWrap">
+                <input id="limit_nextup_tv" type="range" min="1" max="120" step="1" value="60" />
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="limit_nextup_anime">Next Up — Anime</label>
+                <div class="sliderValue" id="val_limit_nextup_anime">60</div>
+              </div>
+              <div class="rangeWrap">
+                <input id="limit_nextup_anime" type="range" min="1" max="120" step="1" value="60" />
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="limit_series_remaining">Series Remaining</label>
+                <div class="sliderValue" id="val_limit_series_remaining">30</div>
+              </div>
+              <div class="rangeWrap">
+                <input id="limit_series_remaining" type="range" min="1" max="120" step="1" value="30" />
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="limit_latest_unwatched_tv">Latest Unwatched Series</label>
+                <div class="sliderValue" id="val_limit_latest_unwatched_tv">10</div>
+              </div>
+              <div class="rangeWrap">
+                <input id="limit_latest_unwatched_tv" type="range" min="1" max="120" step="1" value="10" />
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="limit_latest_unwatched_anime">Latest Unwatched Anime</label>
+                <div class="sliderValue" id="val_limit_latest_unwatched_anime">10</div>
+              </div>
+              <div class="rangeWrap">
+                <input id="limit_latest_unwatched_anime" type="range" min="1" max="120" step="1" value="10" />
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="limit_radarr_recent">Latest Unwatched Movies</label>
+                <div class="sliderValue" id="val_limit_radarr_recent">10</div>
+              </div>
+              <div class="rangeWrap">
+                <input id="limit_radarr_recent" type="range" min="1" max="120" step="1" value="10" />
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="limit_radarr_upcoming">Radarr — Upcoming</label>
+                <div class="sliderValue" id="val_limit_radarr_upcoming">15</div>
+              </div>
+              <div class="rangeWrap">
+                <input id="limit_radarr_upcoming" type="range" min="1" max="120" step="1" value="15" />
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="limit_radarr_missing">Radarr — Missing</label>
+                <div class="sliderValue" id="val_limit_radarr_missing">15</div>
+              </div>
+              <div class="rangeWrap">
+                <input id="limit_radarr_missing" type="range" min="1" max="120" step="1" value="15" />
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="limit_sonarr_upcoming">Sonarr — Upcoming</label>
+                <div class="sliderValue" id="val_limit_sonarr_upcoming">60</div>
+              </div>
+              <div class="rangeWrap">
+                <input id="limit_sonarr_upcoming" type="range" min="1" max="120" step="1" value="60" />
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="limit_sonarr_missing">Sonarr — Missing</label>
+                <div class="sliderValue" id="val_limit_sonarr_missing">60</div>
+              </div>
+              <div class="rangeWrap">
+                <input id="limit_sonarr_missing" type="range" min="1" max="120" step="1" value="60" />
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="limit_download_activity">Download Activity</label>
+                <div class="sliderValue" id="val_limit_download_activity">12</div>
+              </div>
+              <div class="rangeWrap">
+                <input id="limit_download_activity" type="range" min="1" max="120" step="1" value="12" />
+              </div>
+
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="limit_seerr_requests">Your Recent Requests</label>
+                <div class="sliderValue" id="val_limit_seerr_requests">10</div>
+              </div>
+              <div class="rangeWrap">
+                <input id="limit_seerr_requests" type="range" min="1" max="40" step="1" value="10" />
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="sliderHead">
+                <label for="limit_discover_results">Discover Results Per Page</label>
+                <div class="sliderValue" id="val_limit_discover_results">24</div>
+              </div>
+              <div class="rangeWrap">
+                <input id="limit_discover_results" type="range" min="6" max="48" step="1" value="24" />
+              </div>
+            </div>
+          </div>
+
+
+          <div class="miniCard">
+            <div class="miniCardTitle">Homepage Layout</div>
+            <div class="miniCardSub">Drag homepage sections into the order you want, and uncheck anything you want hidden from your QueueDeck homepage.</div>
+
+            <div class="orderList" id="homepageOrderList">
+              <div class="orderItem" data-order-item="sec-cw" data-section-toggle="show_sec_cw" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Continue Watching</div>
+                <label style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                  <input id="show_sec_cw" type="checkbox" />
+                  <span>Show</span>
+                </label>
+              </div>
+
+              <div class="orderItem" data-order-item="sec-nextup-tv" data-section-toggle="show_sec_nextup_tv" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Next Up — Television</div>
+                <label style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                  <input id="show_sec_nextup_tv" type="checkbox" />
+                  <span>Show</span>
+                </label>
+              </div>
+
+              <div class="orderItem" data-order-item="sec-sonarr" data-section-toggle="show_sec_sonarr" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Sonarr Upcoming / Missing</div>
+                <label style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                  <input id="show_sec_sonarr" type="checkbox" />
+                  <span>Show</span>
+                </label>
+              </div>
+
+              <div class="orderItem" data-order-item="sec-nextup-anime" data-section-toggle="show_sec_nextup_anime" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Next Up — Anime</div>
+                <label style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                  <input id="show_sec_nextup_anime" type="checkbox" />
+                  <span>Show</span>
+                </label>
+              </div>
+
+              <div class="orderItem" data-order-item="sec-rem" data-section-toggle="show_sec_rem" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Series Remaining</div>
+                <label style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                  <input id="show_sec_rem" type="checkbox" />
+                  <span>Show</span>
+                </label>
+              </div>
+
+              <div class="orderItem" data-order-item="sec-latest-tv" data-section-toggle="show_sec_latest_tv" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Latest Unwatched Series</div>
+                <label style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                  <input id="show_sec_latest_tv" type="checkbox" />
+                  <span>Show</span>
+                </label>
+              </div>
+
+              <div class="orderItem" data-order-item="sec-latest-anime" data-section-toggle="show_sec_latest_anime" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Latest Unwatched Anime</div>
+                <label style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                  <input id="show_sec_latest_anime" type="checkbox" />
+                  <span>Show</span>
+                </label>
+              </div>
+
+              <div class="orderItem" data-order-item="sec-radarr-recent" data-section-toggle="show_sec_radarr_recent" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Latest Unwatched Movies</div>
+                <label style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                  <input id="show_sec_radarr_recent" type="checkbox" />
+                  <span>Show</span>
+                </label>
+              </div>
+
+              <div class="orderItem" data-order-item="sec-radarr-missing" data-section-toggle="show_sec_radarr_missing" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Radarr Missing</div>
+                <label style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                  <input id="show_sec_radarr_missing" type="checkbox" />
+                  <span>Show</span>
+                </label>
+              </div>
+
+              <div class="orderItem" data-order-item="sec-downloads" data-section-toggle="show_sec_downloads" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Download Activity</div>
+                <label style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                  <input id="show_sec_downloads" type="checkbox" />
+                  <span>Show</span>
+                </label>
+              </div>
+
+              <div class="orderItem" data-order-item="sec-my-requests" data-section-toggle="show_sec_my_requests" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Your Recent Requests</div>
+                <label style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+                  <input id="show_sec_my_requests" type="checkbox" />
+                  <span>Show</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="toggleHint">Only sections available for your configured services and libraries are shown here.</div>
+          </div>
+
+          <div class="miniCard">
+            <div class="miniCardTitle">RSS Feeds</div>
+            <div class="miniCardSub">Use these personal RSS feeds in FreshRSS or any feed reader. Keep the URLs private because they include your feed token.</div>
+
+            <div id="rssFeedsList" style="display:grid; gap:10px; margin-top:12px;"></div>
+
+            <div class="statusRow" style="margin-top:12px; margin-bottom:0;">
+              <button class="btn secondary" id="regenRssTokenBtn" type="button">Regenerate Feed Token</button>
+              <div class="status" id="rssStatus">Loading RSS feeds...</div>
+            </div>
+          </div>
+
+
+          <div class="miniCard">
+            <div class="miniCard">
+            <div class="miniCardTitle">Series Hide Behavior</div>
+            <div class="miniCardSub">Optional behavior for how hidden series affect future Next Up items.</div>
+
+            <div class="toggleGrid">
+              <div class="toggleItem">
+                <input id="hide_future_nextup_for_hidden_series" type="checkbox" />
+                <label for="hide_future_nextup_for_hidden_series">Hidden series also hide future Next Up episodes</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="miniCardTitle">Stats Layout</div>
+            <div class="miniCardSub">Drag stats sections into the order you want them to appear on the Statistics page, and uncheck anything you want hidden.</div>
+
+            <div class="orderList" id="statsLayoutList">
+              <div class="orderItem" data-stats-item="overview" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Overview</div>
+                <label style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+                  <input type="checkbox" data-stats-visible="overview" checked />
+                  <span>Show</span>
+                </label>
+              </div>
+
+              <div class="orderItem" data-stats-item="watch_window" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Watch Window</div>
+                <label style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+                  <input type="checkbox" data-stats-visible="watch_window" checked />
+                  <span>Show</span>
+                </label>
+              </div>
+
+              <div class="orderItem" data-stats-item="watch_activity" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Watch Activity</div>
+                <label style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+                  <input type="checkbox" data-stats-visible="watch_activity" checked />
+                  <span>Show</span>
+                </label>
+              </div>
+
+              <div class="orderItem" data-stats-item="top_shows" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Top Watched Shows</div>
+                <label style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+                  <input type="checkbox" data-stats-visible="top_shows" checked />
+                  <span>Show</span>
+                </label>
+              </div>
+
+              <div class="orderItem" data-stats-item="top_genres" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Top Genres</div>
+                <label style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+                  <input type="checkbox" data-stats-visible="top_genres" checked />
+                  <span>Show</span>
+                </label>
+              </div>
+
+              <div class="orderItem" data-stats-item="top_anime" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Top Watched Anime</div>
+                <label style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+                  <input type="checkbox" data-stats-visible="top_anime" checked />
+                  <span>Show</span>
+                </label>
+              </div>
+
+              <div class="orderItem" data-stats-item="queue_health" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Queue Health</div>
+                <label style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+                  <input type="checkbox" data-stats-visible="queue_health" checked />
+                  <span>Show</span>
+                </label>
+              </div>
+
+              <div class="orderItem" data-stats-item="current_activity" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Current Activity</div>
+                <label style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+                  <input type="checkbox" data-stats-visible="current_activity" checked />
+                  <span>Show</span>
+                </label>
+              </div>
+
+              <div class="orderItem" data-stats-item="watch_split" draggable="true">
+                <div class="orderGrip">☰</div>
+                <div class="orderText">Watch Split</div>
+                <label style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+                  <input type="checkbox" data-stats-visible="watch_split" checked />
+                  <span>Show</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="fineprint">
+            Tip: once this is saved, you can remove most values from <code>docker-compose.yml</code> and keep only DB path / secret stuff.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <input id="stats_layout_order" type="hidden" value="" />
+    <input id="stats_layout_hidden" type="hidden" value="" />
+
+    <script>
+      const fields = [
+        "limit_continue_watching",
+        "limit_nextup_tv",
+        "limit_nextup_anime",
+        "limit_series_remaining",
+        "limit_latest_unwatched_tv",
+        "limit_latest_unwatched_anime",
+        "limit_radarr_recent",
+        "limit_radarr_upcoming",
+        "limit_radarr_missing",
+        "limit_sonarr_upcoming",
+        "limit_sonarr_missing",
+        "limit_download_activity",
+        "limit_seerr_requests",
+        "limit_discover_results",
+        "stats_layout_order",
+        "stats_layout_hidden",
+        "tmdb_bearer_token",
+        "tmdb_api_key",
+        "trakt_client_id",
+        "letterboxd_rss_url",
+        "letterboxd_rss_urls",
+        "discover_title_overrides",
+        "discover_weight_tmdb",
+        "discover_weight_tmdb_popular",
+        "discover_weight_trakt",
+        "discover_weight_trakt_popular",
+        "discover_weight_letterboxd",
+        "discover_weight_tvmaze",
+        "discover_weight_anilist",
+        "discover_bonus_2",
+        "discover_bonus_3",
+        "discover_bonus_4",
+        "discover_bonus_5",
+        "discover_bonus_6",
+        "discover_hot_threshold",
+        "discover_enrich_scale",
+        "discover_weight_tmdb_popular",
+        "discover_weight_trakt",
+        "discover_weight_trakt_popular",
+        "discover_weight_letterboxd",
+        "discover_weight_tvmaze",
+        "discover_weight_anilist",
+        "discover_bonus_2",
+        "discover_bonus_3",
+        "discover_bonus_4",
+        "discover_bonus_5",
+        "discover_bonus_6",
+        "discover_hot_threshold",
+        "discover_enrich_scale",
+        "discover_weight_trakt",
+        "discover_bonus_2",
+        "discover_bonus_3",
+        "discover_bonus_4",
+        "discover_hot_threshold"
+      ];
+
+      const checkboxFields = [
+        "show_sec_cw",
+        "show_sec_nextup_tv",
+        "show_sec_sonarr",
+        "show_sec_nextup_anime",
+        "show_sec_rem",
+        "show_sec_latest_tv",
+        "show_sec_latest_anime",
+        "show_sec_radarr_recent",
+        "show_sec_radarr_missing",
+        "show_sec_downloads",
+        "show_sec_my_requests",
+        "hide_future_nextup_for_hidden_series"
+      ];
+      const statusBox = document.getElementById("statusBox");
+      const discoverEnrichScale = document.getElementById("discover_enrich_scale");
+      const discoverEnrichScaleValue = document.getElementById("discover_enrich_scale_value");
+
+      function syncDiscoverEnrichScaleLabel(){
+        if (!discoverEnrichScale || !discoverEnrichScaleValue) return;
+        const v = String(discoverEnrichScale.value || "100").trim() || "100";
+        discoverEnrichScaleValue.textContent = `${v}%`;
+      }
+
+      function setStatus(text, kind){
+        statusBox.className = "status" + (kind ? (" " + kind) : "");
+        statusBox.textContent = text;
+      }
+
+      function resetDiscoverDefaults(){
+        const defaults = {
+          discover_weight_tmdb: "1.0",
+          discover_weight_tmdb_popular: "0.95",
+          discover_weight_trakt: "1.0",
+          discover_weight_trakt_popular: "0.90",
+          discover_weight_letterboxd: "0.58",
+          discover_weight_tvmaze: "0.80",
+          discover_weight_anilist: "0.92",
+          discover_bonus_2: "0.08",
+          discover_bonus_3: "0.18",
+          discover_bonus_4: "0.28",
+          discover_bonus_5: "0.34",
+          discover_bonus_6: "0.40",
+          discover_hot_threshold: "0.72",
+          discover_enrich_scale: "100"
+        };
+
+        for (const [key, value] of Object.entries(defaults)){
+          const el = document.getElementById(key);
+          if (!el) continue;
+          el.value = value;
+          paintRange(el);
+        }
+
+        syncDiscoverEnrichScaleLabel();
+        setStatus("✅ Discover defaults restored in the form. Click Save Preferences to keep them.", "ok");
+      }
+
+      const rssFeedsList = document.getElementById("rssFeedsList");
+      const rssStatus = document.getElementById("rssStatus");
+      const regenRssTokenBtn = document.getElementById("regenRssTokenBtn");
+
+      function setRssStatus(text, kind=""){
+        if (!rssStatus) return;
+        rssStatus.className = "status" + (kind ? (" " + kind) : "");
+        rssStatus.textContent = text;
+      }
+
+      async function qdCopyText(val){
+        const s = String(val || "");
+        try{
+          if (navigator.clipboard && navigator.clipboard.writeText){
+            await navigator.clipboard.writeText(s);
+            return true;
+          }
+        }catch(_){}
+        try{
+          const ta = document.createElement("textarea");
+          ta.value = s;
+          ta.setAttribute("readonly", "readonly");
+          ta.style.position = "fixed";
+          ta.style.left = "-9999px";
+          document.body.appendChild(ta);
+          ta.select();
+          const ok = document.execCommand("copy");
+          document.body.removeChild(ta);
+          return !!ok;
+        }catch(_){
+          return false;
+        }
+      }
+
+      function renderRssFeeds(data){
+        if (!rssFeedsList) return;
+
+        const feeds = Array.isArray(data?.feeds) ? data.feeds : [];
+        if (!feeds.length){
+          rssFeedsList.innerHTML = `
+            <div class="field" style="min-height:auto;">
+              <div style="font-weight:800; margin-bottom:4px;">No RSS feeds available</div>
+              <div style="color:var(--muted); font-size:13px; line-height:1.4;">
+                RSS feeds appear here when the required services are configured for your account.
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        rssFeedsList.innerHTML = feeds.map(feed => `
+          <div class="field" style="min-height:auto; padding:12px 14px;">
+            <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap;">
+              <div style="min-width:0; flex:1 1 320px;">
+                <div style="font-weight:900; margin-bottom:6px;">${feed.label || feed.key || "RSS Feed"}</div>
+                <div style="font-size:12px; color:var(--muted); line-height:1.35; word-break:break-all;">${feed.url || ""}</div>
+              </div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn secondary" type="button" data-rss-copy="${feed.url || ""}">Copy URL</button>
+                <a class="btn secondary" href="${feed.url || "#"}" target="_blank" rel="noopener">Open</a>
+              </div>
+            </div>
+          </div>
+        `).join("");
+
+        rssFeedsList.querySelectorAll("[data-rss-copy]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const url = btn.getAttribute("data-rss-copy") || "";
+            const ok = await qdCopyText(url);
+            setRssStatus(ok ? "RSS feed URL copied." : "Copy failed. Copy the URL manually.", ok ? "ok" : "bad");
+          });
+        });
+      }
+
+      async function loadRssFeeds(){
+        setRssStatus("Loading RSS feeds...");
+        try{
+          const r = await fetch("/settings/rss-info", { cache: "no-store" });
+          const data = await r.json().catch(() => ({}));
+          if (!r.ok || !data.ok){
+            throw new Error(data.error || ("HTTP " + r.status));
+          }
+          renderRssFeeds(data);
+          setRssStatus("RSS feeds ready.", "ok");
+        }catch(e){
+          console.error(e);
+          if (rssFeedsList){
+            rssFeedsList.innerHTML = "";
+          }
+          setRssStatus("Failed to load RSS feeds: " + (e.message || e), "bad");
+        }
+      }
+
+      async function regenerateRssToken(){
+        setRssStatus("Regenerating RSS token...");
+        try{
+          const r = await fetch("/settings/rss-token/regenerate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+          });
+          const data = await r.json().catch(() => ({}));
+          if (!r.ok || !data.ok){
+            throw new Error(data.error || ("HTTP " + r.status));
+          }
+          await loadRssFeeds();
+          setRssStatus("RSS token regenerated. Update any feed reader subscriptions with the new URLs.", "ok");
+        }catch(e){
+          console.error(e);
+          setRssStatus("Failed to regenerate RSS token: " + (e.message || e), "bad");
+        }
+      }
+
+      async function clearDiscoverCache(){
+        setStatus("Clearing Discover cache...", "");
+        try{
+          const r = await fetch("/api/discover/clear-cache", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+          });
+          const data = await r.json().catch(() => ({}));
+          if (!r.ok || !data.ok){
+            throw new Error(data.error || ("HTTP " + r.status));
+          }
+          setStatus("✅ Discover cache cleared. The next Discover load will rebuild fresh results.", "ok");
+        }catch(e){
+          console.error(e);
+          setStatus("Failed to clear Discover cache: " + e.message, "bad");
+        }
+      }
+
+      function paintRange(el){
+        if (!el) return;
+        const min = Number(el.min || 0);
+        const max = Number(el.max || 100);
+        const val = Number(el.value || min);
+        const pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
+
+        el.style.setProperty(
+          "--range-bg",
+          `linear-gradient(90deg,
+            rgba(124,92,255,.95) 0%,
+            rgba(78,161,255,.92) ${pct}%,
+            rgba(255,255,255,.16) ${pct}%,
+            rgba(255,255,255,.16) 100%)`
+        );
+
+        const pill = document.getElementById("val_" + el.id);
+        if (pill) pill.textContent = String(val);
+      }
+
+      function paintAllRanges(){
+        fields.forEach((k) => {
+          const el = document.getElementById(k);
+          if (!el) return;
+          paintRange(el);
+        });
+      }
+
+      const letterboxdFeedsField = document.getElementById("letterboxd_rss_urls");
+      const letterboxdFeedsEditor = document.getElementById("letterboxdFeedsEditor");
+      const addLetterboxdFeedBtn = document.getElementById("addLetterboxdFeed");
+
+      function qdEscAttr(v){
+        return String(v ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/"/g, "&quot;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      function parseLetterboxdFeeds(raw){
+        raw = String(raw || "").replace(/\r\n/g, "\n").trim();
+        if (!raw) return [];
+
+        return raw
+          .split("\n")
+          .map(line => String(line || "").trim())
+          .filter(Boolean)
+          .map(line => {
+            const parts = line.split("|");
+            if (parts.length >= 2) {
+              const label = String(parts.shift() || "").trim();
+              const url = String(parts.join("|") || "").trim();
+              return { label, url };
+            }
+            return { label: "", url: String(line || "").trim() };
+          });
+      }
+
+      function serializeLetterboxdFeeds(rows){
+        return (rows || [])
+          .map(r => ({
+            label: String(r.label || "").trim(),
+            url: String(r.url || "").trim(),
+          }))
+          .filter(r => r.label || r.url)
+          .map(r => r.label ? `${r.label} | ${r.url}` : r.url)
+          .join("\n");
+      }
+
+      function collectLetterboxdFeedRows(){
+        if (!letterboxdFeedsEditor) return [];
+        return [...letterboxdFeedsEditor.querySelectorAll(".feedRow")].map(row => ({
+          label: row.querySelector('[data-feed-field="label"]')?.value || "",
+          url: row.querySelector('[data-feed-field="url"]')?.value || "",
+        }));
+      }
+
+      function syncLetterboxdFeedsHiddenField(){
+        if (!letterboxdFeedsField) return;
+        letterboxdFeedsField.value = serializeLetterboxdFeeds(collectLetterboxdFeedRows());
+      }
+
+      function renderLetterboxdFeedsEmptyState(){
+        if (!letterboxdFeedsEditor) return;
+        const rows = letterboxdFeedsEditor.querySelectorAll(".feedRow");
+        const existing = letterboxdFeedsEditor.querySelector(".feedEmpty");
+
+        if (!rows.length){
+          if (!existing){
+            const empty = document.createElement("div");
+            empty.className = "feedEmpty";
+            empty.textContent = "No Letterboxd feeds added yet.";
+            letterboxdFeedsEditor.appendChild(empty);
+          }
+        } else if (existing){
+          existing.remove();
+        }
+      }
+
+      function makeLetterboxdFeedRow(feed = {}){
+        const row = document.createElement("div");
+        row.className = "feedRow";
+        row.innerHTML = `
+          <div class="feedCell">
+            <input type="text" data-feed-field="label" placeholder="Kurstboy" value="${qdEscAttr(feed.label || "")}">
+          </div>
+          <div class="feedCell">
+            <input type="text" data-feed-field="url" placeholder="https://letterboxd.com/name/rss/" value="${qdEscAttr(feed.url || "")}">
+          </div>
+          <div class="feedCell">
+            <button type="button" class="feedDelete" title="Remove feed">×</button>
+          </div>
+        `;
+
+        row.querySelectorAll("input").forEach(input => {
+          input.addEventListener("input", syncLetterboxdFeedsHiddenField);
+        });
+
+        row.querySelector(".feedDelete").addEventListener("click", () => {
+          row.remove();
+          renderLetterboxdFeedsEmptyState();
+          syncLetterboxdFeedsHiddenField();
+        });
+
+        return row;
+      }
+
+      function renderLetterboxdFeedsEditor(){
+        if (!letterboxdFeedsEditor || !letterboxdFeedsField) return;
+
+        const rows = parseLetterboxdFeeds(letterboxdFeedsField.value || "");
+        letterboxdFeedsEditor.innerHTML = `
+          <div class="feedHeader">
+            <div>Label</div>
+            <div>RSS URL</div>
+            <div></div>
+          </div>
+        `;
+
+        rows.forEach(feed => {
+          letterboxdFeedsEditor.appendChild(makeLetterboxdFeedRow(feed));
+        });
+
+        renderLetterboxdFeedsEmptyState();
+        syncLetterboxdFeedsHiddenField();
+      }
+
+      function addLetterboxdFeedRow(feed = {}){
+        if (!letterboxdFeedsEditor) return;
+        const empty = letterboxdFeedsEditor.querySelector(".feedEmpty");
+        if (empty) empty.remove();
+        letterboxdFeedsEditor.appendChild(makeLetterboxdFeedRow(feed));
+        syncLetterboxdFeedsHiddenField();
+      }
+
+      if (addLetterboxdFeedBtn){
+        addLetterboxdFeedBtn.addEventListener("click", () => {
+          addLetterboxdFeedRow({ label: "", url: "" });
+        });
+      }
+
+      function getPayload(){
+        syncLetterboxdFeedsHiddenField();
+        const payload = {};
+        for (const k of fields){
+          const el = document.getElementById(k);
+          if (k === "letterboxd_rss_urls") {
+          payload[k] = el ? String(el.value || "").replace(/\r\n/g,"\n").trim() : "";
+        } else {
+          payload[k] = el ? String(el.value || "").trim() : "";
+        }
+        }
+        for (const k of checkboxFields){
+          const el = document.getElementById(k);
+          payload[k] = (el && el.checked) ? "1" : "";
+        }
+        payload.homepage_section_order = JSON.stringify(readHomepageOrder());
+        return payload;
+      }
+
+      function syncHomepageSectionToggleVisibility(settings){
+        const hasJellyfin = !!(
+          String(settings?.jellyfin_url || "").trim() &&
+          String(settings?.jellyfin_api_key || "").trim() &&
+          String(settings?.jellyfin_user || "").trim()
+        );
+
+        const hasSonarr = !!(
+          String(settings?.sonarr_url || "").trim() &&
+          String(settings?.sonarr_api_key || "").trim()
+        );
+
+        const hasRadarr = !!(
+          String(settings?.radarr_url || "").trim() &&
+          String(settings?.radarr_api_key || "").trim()
+        );
+
+        const hasSeerr = !!(
+          String(settings?.seerr_url || "").trim() &&
+          String(settings?.seerr_api_key || "").trim()
+        );
+
+        const hasAnime = hasJellyfin && !!(
+          String(settings?.anime_path || settings?.anime_paths || settings?.animePath || "").trim()
+        );
+
+        const visibility = {
+          show_sec_cw: hasJellyfin,
+          show_sec_nextup_tv: hasJellyfin,
+          show_sec_sonarr: hasSonarr,
+          show_sec_nextup_anime: hasAnime,
+          show_sec_rem: hasJellyfin,
+          show_sec_latest_tv: hasJellyfin,
+          show_sec_latest_anime: hasAnime,
+          show_sec_radarr_recent: hasRadarr,
+          show_sec_radarr_missing: hasRadarr,
+          show_sec_downloads: (hasSonarr || hasRadarr),
+          show_sec_my_requests: hasSeerr,
+        };
+
+        const mapToOrderId = {
+          show_sec_cw: "sec-cw",
+          show_sec_nextup_tv: "sec-nextup-tv",
+          show_sec_sonarr: "sec-sonarr",
+          show_sec_nextup_anime: "sec-nextup-anime",
+          show_sec_rem: "sec-rem",
+          show_sec_latest_tv: "sec-latest-tv",
+          show_sec_latest_anime: "sec-latest-anime",
+          show_sec_radarr_recent: "sec-radarr-recent",
+          show_sec_radarr_missing: "sec-radarr-missing",
+          show_sec_downloads: "sec-downloads",
+          show_sec_my_requests: "sec-my-requests",
+        };
+
+        Object.entries(visibility).forEach(([key, on]) => {
+          const row = document.querySelector(`[data-section-toggle="${key}"]`);
+          if (row) row.style.display = on ? "" : "none";
+
+          const orderId = mapToOrderId[key];
+          const orderRow = orderId ? document.querySelector(`[data-order-item="${orderId}"]`) : null;
+          if (orderRow) orderRow.style.display = on ? "" : "none";
+        });
+
+        const list = getHomepageOrderListEl();
+        if (list){
+          Array.from(list.querySelectorAll(".orderItem")).forEach(el => {
+            const isHidden = el.style.display === "none";
+            el.draggable = !isHidden;
+          });
+        }
+      }
+
+      const homepageOrderDefault = [
+        "sec-cw",
+        "sec-nextup-tv",
+        "sec-sonarr",
+        "sec-nextup-anime",
+        "sec-rem",
+        "sec-latest-tv",
+        "sec-latest-anime",
+        "sec-radarr-recent",
+        "sec-radarr-missing",
+        "sec-downloads",
+        "sec-my-requests",
+      ];
+
+      function getHomepageOrderListEl(){
+        return document.getElementById("homepageOrderList");
+      }
+
+      function normalizeHomepageOrder(rawOrder){
+        const valid = new Set(homepageOrderDefault);
+        const out = [];
+        (Array.isArray(rawOrder) ? rawOrder : []).forEach(v => {
+          const s = String(v || "").trim();
+          if (valid.has(s) && !out.includes(s)) out.push(s);
+        });
+        homepageOrderDefault.forEach(v => {
+          if (!out.includes(v)) out.push(v);
+        });
+        return out;
+      }
+
+      function readHomepageOrder(){
+        const list = getHomepageOrderListEl();
+        if (!list) return [...homepageOrderDefault];
+        return Array.from(list.querySelectorAll(".orderItem"))
+          .map(el => String(el.getAttribute("data-order-item") || "").trim())
+          .filter(Boolean);
+      }
+
+      function applyHomepageOrder(order){
+        const list = getHomepageOrderListEl();
+        if (!list) return;
+        const normalized = normalizeHomepageOrder(order);
+        const byId = {};
+        list.querySelectorAll(".orderItem").forEach(el => {
+          byId[String(el.getAttribute("data-order-item") || "").trim()] = el;
+        });
+        normalized.forEach(id => {
+          if (byId[id]) list.appendChild(byId[id]);
+        });
+      }
+
+      function initHomepageOrderDragDrop(){
+        const list = getHomepageOrderListEl();
+        if (!list || list.dataset.dragInit === "1") return;
+        list.dataset.dragInit = "1";
+
+        let dragEl = null;
+
+        list.addEventListener("dragstart", (e) => {
+          const item = e.target.closest(".orderItem");
+          if (!item) return;
+          dragEl = item;
+          item.classList.add("dragging");
+          try{
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("text/plain", item.getAttribute("data-order-item") || "");
+          }catch(_){}
+        });
+
+        list.addEventListener("dragend", () => {
+          list.querySelectorAll(".orderItem.dragging").forEach(el => el.classList.remove("dragging"));
+          dragEl = null;
+        });
+
+        list.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          const after = getDragAfterElement(list, e.clientY);
+          if (!dragEl) return;
+          if (!after){
+            list.appendChild(dragEl);
+          } else if (after !== dragEl){
+            list.insertBefore(dragEl, after);
+          }
+        });
+      }
+
+      function getDragAfterElement(container, y){
+        const els = [...container.querySelectorAll(".orderItem:not(.dragging)")];
+        let closest = { offset: Number.NEGATIVE_INFINITY, el: null };
+
+        els.forEach(el => {
+          const box = el.getBoundingClientRect();
+          const offset = y - box.top - box.height / 2;
+          if (offset < 0 && offset > closest.offset){
+            closest = { offset, el };
+          }
+        });
+
+        return closest.el;
+      }
+
+      const statsLayoutDefault = [
+        "overview",
+        "watch_window",
+        "watch_activity",
+        "top_shows",
+        "top_genres",
+        "top_anime",
+        "queue_health",
+        "current_activity",
+        "watch_split"
+      ];
+
+      function getStatsLayoutListEl(){
+        return document.getElementById("statsLayoutList");
+      }
+
+      function normalizeStatsLayout(rawOrder){
+        const valid = new Set(statsLayoutDefault);
+        const out = [];
+        (Array.isArray(rawOrder) ? rawOrder : []).forEach(v => {
+          const s = String(v || "").trim();
+          if (valid.has(s) && !out.includes(s)) out.push(s);
+        });
+        statsLayoutDefault.forEach(v => {
+          if (!out.includes(v)) out.push(v);
+        });
+        return out;
+      }
+
+      function readStatsLayoutOrder(){
+        const list = getStatsLayoutListEl();
+        if (!list) return [...statsLayoutDefault];
+        return Array.from(list.querySelectorAll(".orderItem"))
+          .map(el => String(el.getAttribute("data-stats-item") || "").trim())
+          .filter(Boolean);
+      }
+
+      function applyStatsLayoutOrder(order){
+        const list = getStatsLayoutListEl();
+        if (!list) return;
+        const normalized = normalizeStatsLayout(order);
+        const byId = {};
+        list.querySelectorAll(".orderItem").forEach(el => {
+          byId[String(el.getAttribute("data-stats-item") || "").trim()] = el;
+        });
+        normalized.forEach(id => {
+          if (byId[id]) list.appendChild(byId[id]);
+        });
+        syncStatsLayoutInputs();
+      }
+
+      function applyStatsHidden(hiddenList){
+        const hidden = new Set(Array.isArray(hiddenList) ? hiddenList : []);
+        document.querySelectorAll('[data-stats-visible]').forEach(cb => {
+          const id = String(cb.getAttribute('data-stats-visible') || '').trim();
+          cb.checked = !hidden.has(id);
+        });
+        syncStatsLayoutInputs();
+      }
+
+      function syncStatsLayoutInputs(){
+        const orderInput = document.getElementById("stats_layout_order");
+        const hiddenInput = document.getElementById("stats_layout_hidden");
+        if (orderInput){
+          orderInput.value = readStatsLayoutOrder().join(",");
+        }
+        if (hiddenInput){
+          const hidden = Array.from(document.querySelectorAll('[data-stats-visible]'))
+            .filter(cb => !cb.checked)
+            .map(cb => String(cb.getAttribute('data-stats-visible') || '').trim())
+            .filter(Boolean);
+          hiddenInput.value = hidden.join(",");
+        }
+      }
+
+      function initStatsLayout(){
+        const list = getStatsLayoutListEl();
+        if (!list || list.dataset.dragInit === "1") return;
+        list.dataset.dragInit = "1";
+
+        let dragEl = null;
+
+        list.addEventListener("dragstart", (e) => {
+          const item = e.target.closest(".orderItem");
+          if (!item) return;
+          dragEl = item;
+          item.classList.add("dragging");
+          try{
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("text/plain", item.getAttribute("data-stats-item") || "");
+          }catch(_){}
+        });
+
+        list.addEventListener("dragend", () => {
+          list.querySelectorAll(".orderItem.dragging").forEach(el => el.classList.remove("dragging"));
+          dragEl = null;
+          syncStatsLayoutInputs();
+        });
+
+        list.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          const after = getDragAfterElement(list, e.clientY);
+          if (!dragEl) return;
+          if (!after){
+            list.appendChild(dragEl);
+          } else if (after !== dragEl){
+            list.insertBefore(dragEl, after);
+          }
+        });
+
+        list.querySelectorAll('[data-stats-visible]').forEach(cb => {
+          cb.addEventListener('change', syncStatsLayoutInputs);
+        });
+
+        syncStatsLayoutInputs();
+      }
+
+      async function loadSettings(){
+        setStatus("Loading settings...", "");
+        try{
+          const r = await fetch("/settings/api", { cache: "no-store" });
+          const data = await r.json();
+
+          for (const k of fields){
+            const el = document.getElementById(k);
+            if (!el) continue;
+            const fallback = el.getAttribute("value") || el.min || "1";
+            const raw = (data && data[k] !== undefined && data[k] !== null) ? String(data[k]) : "";
+            el.value = raw !== "" ? raw : fallback;
+          }
+
+          for (const k of checkboxFields){
+            const el = document.getElementById(k);
+            if (!el) continue;
+            const raw = (data && data[k] !== undefined && data[k] !== null) ? String(data[k]).trim().toLowerCase() : "";
+            el.checked = ["1","true","yes","on"].includes(raw);
+          }
+
+          renderLetterboxdFeedsEditor();
+          syncHomepageSectionToggleVisibility(data || {});
+
+          let savedOrder = [];
+          try{
+            savedOrder = JSON.parse(String(data.homepage_section_order || "[]"));
+          }catch(_){
+            savedOrder = [];
+          }
+          applyHomepageOrder(savedOrder);
+          syncHomepageSectionToggleVisibility(data || {});
+          applyHomepageOrder(savedOrder);
+          initHomepageOrderDragDrop();
+          initStatsLayout();
+
+          const statsOrderRaw = String(data.stats_layout_order || "").trim();
+          const statsOrder = statsOrderRaw
+            ? statsOrderRaw.split(",").map(s => s.trim()).filter(Boolean)
+            : [...statsLayoutDefault];
+          applyStatsLayoutOrder(statsOrder);
+
+          const statsHiddenRaw = String(data.stats_layout_hidden || "").trim();
+          const statsHidden = statsHiddenRaw
+            ? statsHiddenRaw.split(",").map(s => s.trim()).filter(Boolean)
+            : [];
+          applyStatsHidden(statsHidden);
+
+          paintAllRanges();
+          syncDiscoverEnrichScaleLabel();
+          setStatus("Loaded. Edit preferences and click Save.", "ok");
+        }catch(e){
+          console.error(e);
+          setStatus("Failed to load settings: " + e.message, "bad");
+        }
+      }
+
+      async function saveSettings(){
+        setStatus("Saving preferences...", "");
+        try{
+          const payload = getPayload();
+          const r = await fetch("/settings/api", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          const data = await r.json().catch(() => ({}));
+          if (!r.ok || !data.ok){
+            throw new Error(data.error || ("HTTP " + r.status));
+          }
+          paintAllRanges();
+          setStatus("Preferences saved.", "ok");
+        }catch(e){
+          console.error(e);
+          setStatus("Failed to save preferences: " + e.message, "bad");
+        }
+      }
+
+      for (const k of fields){
+        const el = document.getElementById(k);
+        if (!el) continue;
+        el.addEventListener("input", () => paintRange(el));
+        el.addEventListener("change", () => paintRange(el));
+      }
+
+      if (discoverEnrichScale){
+        discoverEnrichScale.addEventListener("input", syncDiscoverEnrichScaleLabel);
+        discoverEnrichScale.addEventListener("change", syncDiscoverEnrichScaleLabel);
+      }
+
+      document.getElementById("saveBtn").addEventListener("click", saveSettings);
+
+      loadRssFeeds();
+
+      if (regenRssTokenBtn){
+        regenRssTokenBtn.addEventListener("click", regenerateRssToken);
+      }
+
+      document.querySelectorAll("[data-reveal-target]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const targetId = btn.getAttribute("data-reveal-target");
+          const input = targetId ? document.getElementById(targetId) : null;
+          if (!input) return;
+
+          const isHidden = input.type === "password";
+          input.type = isHidden ? "text" : "password";
+          btn.textContent = isHidden ? "Hide" : "Show";
+        });
+      });
+      document.getElementById("reloadBtn").addEventListener("click", loadSettings);
+
+      const discoverResetDefaultsBtn = document.getElementById("discoverResetDefaultsBtn");
+      if (discoverResetDefaultsBtn){
+        discoverResetDefaultsBtn.addEventListener("click", () => {
+          if (!confirm("Reset Discover scoring weights, bonuses, HOT threshold, and enrichment to defaults?")) return;
+          resetDiscoverDefaults();
+        });
+      }
+
+      const discoverClearCacheBtn = document.getElementById("discoverClearCacheBtn");
+      if (discoverClearCacheBtn){
+        discoverClearCacheBtn.addEventListener("click", () => {
+          if (!confirm("Clear all cached Discover results and source fetches? The next Discover load will rebuild from scratch.")) return;
+          clearDiscoverCache();
+        });
+      }
+
+      const changePasswordBtn = document.getElementById("changePasswordBtn");
+      const pwStatus = document.getElementById("pwStatus");
+
+      async function changePassword(){
+        if (!changePasswordBtn || !pwStatus) return;
+
+        const currentPassword = document.getElementById("current_password")?.value || "";
+        const newPassword = document.getElementById("new_password")?.value || "";
+        const confirmPassword = document.getElementById("confirm_password")?.value || "";
+
+        pwStatus.className = "status";
+        pwStatus.textContent = "Changing password...";
+
+        try{
+          const r = await fetch("/settings/password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              current_password: currentPassword,
+              new_password: newPassword,
+              confirm_password: confirmPassword
+            })
+          });
+
+          const data = await r.json().catch(() => ({}));
+          if (!r.ok || !data.ok){
+            throw new Error(data.error || ("HTTP " + r.status));
+          }
+
+          document.getElementById("current_password").value = "";
+          document.getElementById("new_password").value = "";
+          document.getElementById("confirm_password").value = "";
+
+          pwStatus.className = "status ok";
+          pwStatus.textContent = "Password changed successfully.";
+        }catch(e){
+          pwStatus.className = "status bad";
+          pwStatus.textContent = "Failed to change password: " + (e.message || e);
+        }
+      }
+
+      if (changePasswordBtn){
+        changePasswordBtn.addEventListener("click", changePassword);
+      }
+
+      loadSettings();
+    
+    </script>
+    <script>
+    (function(){
+      const menu = document.getElementById("userMenu");
+      const btn = document.getElementById("userMenuBtn");
+      if (!menu || !btn) return;
+
+      function closeMenu(){
+        menu.classList.remove("open");
+        btn.setAttribute("aria-expanded", "false");
+      }
+
+      function openMenu(){
+        menu.classList.add("open");
+        btn.setAttribute("aria-expanded", "true");
+      }
+
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        menu.classList.contains("open") ? closeMenu() : openMenu();
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!menu.contains(e.target)) closeMenu();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeMenu();
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,3734 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QueueDeck</title>
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=5" />
+
+  <!-- iOS / Home Screen icon -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png?v=5" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="QueueDeck" />
+
+  <!-- Nice-to-have theme color -->
+  <meta name="theme-color" content="#0b0f14" />
+
+  <style>
+    :root{
+      --bg0:#07090c;
+      --bg1:#0b0f14;
+      --card: rgba(255,255,255,.055);
+      --card2: rgba(255,255,255,.075);
+      --border: rgba(255,255,255,.10);
+      --muted: rgba(255,255,255,.62);
+      --text: rgba(255,255,255,.92);
+      --shadow: 0 20px 60px rgba(0,0,0,.55);
+      --shadow2: 0 10px 30px rgba(0,0,0,.40);
+
+      --r: 20px;
+      --r2: 16px;
+
+      --accent1: #6aa3ff;
+      --accent2: #a855f7;
+      --accent3: #22c55e;
+
+      --max: 1400px;
+      --pad: 18px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+
+    html{
+      background: transparent;
+      overflow-x: clip;
+      position:relative;
+    }
+
+    body{
+      margin:0;
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Seg
+oe UI Emoji";
+      background:
+        radial-gradient(1200px 700px at 15% 0%, rgba(106,163,255,.16), transparent 55%),
+        radial-gradient(1000px 700px at 90% 30%, rgba(168,85,247,.16), transparent 60%),
+        radial-gradient(900px 700px at 40% 110%, rgba(34,197,94,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+    }
+
+    a{ color:inherit; text-decoration:none; }
+
+    /* Typography polish */
+    body{
+      font-family: ui-sans-serif, "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Em
+oji","Segoe UI Emoji";
+      text-rendering: geometricPrecision;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      letter-spacing: 0.1px;
+    }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospa
+ce; }
+
+    /* Brand polish */
+.brand h1{
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: .3px;
+    }
+    .brand .sub{
+      margin-top:3px;
+      font-size:12px;
+      color: rgba(255,255,255,.70);
+      letter-spacing:.2px;
+    }
+    .brand .sub strong{
+      color: rgba(255,255,255,.92);
+      font-weight: 800;
+    }
+
+    /* Section title row polish */
+    .section-title h2{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight: 900;
+      letter-spacing: .25px;
+    }
+    .section-title p{
+      font-size: 12.5px;
+      line-height: 1.3;
+      color: rgba(255,255,255,.66);
+      max-width: 780px;
+    }
+
+    /* Small ? help button */
+    .helpbtn{
+      width: 18px; height: 18px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.85);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 12px;
+      line-height: 1;
+      cursor:pointer;
+      user-select:none;
+      transition: transform .08s ease, background .15s ease, border-color .15s ease, opacity .15s ease;
+      opacity:.9;
+    }
+    .helpbtn:hover{ background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.26); opacity:1; }
+    .helpbtn:active{ transform: translateY(1px); }
+
+    .help-pop{
+      position:absolute;
+      left: 16px;
+      top: calc(100% + 10px);
+      width: min(460px, calc(100vw - 60px));
+      max-width: min(640px, calc(100vw - 60px));
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(10,12,18,.92);
+      backdrop-filter: blur(10px);
+      border-radius: 14px;
+      box-shadow: 0 24px 70px rgba(0,0,0,.60);
+      padding: 10px 12px;
+      display:none;
+      z-index: 50;
+    }
+    .help-pop.open{ display:block; }
+    .help-pop .t{ font-weight: 900; font-size: 12.5px; color: rgba(255,255,255,.92); margin-bottom: 4px; }
+    .help-pop .b{ font-size: 12.5px; color: rgba(255,255,255,.72); line-height: 1.35; }
+    .section-head{ position: relative; }
+
+    .section-title p{ display:none !important; }
+
+    /* Seam-free fixed background layer */
+    body::before{
+      content:"";
+      position: fixed;
+      inset: -320px;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(1200px 700px at 15% 0%, rgba(106,163,255,.16), transparent 58%),
+        radial-gradient(1100px 720px at 90% 18%, rgba(168,85,247,.18), transparent 62%),
+        radial-gradient(900px 650px at 40% 105%, rgba(34,197,94,.08), transparent 62%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      filter: blur(18px);
+      opacity: .95;
+      transform: translateZ(0);
+      will-change: transform;
+    }
+
+    .wrap{
+      position:relative;
+      z-index:1;
+      max-width:var(--max);
+      margin:0 auto;
+      padding: 18px var(--pad) 44px;
+    }
+
+    /* Header */
+    a.btn.primary[href="/discover"]{
+      white-space: nowrap;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding:14px 16px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.20);
+      backdrop-filter: blur(10px);
+      border-radius: 999px;
+      box-shadow: var(--shadow2);
+      position: sticky;
+      top: 12px;
+      z-index:10;
+    }
+
+    .userMenu{
+      position:relative;
+      display:flex;
+      align-items:center;
+      flex:0 0 auto;
+    }
+
+    .userMenuBtn{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      min-height:44px;
+      padding:8px 12px 8px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      color:#fff;
+      cursor:pointer;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.04),
+        0 8px 22px rgba(0,0,0,.18);
+      transition: background .15s ease, border-color .15s ease, transform .08s ease;
+    }
+
+    .userMenuBtn:hover{
+      background: rgba(255,255,255,.09);
+      border-color: rgba(255,255,255,.16);
+    }
+
+    .userMenuBtn:active{
+      transform: translateY(1px);
+    }
+
+    .userAvatar{
+      width:30px;
+      height:30px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+      font-weight:900;
+      color:#fff;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.10),
+        0 8px 18px rgba(0,0,0,.25);
+      flex:0 0 auto;
+    }
+
+    .userMenuName{
+      font-size:13px;
+      font-weight:800;
+      color: rgba(255,255,255,.92);
+      white-space:nowrap;
+    }
+
+    .userMenuChevron{
+      font-size:11px;
+      color: rgba(255,255,255,.72);
+      transition: transform .18s ease;
+    }
+
+    .userMenu.open .userMenuChevron{
+      transform: rotate(180deg);
+    }
+
+    .userDropdown{
+      position:absolute;
+      right:0;
+      top:calc(100% + 10px);
+      min-width:220px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(10,12,18,.94);
+      backdrop-filter: blur(10px);
+      border-radius:16px;
+      box-shadow: 0 24px 70px rgba(0,0,0,.55);
+      padding:8px;
+      display:none;
+      z-index:30;
+    }
+
+    .userMenu.open .userDropdown{
+      display:block;
+    }
+
+    .userDropdownHead{
+      padding:10px 12px 8px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      margin-bottom:6px;
+    }
+
+    .userDropdownTitle{
+      font-size:13px;
+      font-weight:900;
+      color: rgba(255,255,255,.94);
+      line-height:1.2;
+    }
+
+    .userDropdownSub{
+      margin-top:3px;
+      font-size:12px;
+      color: rgba(255,255,255,.62);
+      line-height:1.2;
+    }
+
+    .userDropdown a{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      font-size:13px;
+      font-weight:700;
+      color: rgba(255,255,255,.88);
+      text-decoration:none;
+    }
+
+    .userDropdown a:hover{
+      background: rgba(255,255,255,.06);
+      color:#fff;
+    }
+
+    .userDropdown a.danger{
+      color: rgba(255,130,130,.95);
+    }
+
+    @media (max-width: 760px){
+      .userMenuName{
+        display:none;
+      }
+
+      .userMenuBtn{
+        padding-right:10px;
+      }
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      min-width: 260px;
+    }
+    .logo{
+      width:50px;
+      height:50px;
+      border-radius:16px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08),
+        0 12px 34px rgba(0,0,0,.38),
+        0 0 18px rgba(120,140,255,.35),
+        0 0 36px rgba(120,140,255,.15);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      flex: 0 0 auto;
+    }
+    .logo img{
+      width:34px;
+      height:34px;
+      display:block;
+      border-radius:10px;
+      filter:
+        drop-shadow(0 6px 16px rgba(0,0,0,.40))
+        saturate(1.08);
+      transform: translateY(.5px);
+    }
+    .brand h1{
+      font-size: 16px;
+      line-height:1.02;
+      margin:0;
+      letter-spacing:.25px;
+      font-weight:900;
+      color: rgba(255,255,255,.98);
+      text-shadow:
+        0 1px 0 rgba(255,255,255,.05),
+        0 8px 22px rgba(0,0,0,.32);
+    }
+    .brand .sub{
+      margin-top:3px;
+      font-size:12px;
+      color:rgba(255,255,255,.70);
+    }
+    .brand .sub strong{
+      color: rgba(255,255,255,.92);
+      font-weight: 800;
+    }
+
+    .pillrow{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      flex: 1;
+      min-width: 220px;
+      flex-wrap: wrap;
+    }
+    .pill{
+      font-size:12px;
+      color: rgba(255,255,255,.82);
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.05);
+      padding:8px 12px;
+      border-radius: 999px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      white-space:nowrap;
+    }
+    .dot{
+      width:7px;height:7px;border-radius:50%;
+      background: rgba(255,255,255,.35);
+    }
+    .dot.ok{ background: rgba(34,197,94,.85); }
+    .dot.warn{ background: rgba(245,158,11,.90); }
+    .dot.bad{ background: rgba(239,68,68,.90); }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 220px;
+      justify-content:flex-end;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:9px 12px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.90);
+      font-weight: 700;
+      font-size: 12.5px;
+      cursor:pointer;
+      user-select:none;
+      transition: transform .08s ease, background .15s ease, border-color .15s ease;
+      white-space:nowrap;
+    }
+    .btn:hover{ background: rgba(255,255,255,.085); border-color: rgba(255,255,255,.18); }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      background: linear-gradient(135deg, rgba(106,163,255,.90), rgba(168,85,247,.90));
+      border-color: rgba(255,255,255,.18);
+      box-shadow: 0 14px 40px rgba(168,85,247,.20);
+    }
+    .btn.danger{
+      background: rgba(255,255,255,.04);
+      border-color: rgba(239,68,68,.30);
+      color: rgba(255,255,255,.88);
+    }
+
+    .btn.hidden{
+      background: rgba(168,85,247,.10);
+      border-color: rgba(168,85,247,.38);
+      color: rgba(233,213,255,.96);
+      box-shadow: 0 14px 40px rgba(168,85,247,.12);
+    }
+    .btn.hidden:hover{
+      background: rgba(168,85,247,.16);
+      border-color: rgba(168,85,247,.55);
+    }
+
+    /* Sections */
+    .grid{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      margin-top: 16px;
+    }
+
+    .section{
+      border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .section-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      padding: 16px 16px 10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .section-title{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width: 240px;
+    }
+    .section-title h2{
+      margin:0;
+      font-size: 16px;
+      letter-spacing: .2px;
+    }
+    .section-title p{
+      margin:0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .section-meta{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-top:2px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.20);
+      font-size: 12px;
+      color: rgba(255,255,255,.80);
+    }
+
+    /* Carousel */
+    .carousel-wrap{
+      position:relative;
+      padding: 12px 10px 14px;
+    }
+
+    .carousel{
+      display:flex;
+      gap: 14px;
+      overflow-x:auto;
+      overflow-y:hidden;
+      padding: 6px 8px 14px;
+      scroll-snap-type: x mandatory;
+      scroll-padding-left: 8px;
+      -webkit-overflow-scrolling: touch;
+      align-items: stretch;
+    }
+    .carousel::-webkit-scrollbar{ height: 10px; }
+    .carousel::-webkit-scrollbar-track{ background: rgba(255,255,255,.05); border-radius:999px; }
+    .carousel::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.12); border-radius:999px; }
+    .carousel:hover::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.18); }
+
+    .navbtn{
+      position:absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.35);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 45px rgba(0,0,0,.55);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      transition: transform .08s ease, background .15s ease, opacity .15s ease;
+      user-select:none;
+      opacity:.85;
+      z-index:2;
+    }
+    .navbtn:hover{ background: rgba(0,0,0,.48); opacity:1; }
+    .navbtn:active{ transform: translateY(calc(-50% + 1px)); }
+    .navbtn.left{ left: 10px; }
+    .navbtn.right{ right: 10px; }
+    .navbtn svg{ width: 18px; height: 18px; fill: rgba(255,255,255,.90); }
+
+    /* Cards */
+    .card{
+    /* Sonarr missing episodes highlight */
+    .card.missing{
+      border:2px solid rgba(239,68,68,.85);
+      box-shadow:
+        0 0 0 1px rgba(239,68,68,.25),
+        0 10px 30px rgba(0,0,0,.45);
+    }
+
+      width: 220px;
+      min-width: 220px;
+      border-radius: var(--r2);
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.25);
+      box-shadow: 0 18px 55px rgba(0,0,0,.35);
+      overflow:hidden;
+      scroll-snap-align: start;
+      display:flex;
+      flex-direction:column;
+      position: relative;
+      transition: top .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease;
+    }
+
+    .card:hover{
+      top: -4px;
+      box-shadow: 0 26px 70px rgba(0,0,0,.48);
+      border-color: rgba(255,255,255,.16);
+      background: rgba(0,0,0,.30);
+    }
+    .poster{
+      position:relative;
+      background: rgba(255,255,255,.06);
+      aspect-ratio: 2 / 3;
+      width: 100%;
+      overflow:hidden;
+    }
+    .poster img{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      display:block;
+    }
+    .poster::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: linear-gradient(180deg, rgba(0,0,0,.04), rgba(0,0,0,.55));
+      pointer-events:none;
+    }
+
+    .card.small{
+      width: 210px;
+      min-width: 210px;
+    }
+    .card.small .poster{
+      aspect-ratio: 2 / 3;
+    }
+
+    .card-body{
+      padding: 10px 10px 8px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .title{
+      font-weight: 850;
+      font-size: 14px;
+      letter-spacing:.2px;
+      line-height:1.2;
+      overflow:hidden;
+      display:-webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      min-height: 34px;
+    }
+    .meta{
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.25;
+    }
+    .bar{
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.07);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .bar > span{
+      display:block;
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(106,163,255,.95), rgba(168,85,247,.95));
+    }
+
+    .card-actions{
+      padding: 0 10px 10px;
+      display:flex;
+      gap:8px;
+      margin-top:auto;
+      flex-wrap: wrap;
+    }
+    .card-actions .btn{
+      padding: 8px 10px;
+      font-size: 12px;
+      flex: 1 1 120px;
+      min-width: 0;
+    }
+    .btn.ghost{
+      background: rgba(255,255,255,.05);
+      border-color: rgba(255,255,255,.10);
+      font-weight:800;
+    }
+
+    /* Menu */
+    .menu{
+      position: fixed;
+      min-width: 200px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(10,12,18,.92);
+      backdrop-filter: blur(10px);
+      border-radius: 14px;
+      box-shadow: 0 24px 70px rgba(0,0,0,.60);
+      padding: 8px;
+      display:none;
+      z-index: 9999;
+    }
+    .menu.open{ display:block; }
+    .menu button{
+      width:100%;
+      text-align:left;
+      border:0;
+      border-radius: 12px;
+      padding: 9px 10px;
+      background: transparent;
+      color: rgba(255,255,255,.92);
+      cursor:pointer;
+      font-size: 12.5px;
+      font-weight: 700;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .menu button:hover{ background: rgba(255,255,255,.08); }
+    .menu .muted{ color: rgba(255,255,255,.62); font-weight:700; }
+
+    /* Empty + errors */
+    .empty{
+      padding: 14px 16px 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .error{
+      padding: 14px 16px 18px;
+      color: rgba(255,255,255,.86);
+      font-size: 13px;
+    }
+    .error strong{ color: rgba(255,255,255,.95); }
+
+    @media (max-width: 980px){
+      .topbar{
+        border-radius: var(--r);
+        flex-wrap:wrap;
+        justify-content:space-between;
+      }
+      .brand,.actions,.pillrow{ min-width: unset; flex: unset; }
+      .pillrow{ width: 100%; justify-content:flex-start; order: 3; }
+      .actions{ order:2; }
+      .brand{ order:1; }
+    }
+
+    @media (max-width: 520px){
+      .wrap{ padding-left: 12px; padding-right: 12px; }
+      .navbtn{ display:none; }
+      .card{ width: 205px; min-width: 205px; }
+      .card.small{ width: 195px; min-width: 195px; }
+    }
+  
+    .approvalStrip{
+      display:none;
+      margin: 10px 0 18px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.045);
+      border-radius: 18px;
+      padding: 12px;
+      box-shadow: var(--shadow2);
+    }
+    .approvalStrip.show{ display:block; }
+
+    .approvalStripHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .approvalStripTitle{
+      font-weight: 900;
+      letter-spacing: .2px;
+    }
+    .approvalStripCount{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .approvalStripBody{
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 10px;
+    }
+
+    .approvalCard{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+      border-radius: 14px;
+      padding: 10px;
+    }
+    .approvalPoster{
+      width: 54px;
+      height: 80px;
+      border-radius: 10px;
+      object-fit: cover;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      flex: 0 0 auto;
+    }
+    .approvalMain{
+      min-width:0;
+      flex:1 1 auto;
+    }
+    .approvalTitle{
+      font-weight: 800;
+      line-height:1.2;
+      margin-bottom:4px;
+    }
+    .approvalMeta{
+      font-size:12px;
+      color: var(--muted);
+      margin-bottom:8px;
+    }
+    .approvalActions{
+      display:flex;
+      gap:8px;
+    }
+    .approvalActions .btn{
+      min-width: 0;
+      padding: 8px 10px;
+    }
+
+    /* ---- QD: Sonarr missing highlight (safe override) ---- */
+    .card.missing{
+      border: 2px solid rgba(239,68,68,.85) !important;
+      box-shadow:
+        0 0 0 1px rgba(239,68,68,.35) inset,
+        0 18px 55px rgba(0,0,0,.40) !important;
+    }
+
+    /* ---- QD: section header fade line ---- */
+    /* CSS-only: draws the purple gradient line via .section-head::after */
+    .section-head{
+      display:flex !important;
+      align-items:center !important;
+      gap: 10px !important;          /* space between title and line */
+    }
+    .section-head .section-title{
+      flex: 0 0 auto !important;
+      width: auto !important;
+      min-width: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      white-space: nowrap;
+    }
+    /* Hide any old/manual line element if it exists from prior experiments */
+    .qd-hline{ display:none !important; }
+
+    .section-head::after{
+      content:"";
+      flex: 1 1 auto;
+      height: 2px;
+      border-radius: 999px;
+      opacity: .95;
+      transform: translateY(1px);
+
+      /* Fade out around ~2/3 across */
+      background: linear-gradient(
+        90deg,
+        rgba(168,85,247,.95) 0%,
+        rgba(106,163,255,.55) 35%,
+        rgba(168,85,247,.35) 55%,
+        rgba(168,85,247,0) 70%
+      );
+    }
+
+
+  /* --- NEW: Glow for newly arrived Sonarr episodes --- */
+  @keyframes qdNewEpPulse{
+    0%   { box-shadow: 0 14px 40px rgba(0,0,0,.45); }
+    50%  { box-shadow: 0 14px 40px rgba(0,0,0,.45), 0 0 18px rgba(255,102,204,.22), 0 0 44px rgba(170,110,255,.12); }
+    100% { box-shadow: 0 14px 40px rgba(0,0,0,.45); }
+  }
+  .card.newEp{
+    border-color: rgba(255,102,204,.20) !important;
+    background: linear-gradient(135deg, rgba(255,102,204,.10), rgba(170,110,255,.06), rgba(102,163,255,.03));
+    animation: qdNewEpPulse 3.4s ease-in-out infinite;
+  }
+
+
+    .statusDot{
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background: rgba(255,255,255,.35);
+      box-shadow: 0 0 0 rgba(0,0,0,0);
+      transition: background .18s ease, box-shadow .18s ease;
+      flex: 0 0 auto;
+    }
+    
+
+/* Status pill (unifies the old floating dot) */
+.statusPill{
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 999px;
+}
+.statusPill .statusDot{
+  position: relative;
+  top: 0;
+  left: 0;
+  transform: none;
+  margin: 0;
+}
+.statusPill .statusLabel{
+  font-weight: 700;
+  letter-spacing: .2px;
+  opacity: .92;
+}
+.statusDot.ok{
+      background: rgba(34,197,94,.92);
+      box-shadow: 0 0 10px rgba(34,197,94,.45);
+    }
+    .statusDot.loading{
+      background: rgba(255,255,255,.38);
+      box-shadow: 0 0 8px rgba(255,255,255,.14);
+    }
+    .statusDot.bad{
+      background: rgba(239,68,68,.92);
+      box-shadow: 0 0 10px rgba(239,68,68,.42);
+    }
+
+    .downloadStrip{
+      margin-top: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.045);
+      border-radius: 16px;
+      box-shadow: var(--shadow2);
+      overflow: hidden;
+      display: none;
+    }
+    .downloadStrip.show{ display:block; }
+
+    .downloadStripHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 10px 14px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      background: rgba(0,0,0,.16);
+    }
+    .downloadStripTitle{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size: 12.5px;
+      font-weight: 900;
+      letter-spacing:.2px;
+    }
+    .downloadDot{
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      background: rgba(168,85,247,.95);
+      box-shadow: 0 0 10px rgba(168,85,247,.45);
+      flex:0 0 auto;
+    }
+    .downloadStripBody{
+      display:flex;
+      gap:10px;
+      overflow-x:auto;
+      padding: 10px 12px 12px;
+    }
+    .downloadStripBody::-webkit-scrollbar{ height: 8px; }
+    .downloadStripBody::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.12); border-radius:999px; }
+
+    .downloadMini{
+      min-width: 230px;
+      max-width: 230px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      border-radius: 14px;
+      padding: 10px 10px;
+    }
+    .downloadMini.tv{
+      border-color: rgba(59,130,246,.55);
+      box-shadow: inset 0 0 0 1px rgba(59,130,246,.12);
+    }
+    .downloadMini.movie{
+      border-color: rgba(250,204,21,.55);
+      box-shadow: inset 0 0 0 1px rgba(250,204,21,.12);
+    }
+    .downloadMiniTitle{
+      font-size: 13px;
+      font-weight: 850;
+      line-height: 1.2;
+      margin-bottom: 4px;
+      overflow:hidden;
+      white-space:nowrap;
+      text-overflow:ellipsis;
+    }
+    .downloadMiniMeta{
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+    .downloadMiniKind{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:.2px;
+      color: rgba(255,255,255,.78);
+      margin-bottom:6px;
+    }
+    .downloadMiniBar{
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+      overflow:hidden;
+      margin-top:8px;
+      border:1px solid rgba(255,255,255,.06);
+    }
+    .downloadMiniBarFill{
+      height:100%;
+      border-radius:999px;
+      background: linear-gradient(90deg, rgba(102,163,255,.90), rgba(168,85,247,.86));
+      width:0%;
+      transition: width .25s ease;
+    }
+    .downloadMiniFoot{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-top:6px;
+      font-size:11.5px;
+      color: var(--muted);
+    }
+
+    .reqList{
+      display:grid;
+      gap:10px;
+      padding: 0;
+      margin: 0;
+    }
+    .reqRow{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:12px;
+      align-items:center;
+      padding: 12px 14px;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      background: rgba(255,255,255,.035);
+    }
+    .reqLeft{
+      min-width:0;
+    }
+    .reqTitle{
+      font-size: 13.5px;
+      font-weight: 850;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .reqMeta{
+      margin-top:4px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+    .reqPill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width: 92px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 900;
+      letter-spacing: .2px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+    }
+    .reqPill.pending{ border-color: rgba(245,158,11,.35); color: rgba(255,214,102,.96); }
+    .reqPill.processing{ border-color: rgba(59,130,246,.35); color: rgba(156,197,255,.98); }
+    .reqPill.available{ border-color: rgba(34,197,94,.35); color: rgba(158,243,167,.98); }
+
+    .airsTonightDot{
+      display:inline-block;
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      background: rgba(168,85,247,.98);
+      box-shadow: 0 0 10px rgba(168,85,247,.55);
+      margin-right: 7px;
+      transform: translateY(-1px);
+      vertical-align: middle;
+    }
+
+
+.card.justAired{
+  border-color: rgba(170,110,255,.30) !important;
+  background: linear-gradient(
+      135deg,
+      rgba(170,110,255,.10),
+      rgba(255,120,200,.05),
+      rgba(102,163,255,.03)
+  );
+  box-shadow:
+      0 0 0 rgba(0,0,0,0),
+      0 0 18px rgba(170,110,255,.18),
+      0 0 40px rgba(170,110,255,.08);
+}
+
+
+/* --- QD: Legend popover --- */
+.pill.legendBtn{
+  display:flex; align-items:center; gap:10px;
+  cursor:pointer;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.06);
+}
+.pill.legendBtn:hover{ background: rgba(255,255,255,.08); }
+
+.legendDot{
+  width:10px; height:10px; border-radius:999px;
+  background: radial-gradient(circle at 30% 30%, rgba(168,85,247,.95), rgba(102,163,255,.45));
+  box-shadow: 0 0 18px rgba(168,85,247,.28);
+}
+
+.legendPop{
+  position:absolute;
+  top: 62px;
+  right: 220px;
+  width: 280px;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(10,12,16,.92);
+  box-shadow: 0 24px 70px rgba(0,0,0,.55);
+  backdrop-filter: blur(10px);
+  display:none;
+  z-index: 9998;
+}
+.legendPop.open{ display:block; }
+.legendPop .t{ font-weight: 900; margin-bottom: 8px; letter-spacing:.2px; }
+.legendPop .b{ color: rgba(255,255,255,.78); font-size: 13px; line-height: 1.35; }
+.legendPop .row{ display:flex; gap:10px; align-items:center; padding: 6px 0; }
+.legendPop .k{ width: 26px; text-align:center; opacity:.95; }
+
+
+/* --- QD: Just-aired glow pulse --- */
+@keyframes qdGlowPulse {
+  0%   { box-shadow: 0 0 0 1px rgba(170,110,255,.14), 0 18px 55px rgba(0,0,0,.35), 0 0 22px rgba(170,110,255,.18); }
+  50%  { box-shadow: 0 0 0 1px rgba(170,110,255,.22), 0 18px 55px rgba(0,0,0,.35), 0 0 30px rgba(170,110,255,.26); }
+  100% { box-shadow: 0 0 0 1px rgba(170,110,255,.14), 0 18px 55px rgba(0,0,0,.35), 0 0 22px rgba(170,110,255,.18); }
+}
+.card.justAired{ animation: qdGlowPulse 2.8s ease-in-out infinite; }
+
+
+    .actions .legendBtn,
+    .actions .statusPill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+    }
+    .actions .statusLabel{
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+
+
+/* --- Header polish tweaks --- */
+
+.actions .btn{
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.actions .btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,0,0,.25);
+}
+
+/* dim status text slightly so the dot stands out */
+.statusLabel{
+  opacity:.75;
+}
+
+
+
+
+/* --- Dashboard header refresh (Discover-inspired, sticky preserved) --- */
+.topbar{
+  position: sticky;
+  top: 14px;
+  z-index: 40;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+
+  padding: 14px 16px;
+  margin-bottom: 16px;
+
+  border:1px solid rgba(255,255,255,.10);
+  border-radius: 26px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.02)),
+    rgba(10,12,18,.68);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.05),
+    0 16px 50px rgba(0,0,0,.30);
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  min-width:0;
+  flex:1 1 auto;
+}
+
+.logo{
+  width:48px;
+  height:48px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.12);
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    0 10px 26px rgba(0,0,0,.26);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+  overflow:hidden;
+}
+
+.logo img{
+  width:28px;
+  height:28px;
+  display:block;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,.35));
+}
+
+.brand h1{
+  margin:0;
+  font-size:15px;
+  font-weight:900;
+  letter-spacing:.2px;
+  line-height:1.05;
+}
+
+.brand .sub{
+  margin-top:4px;
+  font-size:12.5px;
+  color: rgba(255,255,255,.72);
+  line-height:1.25;
+  letter-spacing:.15px;
+}
+
+.actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+  flex:0 1 auto;
+}
+
+.actions .btn{
+  min-height:46px;
+  padding:11px 18px;
+  border-radius:18px;
+  font-weight:800;
+  font-size:14px;
+  letter-spacing:.1px;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease, filter .15s ease;
+}
+
+.actions .btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(0,0,0,.24);
+}
+
+.actions .btn.primary{
+  background: linear-gradient(135deg, rgba(124,92,255,.92), rgba(78,161,255,.92));
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    0 10px 26px rgba(0,0,0,.22);
+}
+
+.actions .btn.primary:hover{
+  filter: brightness(1.03);
+}
+
+.actions .btn.statusPill{
+  background: rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.04),
+    0 8px 22px rgba(0,0,0,.18);
+}
+
+.actions .btn.danger{
+  background: rgba(255,255,255,.03);
+  border:1px solid rgba(239,68,68,.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.03),
+    0 8px 22px rgba(0,0,0,.18);
+}
+
+.statusLabel{
+  opacity:.8;
+  font-weight:800;
+  letter-spacing:.15px;
+}
+
+
+
+/* --- Match Discover typography for dashboard title --- */
+
+.brand h1{
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: .25px;
+  line-height: 1.05;
+}
+
+.brand .sub{
+  font-size: 14px;
+  color: rgba(255,255,255,.68);
+  margin-top: 4px;
+  line-height: 1.35;
+  letter-spacing: .15px;
+}
+
+
+
+/* --- Force dashboard brand text to match Discover font family --- */
+.brand h1,
+.brand .sub,
+.brand .sub strong{
+  font-family: ui-sans-serif, "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif !important;
+}
+
+.brand h1{
+  margin: 0;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: .2px;
+  line-height: 1.05;
+}
+
+.brand .sub{
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255,255,255,.68);
+  line-height: 1.35;
+  letter-spacing: .12px;
+}
+
+.brand .sub strong{
+  font-weight: 800;
+}
+
+
+</style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"><img src="/favicon.svg?v=5" alt=""></div>
+        <div>
+          <h1>QueueDeck</h1>
+          <div class="sub">Your <strong>local</strong> watch queue — clean, fast, and unified.</div>
+        </div>
+      </div>
+
+      <div class="pillrow"></div>
+
+      <div class="actions">
+        <button id="qdOpenSeerrSearch" class="btn primary" type="button">🔎 Search / Request</button>
+        <a class="btn primary" href="/discover">Discover</a>
+        <button class="btn statusPill" id="statusPill" type="button" title="Status">
+          <span class="statusDot" id="statusDot"></span>
+          <span class="statusLabel" id="statusText">Ready</span>
+        </button>
+        {% set username = (me.username if me and me.username else 'User') %}
+        {% set initial = (username[:1] | upper) %}
+        <div class="userMenu" id="userMenu">
+          <button class="userMenuBtn" id="userMenuBtn" type="button" aria-haspopup="menu" aria-expanded="false">
+            <span class="userAvatar">{{ initial }}</span>
+            <span class="userMenuName">{{ username }}</span>
+            <span class="userMenuChevron">▾</span>
+          </button>
+
+          <div class="userDropdown" id="userDropdown" role="menu">
+            <div class="userDropdownHead">
+              <div class="userDropdownTitle">{{ username }}</div>
+              <div class="userDropdownSub">QueueDeck user</div>
+            </div>
+
+            <a href="/settings" role="menuitem">Preferences</a>
+            <a href="/stats" role="menuitem">Statistics</a>
+            <a href="/hidden" role="menuitem">Hidden Items</a>
+            {% if me and me.get("is_admin") %}<a href="/admin/settings">Admin Settings</a>{% endif %}
+            <a class="danger" href="/logout" role="menuitem">Log out</a>
+          </div>
+        </div>
+      </div>
+
+  <div class="legendPop" id="legendPop" aria-hidden="true">
+    <div class="t">Legend</div>
+    <div class="b">
+      <div class="row"><span class="k">🟣</span><span>Airs tonight</span></div>
+      <div class="row"><span class="k">✨</span><span>Just aired (last 48h) glow</span></div>
+      <div class="row"><span class="k">🔴</span><span>Missing (aired but not downloaded)</span></div>
+      <div class="row"><span class="k">⬇</span><span>Downloading (appears in download strip)</span></div>
+    </div>
+  </div>
+
+    </div>
+
+
+    <div class="approvalStrip" id="approvalStrip">
+      <div class="approvalStripHead">
+        <div class="approvalStripTitle">Pending Request Approvals</div>
+        <div class="approvalStripCount" id="approvalCount">0 pending</div>
+      </div>
+      <div class="approvalStripBody" id="approvalStripBody"></div>
+    </div>
+
+    <div class="downloadStrip" id="downloadStrip">
+      <div class="downloadStripHead">
+        <div class="downloadStripTitle">
+          <span class="downloadDot"></span>
+          <span>Download Activity</span>
+        </div>
+        <div class="chip"><span id="downloadCount">0</span> item(s)</div>
+      </div>
+      <div class="downloadStripBody" id="downloadStripBody"></div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <script>
+    const $ = (sel, root=document) => root.querySelector(sel);
+
+    function iconChevron(dir="right"){
+      return dir==="left"
+        ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 5.5a1 1 0 0 1 0 1.4L10.4 12l5.1 5.1a1 1 0 1 1-1.4
+1.4l-5.8-5.8a1.2 1.2 0 0 1 0-1.7l5.8-5.8a1 1 0 0 1 1.4 0Z"/></svg>`
+        : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 18.5a1 1 0 0 1 0-1.4l5.1-5.1-5.1-5.1a1 1 0 1 1 1.4-
+1.4l5.8 5.8a1.2 1.2 0 0 1 0 1.7l-5.8 5.8a1 1 0 0 1-1.4 0Z"/></svg>`;
+    }
+
+    async function fetchJSON(url, opts={}){
+      const res = await fetch(url, { credentials: "same-origin", ...opts });
+      const ct = (res.headers.get("content-type") || "").toLowerCase();
+      if (!ct.includes("application/json")) {
+        const text = await res.text();
+        throw new Error(`Not JSON (maybe logged out). URL=${url} status=${res.status}. First bytes: ${text.slice(0,80)}`
+);
+      }
+      if (!res.ok) {
+        const j = await res.json().catch(()=> ({}));
+        throw new Error(`HTTP ${res.status} for ${url}: ${JSON.stringify(j)}`);
+      }
+      return res.json();
+    }
+
+    function setStatus(ok, msg){
+      const dot = document.getElementById("statusDot");
+      const pill = document.getElementById("pill-status");
+      if (!dot) return;
+
+      dot.classList.remove("ok", "loading", "bad");
+
+      if (ok === null){
+        dot.classList.add("loading");
+      } else if (ok) {
+        dot.classList.add("ok");
+      } else {
+        dot.classList.add("bad");
+      }
+
+      if (pill) pill.title = msg || (ok ? "OK" : "Error");
+    }
+
+    function sectionTemplate({title, subtitle, countText, id}){
+      return `
+        <section class="section" id="${id}">
+          <div class="section-head">
+            <div class="section-title">
+              <h2><span>${title}</span><button class="helpbtn" type="button" aria-label="Help" data-help="${subtitle ||
+""}">?</button></h2>
+              <p>${subtitle || ""}</p>
+            </div>
+            <div class="section-meta">
+              ${countText ? `<span class="chip">${countText}</span>` : ``}
+            </div>
+          </div>
+          <div class="carousel-wrap">
+            <div class="navbtn left" data-dir="left" title="Scroll left">${iconChevron("left")}</div>
+            <div class="navbtn right" data-dir="right" title="Scroll right">${iconChevron("right")}</div>
+            <div class="carousel" role="list"></div>
+            <div class="empty" style="display:none;"></div>
+            <div class="error" style="display:none;"></div>
+          </div>
+        </section>
+      `;
+    }
+
+    function qdHelpText(lines){
+      return (lines || []).filter(Boolean).join("\n");
+    }
+
+    function qdSetSectionHelp(sectionId, lines){
+      const sec = document.getElementById(sectionId);
+      if (!sec) return;
+      const btn = sec.querySelector(".helpbtn");
+      const p = sec.querySelector(".section-title p");
+      const text = qdHelpText(lines);
+      if (btn) btn.setAttribute("data-help", text);
+      if (p) p.textContent = text;
+    }
+
+    function qdApplySectionHelp(settings){
+      const hasAdditionalTv = !!String(settings?.mytv_view_id || settings?.jellyfin_view_id || "").trim();
+      const hasAnimePaths = !!String(settings?.anime_path || settings?.anime_paths || settings?.animePath || "").trim();
+
+      qdSetSectionHelp("sec-cw", [
+        "Source: Jellyfin",
+        "Shows movies and episodes you already started but have not finished yet.",
+        "Cards may offer quick resume actions when available.",
+        "If this section is empty, there is nothing currently in progress for this Jellyfin user."
+      ]);
+
+      qdSetSectionHelp("sec-nextup-tv", [
+        "Source: Jellyfin Next Up",
+        hasAnimePaths ? "Scope: TV only, excluding Anime paths configured for this user." : "Scope: TV from your main Jellyfin libraries.",
+        hasAdditionalTv ? "Includes your Additional TV library for this user." : null,
+        "Shows the next episode QueueDeck thinks you are most likely to watch next.",
+        "If this section is empty, there may be nothing queued in Jellyfin Next Up yet."
+      ]);
+
+      qdSetSectionHelp("sec-sonarr", [
+        "Source: Sonarr",
+        "Upcoming: episodes airing soon.",
+        "Missing: recently aired episodes not fully downloaded yet.",
+        "Cards may show status styling for upcoming vs missing items."
+      ]);
+
+      qdSetSectionHelp("sec-nextup-anime", [
+        "Source: Jellyfin Next Up",
+        hasAnimePaths ? "Scope: only content matched by this user's Anime Path(s)." : "Anime Path(s) are not configured for this user, so Anime-specific filtering is not available.",
+        "Shows the next anime episode QueueDeck thinks you are most likely to watch next."
+      ]);
+
+      qdSetSectionHelp("sec-rem", [
+        "Source: Jellyfin",
+        "Shows the next episode in a series and how many episodes remain after it.",
+        "Useful for seeing what is left before you finish a show.",
+        "If this section is empty, QueueDeck could not find remaining unwatched episodes for in-progress series."
+      ]);
+
+      qdSetSectionHelp("sec-latest-tv", [
+        "Source: Jellyfin",
+        "Recently added TV series with unwatched episodes.",
+        "Good for spotting newly added shows you have not started or finished yet."
+      ]);
+
+      qdSetSectionHelp("sec-latest-anime", [
+        "Source: Jellyfin",
+        hasAnimePaths ? "Limited to Anime Path(s) configured for this user." : "Anime Path(s) are not configured for this user, so Anime-specific filtering is not available.",
+        "Shows recently added anime series that are still unwatched."
+      ]);
+
+      qdSetSectionHelp("sec-radarr-recent", [
+        "Source: Jellyfin",
+        "Recently added movies that are still marked unplayed for this user.",
+        "Great for finding new movies you meant to watch."
+      ]);
+
+      qdSetSectionHelp("sec-radarr-missing", [
+        "Source: Radarr",
+        "Upcoming: movies releasing soon.",
+        "Missing: movies monitored by Radarr that are not downloaded yet."
+      ]);
+
+      qdSetSectionHelp("sec-my-requests", [
+        "Source: Seerr",
+        "Shows your most recent Seerr requests.",
+        "Useful for checking whether something you asked for is still pending or already available."
+      ]);
+    }
+
+    // --------------------------
+    // Section "?" help popovers
+    // --------------------------
+    function closeAllHelp(){
+      document.querySelectorAll(".help-pop.open").forEach(p => p.classList.remove("open"));
+    }
+
+    function wireHelpPopovers(){
+      document.querySelectorAll(".section").forEach(sec => {
+        const btn = sec.querySelector(".helpbtn");
+        if (!btn) return;
+
+        let pop = sec.querySelector(".help-pop");
+        if (!pop){
+          pop = document.createElement("div");
+          pop.className = "help-pop";
+          sec.querySelector(".section-head")?.appendChild(pop);
+        }
+
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          const title = (sec.querySelector(".section-title h2 span")?.textContent || "Help").trim();
+          const body = (btn.getAttribute("data-help") || "").trim();
+          const bodyHtml = escapeHTML(body || "No help text.").replace(/\n/g, "<br>");
+          pop.innerHTML = `<div class="t">${escapeHTML(title)}</div><div class="b">${bodyHtml}</div>`;
+
+          const isOpen = pop.classList.contains("open");
+          closeAllHelp();
+          if (!isOpen) pop.classList.add("open");
+        });
+      });
+    }
+
+    const qdDefaultSectionOrder = [
+      "sec-cw",
+      "sec-nextup-tv",
+      "sec-sonarr",
+      "sec-nextup-anime",
+      "sec-rem",
+      "sec-latest-tv",
+      "sec-latest-anime",
+      "sec-radarr-recent",
+      "sec-radarr-missing",
+      "sec-downloads",
+      "sec-my-requests",
+    ];
+
+    function qdNormalizeSectionOrder(rawOrder){
+      const valid = new Set(qdDefaultSectionOrder);
+      const out = [];
+      (Array.isArray(rawOrder) ? rawOrder : []).forEach(v => {
+        const s = String(v || "").trim();
+        if (valid.has(s) && !out.includes(s)) out.push(s);
+      });
+      qdDefaultSectionOrder.forEach(v => {
+        if (!out.includes(v)) out.push(v);
+      });
+      return out;
+    }
+
+    function qdApplySectionOrder(settings){
+      const grid = $("#grid");
+      if (!grid) return;
+
+      let savedOrder = [];
+      try{
+        savedOrder = JSON.parse(String(settings?.homepage_section_order || "[]"));
+      }catch(_){
+        savedOrder = [];
+      }
+
+      const normalized = qdNormalizeSectionOrder(savedOrder);
+      const byId = {};
+      Array.from(grid.children).forEach(el => {
+        if (el && el.id) byId[el.id] = el;
+      });
+
+      normalized.forEach(id => {
+        if (byId[id]) grid.appendChild(byId[id]);
+      });
+    }
+
+    function mountSections(){
+      const grid = $("#grid");
+      grid.innerHTML = [
+        sectionTemplate({
+          id:"sec-cw",
+          title:"Continue Watching",
+          subtitle:"Source: Jellyfin • Resume where you left off",
+          countText:`<span id="chip-cw">–</span> item(s)`
+        }),
+        sectionTemplate({
+          id:"sec-nextup-tv",
+          title:"Next Up — Television",
+          subtitle:"Scope: TV (non-Anime) • Includes your Additional TV library",
+          countText:`<span id="chip-nextup-tv">–</span> item(s)`
+        }),
+        sectionTemplate({
+          id:"sec-sonarr",
+          title:"Sonarr — Upcoming • Missing",
+          subtitle:"Upcoming: next 14 days • Missing: aired (last 14 days) and not downloaded",
+          countText:`<span id="chip-sonarr">–</span> item(s)`
+        }),
+        sectionTemplate({
+          id:"sec-nextup-anime",
+          title:"Next Up — Anime",
+          subtitle:"Scope: Anime paths only",
+          countText:`<span id="chip-nextup-anime">–</span> item(s)`
+        }),
+        sectionTemplate({
+          id:"sec-rem",
+          title:"Series Remaining",
+          subtitle:"Source: Jellyfin • Shows you the next episode and what’s left",
+          countText:`<span id="chip-rem">–</span> item(s)`
+        }),
+        sectionTemplate({
+          id:"sec-latest-tv",
+          title:"Latest Unwatched Series",
+          subtitle:"Source: Jellyfin • Recent series with unwatched episodes",
+          countText:`<span id="chip-latest-tv">–</span> item(s)`
+        }),
+        sectionTemplate({
+          id:"sec-latest-anime",
+          title:"Latest Unwatched Anime",
+          subtitle:"Source: Jellyfin • Latest added Anime series filtered to never-started shows",
+          countText:`<span id="chip-latest-anime">–</span> item(s)`
+        }),
+        sectionTemplate({
+          id:"sec-radarr-recent",
+          title:"Latest Unwatched Movies",
+          subtitle:"Source: Jellyfin • Latest added movies filtered to Unplayed",
+          countText:`<span id="chip-radarr-recent">–</span> item(s)`
+        }),
+        sectionTemplate({
+          id:"sec-radarr-missing",
+          title:"Radarr — Upcoming • Missing",
+          subtitle:"Movies releasing soon that are not downloaded yet",
+          countText:`<span id="chip-radarr-missing">–</span> item(s)`
+        }),
+        sectionTemplate({
+          id:"sec-my-requests",
+          title:"Your Recent Requests",
+          subtitle:"Your most recent Seerr requests",
+          countText:`<span id="chip-my-requests">–</span> item(s)`
+        }),
+      ].join("");
+
+      document.querySelectorAll(".section").forEach(sec => {
+        const car = sec.querySelector(".carousel");
+        const left = sec.querySelector(".navbtn.left");
+        const right = sec.querySelector(".navbtn.right");
+
+        function scrollByAmount(dir){
+          const amount = Math.max(320, Math.floor(car.clientWidth * 0.88));
+          car.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
+        }
+        left.addEventListener("click", () => scrollByAmount("left"));
+        right.addEventListener("click", () => scrollByAmount("right"));
+
+        function updateArrows(){
+          const maxScroll = car.scrollWidth - car.clientWidth;
+          const x = car.scrollLeft;
+          left.style.opacity = (x <= 4) ? "0" : "0.85";
+          right.style.opacity = (x >= maxScroll - 4) ? "0" : "0.85";
+          left.style.pointerEvents = (x <= 4) ? "none" : "auto";
+          right.style.pointerEvents = (x >= maxScroll - 4) ? "none" : "auto";
+        }
+        let _qdRAF = 0;
+          car.addEventListener("scroll", () => {
+            updateArrows();
+            if (_qdRAF) return;
+            _qdRAF = requestAnimationFrame(() => {
+              _qdRAF = 0;
+              qdRepositionOpenMenus();
+            });
+          }, { passive:true });
+        window.addEventListener("resize", updateArrows);
+        setTimeout(updateArrows, 350);
+      });
+    }
+
+    function showEmpty(secId, text){
+      const sec = document.getElementById(secId);
+      const car = sec.querySelector(".carousel");
+      const emp = sec.querySelector(".empty");
+      const err = sec.querySelector(".error");
+      car.style.display = "none";
+      err.style.display = "none";
+      emp.style.display = "block";
+      emp.textContent = text || "Nothing here.";
+    }
+
+    function showError(secId, text){
+      const sec = document.getElementById(secId);
+      const car = sec.querySelector(".carousel");
+      const emp = sec.querySelector(".empty");
+      const err = sec.querySelector(".error");
+      car.style.display = "none";
+      emp.style.display = "none";
+      err.style.display = "block";
+      err.innerHTML = `<strong>Problem:</strong> ${text}`;
+    }
+
+    function setCount(sel, n){
+      const el = document.querySelector(sel);
+      if (el) el.textContent = (typeof n === "number" ? String(n) : "0");
+    }
+
+    function escapeHTML(s){
+        // No regex literals on purpose (avoids accidental patch mangling)
+        let out = String(s ?? "");
+        out = out.split("&").join("&amp;");
+        out = out.split("<").join("&lt;");
+        out = out.split(">").join("&gt;");
+        out = out.split("\"").join("&quot;");
+        out = out.split("'").join("&#039;");
+        return out;
+      }
+
+function airsTonight(dateStr){
+      if (!dateStr) return false;
+      const d = new Date(dateStr);
+      if (!Number.isFinite(d.getTime())) return false;
+
+      const now = new Date();
+      return (
+        d.getFullYear() === now.getFullYear() &&
+        d.getMonth() === now.getMonth() &&
+        d.getDate() === now.getDate()
+      );
+    }
+
+    function formatEpisodeTag(item){
+      if (item.display_code) return String(item.display_code);
+      const s = item.season_number ?? item.seasonNumber;
+      const e = item.episode_number ?? item.episodeNumber;
+      if (s === undefined || s === null || e === undefined || e === null || s === "" || e === "") return "";
+      return `S${String(s).padStart(2,"0")}E${String(e).padStart(2,"0")}`;
+    }
+
+    function renderDownloadStrip(items){
+      const strip = document.getElementById("downloadStrip");
+      const body = document.getElementById("downloadStripBody");
+      const count = document.getElementById("downloadCount");
+      if (!strip || !body || !count) return;
+
+      const arr = (Array.isArray(items) ? items : []).filter(Boolean);
+      count.textContent = String(arr.length);
+
+      if (!arr.length){
+        body.innerHTML = "";
+        strip.classList.remove("show");
+        return;
+      }
+
+      body.innerHTML = arr.map(it => {
+        const pct = (typeof it.progress === "number" && Number.isFinite(it.progress))
+          ? Math.max(0, Math.min(100, it.progress))
+          : null;
+
+        const isMovie = String(it.kind || "").toLowerCase() === "movie";
+        const kindLabel = isMovie ? "🎬 Movie" : "📺 TV";
+        const title = isMovie ? (it.title || it.series || "Unknown") : (it.series || "Unknown");
+
+        let code = "";
+        if (isMovie){
+          code = [it.year].filter(Boolean).join(" • ");
+        } else {
+          const epTag = formatEpisodeTag(it);
+          const epTitle = String(it.title || "").trim();
+          code = [epTag, epTitle].filter(Boolean).join(" • ");
+        }
+
+        const footLeft = it.status || "queued";
+        const footRight = (pct !== null) ? `${pct}%` : "—";
+
+        return `
+          <div class="downloadMini ${isMovie ? "movie" : "tv"}">
+            <div class="downloadMiniKind">${escapeHTML(kindLabel)}</div>
+            <div class="downloadMiniTitle">${escapeHTML(title)}</div>
+            <div class="downloadMiniMeta">${escapeHTML(code)}</div>
+            <div class="downloadMiniBar">
+              <div class="downloadMiniBarFill" style="width:${pct !== null ? pct : 0}%"></div>
+            </div>
+            <div class="downloadMiniFoot">
+              <span>${escapeHTML(footLeft)}</span>
+              <span>${escapeHTML(footRight)}</span>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      strip.classList.add("show");
+    }
+
+    window.qdPreviewDownloadStrip = function(mode="mixed"){
+      const samples = {
+        single: [
+          {
+            kind: "tv",
+            series: "JUJUTSU KAISEN",
+            season_number: 3,
+            episode_number: 10,
+            display_code: "S03E10",
+            title: "Tokyo Colony No. 1, Part 4",
+            status: "downloading",
+            progress: 42,
+            poster_url: "/img/sonarr/series/401234.jpg"
+          }
+        ],
+        seasonpacks: [
+          {
+            kind: "tv",
+            series: "Stranger Things",
+            season_number: 2,
+            display_code: "Season 2",
+            title: "9 episodes",
+            status: "downloading",
+            progress: 17,
+            poster_url: "/img/sonarr/series/305288.jpg"
+          },
+          {
+            kind: "tv",
+            series: "Stranger Things",
+            season_number: 3,
+            display_code: "Season 3",
+            title: "8 episodes",
+            status: "downloading",
+            progress: 63,
+            poster_url: "/img/sonarr/series/305288.jpg"
+          },
+          {
+            kind: "tv",
+            series: "Stranger Things",
+            season_number: 4,
+            display_code: "Season 4",
+            title: "9 episodes",
+            status: "downloading",
+            progress: 88,
+            poster_url: "/img/sonarr/series/305288.jpg"
+          }
+        ],
+        mixed: [
+          {
+            kind: "movie",
+            title: "The Batman",
+            year: 2022,
+            status: "downloading",
+            progress: 51,
+            poster_url: "/img/radarr/tmdb/414906.jpg"
+          },
+          {
+            kind: "tv",
+            series: "JUJUTSU KAISEN",
+            season_number: 3,
+            episode_number: 10,
+            display_code: "S03E10",
+            title: "Tokyo Colony No. 1, Part 4",
+            status: "queued",
+            progress: 0,
+            poster_url: "/img/sonarr/series/401234.jpg"
+          },
+          {
+            kind: "tv",
+            series: "Stranger Things",
+            season_number: 2,
+            display_code: "Season 2",
+            title: "9 episodes",
+            status: "downloading",
+            progress: 17,
+            poster_url: "/img/sonarr/series/305288.jpg"
+          }
+        ]
+      };
+
+      renderDownloadStrip(samples[mode] || samples.mixed);
+    };
+
+    window.qdClearPreviewDownloadStrip = function(){
+      const strip = document.getElementById("downloadStrip");
+      const body = document.getElementById("downloadStripBody");
+      const count = document.getElementById("downloadCount");
+      if (body) body.innerHTML = "";
+      if (count) count.textContent = "0";
+      if (strip) strip.classList.remove("show");
+    };
+
+
+    function reqStatusClass(v){
+      const s = String(v || "").toLowerCase();
+      if (s.includes("available")) return "available";
+      if (s.includes("process")) return "processing";
+      if (s.includes("pending")) return "pending";
+      return "";
+    }
+
+    function prettyWhen(iso){
+      if (!iso) return "";
+      const d = new Date(iso);
+      if (!Number.isFinite(d.getTime())) return "";
+      return d.toLocaleString([], {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+      });
+    }
+
+    function requestCardHTML(it){
+      const isMovie = String(it.type || "").toLowerCase() === "movie";
+      const img = it.poster_url || "";
+      const title = escapeHTML(it.title || "Unknown");
+      const meta1 = escapeHTML(isMovie ? "Movie Request" : "TV Request");
+      const meta2 = escapeHTML([
+        it.season_text || "",
+        prettyWhen(it.created_at) ? ("Requested " + prettyWhen(it.created_at)) : ""
+      ].filter(Boolean).join(" • "));
+      const pillCls = reqStatusClass(it.status);
+
+      return `
+        <div class="card" role="listitem" data-kind="seerr_request" data-sid="${escapeHTML(String(it.id || ""))}" data-mode="seerr_request">
+          <div class="poster">
+            ${img ? `<img src="${img}" alt="">` : ``}
+          </div>
+          <div class="card-body">
+            <div class="title">${title}</div>
+            ${meta1 ? `<div class="meta">${meta1}</div>` : ``}
+            ${meta2 ? `<div class="meta">${meta2}</div>` : ``}
+            <div class="meta" style="margin-top:8px;">
+              <span class="reqPill ${pillCls}">${escapeHTML(it.status || "Unknown")}</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="btn ghost" type="button" data-action="menu">☰</button>
+          </div>
+          ${menuHTML("seerr_request", it)}
+        </div>
+      `;
+    }
+
+    function renderMyRequests(items){
+      const sec = document.getElementById("sec-my-requests");
+      if (!sec) return 0;
+
+      const car = sec.querySelector(".carousel");
+      const emp = sec.querySelector(".empty");
+      const err = sec.querySelector(".error");
+
+      if (!car || !emp || !err) return 0;
+
+      car.style.display = "flex";
+      emp.style.display = "none";
+      err.style.display = "none";
+
+      const arr = Array.isArray(items) ? items : [];
+
+      if (!arr.length){
+        showEmpty("sec-my-requests", "No recent Seerr requests yet.");
+        return 0;
+      }
+
+      car.innerHTML = arr.map(requestCardHTML).join("");
+
+      wireMenus(car);
+
+      setTimeout(()=> car.dispatchEvent(new Event("scroll")), 50);
+      return arr.length;
+    }
+
+    // --------------------------
+    // State filtering (hide/snooze)
+    // --------------------------
+    let STATE = { now: 0, map: {} };
+
+    function stateKey(kind, id){ return `${kind}:${id}`; }
+
+    function isSuppressed(kind, id){
+      const k = stateKey(kind, id);
+      const row = STATE.map[k];
+      if (!row) return false;
+      if (row.hidden) return true;
+      const until = Number(row.snooze_until || 0);
+      return until > (STATE.now || 0);
+    }
+
+    async function loadState(){
+      const j = await fetchJSON("/api/state/list");
+      STATE.now = j.now || Math.floor(Date.now()/1000);
+      STATE.map = j.state || {};
+    }
+
+    async function doHide(kind, id){
+      await fetchJSON("/api/state/hide", {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({kind: kind, item_id: id})
+      });
+      STATE.map[stateKey(kind,id)] = {kind, item_id:id, hidden:true, snooze_until:0};
+    }
+
+    async function doSnooze(kind, id, seconds){
+      const j = await fetchJSON("/api/state/snooze", {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({kind: kind, item_id: id, seconds: seconds})
+      });
+      STATE.map[stateKey(kind,id)] = {kind, item_id:id, hidden:false, snooze_until: j.snooze_until || 0};
+    }
+
+    // --------------------------
+    // Menu positioning helpers
+    // --------------------------
+    function closeAllMenus(){
+      document.querySelectorAll(".menu.open").forEach(m => {
+        m.classList.remove("open");
+        m.style.left = "";
+        m.style.top = "";
+              m._qdAnchorBtn = null;
+        m._qdAnchor = null;
+});
+    }
+
+    function showMenuNearButton(menuEl, btnEl){
+      menuEl.classList.add("open");
+                // QD: anchor to the button + use viewport coordinates
+        menuEl._qdAnchorBtn = btnEl;
+        menuEl.style.position = "fixed";
+        menuEl.style.zIndex = "9999";
+// QD: remember the button we opened from, so we can follow it on scroll
+        menuEl._qdAnchorBtn = btnEl;
+        // Make positioning stable relative to viewport
+        menuEl.style.position = "fixed";
+        menuEl.style.zIndex = "9999";
+
+      const rect = btnEl.getBoundingClientRect();
+      const pad = 10;
+
+      let left = rect.left;
+      let top = rect.bottom + 8;
+
+      const mw = menuEl.offsetWidth || 220;
+      const mh = menuEl.offsetHeight || 220;
+
+      left = Math.max(pad, Math.min(left, window.innerWidth - mw - pad));
+      top  = Math.max(pad, Math.min(top,  window.innerHeight - mh - pad));
+
+      menuEl.style.left = `${left}px`;
+      menuEl.style.top  = `${top}px`;
+    }
+
+      // ---- QD: keep context menus attached on scroll/resize ----
+      function qdRepositionOpenMenus(){
+        document.querySelectorAll(".menu.open").forEach(m => {
+          const a = m._qdAnchorBtn;
+          if (!a || !document.contains(a)) return;
+          try { showMenuNearButton(m, a); } catch(e) {}
+        });
+      }
+
+
+    // --------------------------
+    // Card + menu
+    // --------------------------
+    function menuHTML(kind, item){
+      const id = item.item_id || item.episode_id || item.series_id || item.id || item._key || "";
+      const canJellyfin = kind.startsWith("jellyfin_");
+      const canSeries = canJellyfin && (item.item_id);
+      const canSonarr = (kind === "sonarr_episode" && item.series_id);
+      const canRadarr = ((kind === "radarr_movie") && (item.tmdb_id || item.tmdbId || item.tmdb));
+      const canSeerrService = (kind === "seerr_request" && item.service_url);
+      const seerrIsMovie = String(item.type || "").toLowerCase() === "movie";
+      const seerrOpenLabel = seerrIsMovie ? "Open in Radarr" : "Open in Sonarr";
+
+      const isEpisodeHideMenu = (kind === "sonarr_episode" || kind === "jellyfin_episode");
+      const seriesHideKind =
+        kind === "sonarr_episode" ? "sonarr_series" :
+        kind === "jellyfin_episode" ? "jellyfin_series" : "";
+
+      const seriesHideId = String(
+        item.series_id ||
+        item.seriesId ||
+        item.series_item_id ||
+        item.seriesItemId ||
+        item.series_item ||
+        ""
+      );
+
+      return `
+        <div class="menu"
+             data-menu-for="${escapeHTML(id)}"
+             data-sonarr-series-id="${canSonarr ? escapeHTML(item.series_id) : ""}"
+             data-sonarr-series-slug="${canSonarr ? escapeHTML(item.series_slug || "") : ""}"
+             data-series-hide-kind="${seriesHideKind ? escapeHTML(seriesHideKind) : ""}"
+             data-series-hide-id="${seriesHideId ? escapeHTML(seriesHideId) : ""}"
+             data-radarr-tmdb-id="${canRadarr ? escapeHTML(String(item.tmdb_id || item.tmdbId || item.tmdb)) : ""}"
+             data-service-url="${canSeerrService ? escapeHTML(item.service_url || "") : ""}">
+          ${canSeries ? `<button data-act="open-series"><span>Open Series</span><span class="muted">↗</span></button>` : ``}
+          ${canJellyfin ? `<button data-act="mark-played"><span>Mark Played</span><span class="muted">✓</span></button>` : ``}
+          ${canJellyfin ? `<button data-act="mark-unplayed"><span>Mark Unplayed</span><span class="muted">↺</span></button>` : ``}
+          <button data-act="snooze" data-seconds="86400"><span>Snooze 24h</span><span class="muted">⏱</span></button>
+          <button data-act="snooze" data-seconds="604800"><span>Snooze 7d</span><span class="muted">⏱</span></button>
+          <button data-act="snooze" data-seconds="2592000"><span>Snooze 30d</span><span class="muted">⏱</span></button>
+          ${(isEpisodeHideMenu && seriesHideKind && seriesHideId) ? `<button data-act="hide-series"><span>Hide Series</span><span class="muted">✕</span></button>` : ``}
+          ${isEpisodeHideMenu ? `<button data-act="hide-episode"><span>Hide Episode</span><span class="muted">✕</span></button>` : `<button data-act="hide"><span>Hide</span><span class="muted">✕</span></button>`}
+          ${canSonarr ? `<button data-act="open-sonarr"><span>Open in Sonarr</span><span class="muted">↗</span></button>` : ``}
+          ${canRadarr ? `<button data-act="open-radarr"><span>Open in Radarr</span><span class="muted">↗</span></button>` : ``}
+          ${canSeerrService ? `<button data-act="open-service"><span>${escapeHTML(seerrOpenLabel)}</span><span class="muted">↗</span></button>` : ``}
+        </div>
+      `;
+    }
+
+  // --- NEW: Sonarr "newly arrived" glow ---
+  // We define "new" as: aired within the last NEW_EP_HOURS and not marked as missing.
+  const NEW_EP_HOURS = 48;
+
+  function isRecentlyAired(airRaw, hours){
+    if (!airRaw) return false;
+    const t = new Date(airRaw).getTime();
+    if (!Number.isFinite(t)) return false;
+    const ageMs = Date.now() - t;
+    return ageMs >= 0 && ageMs <= (hours * 60 * 60 * 1000);
+  }
+
+  function qdGroupSonarrCards(items){
+    const src = Array.isArray(items) ? items : [];
+    const groups = new Map();
+    const ordered = [];
+
+    const toDayKey = (v) => {
+      const s = String(v || "").trim();
+      return s ? s.slice(0, 10) : "";
+    };
+
+    const toNum = (v) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
+
+    const uniqSorted = (arr) =>
+      [...new Set((arr || []).filter(v => Number.isFinite(v)))].sort((a, b) => a - b);
+
+    src.forEach((raw, idx) => {
+      const item = { ...(raw || {}) };
+      const seriesKey = String(item.series_id || item.series || item.series_slug || "").trim();
+      const dayKey = toDayKey(item.air_date_utc || item.airDateUtc || item.airDate);
+
+      if (!seriesKey){
+        item._episode_count = 1;
+        item._grouped = false;
+        item._group_key = `single::${idx}`;
+        groups.set(item._group_key, item);
+        ordered.push(item._group_key);
+        return;
+      }
+
+      // Group same-series same-day episodes together regardless of current missing/upcoming state.
+      // Then keep the grouped card "missing" if ANY child episode is still missing.
+      const key = `${seriesKey}::${dayKey || "nodate"}`;
+
+      if (!groups.has(key)){
+        const seasonNum = toNum(item.season_number ?? item.seasonNumber);
+        const episodeNum = toNum(item.episode_number ?? item.episodeNumber);
+
+        groups.set(key, {
+          ...item,
+          _group_key: key,
+          _grouped: false,
+          _episode_count: 1,
+          _season_numbers: seasonNum !== null ? [seasonNum] : [],
+          _episode_numbers: episodeNum !== null ? [episodeNum] : [],
+          _missing: !!item._missing,
+        });
+        ordered.push(key);
+        return;
+      }
+
+      const g = groups.get(key);
+
+      g._episode_count = Number(g._episode_count || 1) + 1;
+
+      const seasonNum = toNum(item.season_number ?? item.seasonNumber);
+      const episodeNum = toNum(item.episode_number ?? item.episodeNumber);
+
+      if (seasonNum !== null) g._season_numbers.push(seasonNum);
+      if (episodeNum !== null) g._episode_numbers.push(episodeNum);
+
+      if (!g.poster_url && item.poster_url) g.poster_url = item.poster_url;
+      if (!g.series && item.series) g.series = item.series;
+      if (!g.series_id && item.series_id) g.series_id = item.series_id;
+      if (!g.series_slug && item.series_slug) g.series_slug = item.series_slug;
+
+      // Keep grouped card missing if any child episode is missing.
+      g._missing = !!g._missing || !!item._missing;
+
+      const gAir = String(g.air_date_utc || g.airDateUtc || g.airDate || "");
+      const iAir = String(item.air_date_utc || item.airDateUtc || item.airDate || "");
+
+      if (g._missing){
+        if (iAir && (!gAir || iAir > gAir)){
+          g.air_date_utc = item.air_date_utc || item.airDateUtc || item.airDate;
+        }
+      } else {
+        if (iAir && (!gAir || iAir < gAir)){
+          g.air_date_utc = item.air_date_utc || item.airDateUtc || item.airDate;
+        }
+      }
+    });
+
+    return ordered.map((key) => {
+      const g = groups.get(key);
+      const count = Number(g._episode_count || 1);
+      const seasons = uniqSorted(g._season_numbers || []);
+      const episodes = uniqSorted(g._episode_numbers || []);
+
+      if (count > 1){
+        g._grouped = true;
+        g.title = `${count} episodes`;
+
+        if (seasons.length === 1 && episodes.length >= 2){
+          g._episode_label = `S${seasons[0]}E${episodes[0]}–E${episodes[episodes.length - 1]}`;
+        } else if (seasons.length === 1 && episodes.length === 1){
+          g._episode_label = `S${seasons[0]}E${episodes[0]}`;
+        } else if (seasons.length > 1){
+          g._episode_label = `${seasons.length} seasons • ${count} episodes`;
+        } else {
+          g._episode_label = `${count} episodes`;
+        }
+      }
+
+      delete g._season_numbers;
+      delete g._episode_numbers;
+      return g;
+    });
+  }
+
+  function cardHTML(item, mode){
+      const img = item.primary_image_url || item.poster_url || item.poster || item.image_url || "";
+      const rawTitle = item.title || item.series || item.movie_title || "Untitled";
+      const title = (mode === "sonarr" && !item._missing && airsTonight(item.air_date_utc || item.airDateUtc || item.airDate))
+        ? `<span class="airsTonightDot" title="Airs tonight"></span>${escapeHTML(rawTitle)}`
+        : escapeHTML(rawTitle);
+
+      const isRemaining = (mode === "rem");
+      const isSonarrMissing = (mode === "sonarr" && !!item._missing);
+      const isRadarrMissing = (mode === "radarr_missing" && !!item._released_missing);
+
+      
+      // Sonarr: just aired (last 48h) soft glow (but not if Missing)
+      const airRaw = item.air_date_utc || item.airDateUtc || item.airDate || item.premiere_date;
+      const isJustAired = (mode === "sonarr" || mode === "nextup_tv" || mode === "nextup_anime") && isRecentlyAired(airRaw, 48);
+// Glow for newly arrived Sonarr episodes (recently aired)
+      const isNewEp = (mode === "sonarr" || mode === "nextup_tv" || mode === "nextup_anime") && isRecentlyAired(item.air_date_utc || item.airDateUtc || item.airDate || item.premiere_date, NEW_EP_HOURS);
+
+      let cardClass = (isSonarrMissing || isRadarrMissing)
+        ? (isRemaining ? "card small missing" : "card missing")
+        : (isRemaining ? "card small" : "card");
+
+      
+      if (isJustAired && !isSonarrMissing){ cardClass += " justAired"; }
+
+if (isNewEp && !isSonarrMissing) cardClass += " newEp";
+const meta1 =
+        mode === "radarr_recent"
+          ? (item.year ? String(item.year) : "")
+          : mode === "radarr_missing"
+            ? (() => {
+                const raw = item.release_date || item.physicalRelease || item.digitalRelease || item.inCinemas || "";
+                if (!raw) return item.year ? String(item.year) : "";
+                try {
+                  return new Date(raw).toLocaleDateString(undefined, { month:"short", day:"numeric", year:"numeric" });
+                } catch {
+                  return item.year ? String(item.year) : "";
+                }
+              })()
+          : (item.series && item.title ? item.series : (item.series || ""));
+
+      // Remaining count (lots of possible field names, so we try a bunch)
+      const remCount =
+        (typeof item.remaining_episodes === "number" ? item.remaining_episodes :
+        typeof item.remaining === "number" ? item.remaining :
+        typeof item.remaining_eps === "number" ? item.remaining_eps :
+        typeof item.episodes_remaining === "number" ? item.episodes_remaining :
+        typeof item.remaining_count === "number" ? item.remaining_count :
+        typeof item.count_remaining === "number" ? item.count_remaining :
+        typeof item.unwatched_count === "number" ? item.unwatched_count :
+        null);
+
+      // ✅ FIX 1: Sonarr meta line should include Air date again
+      const meta2 =
+        mode === "rem"
+          ? (remCount !== null ? `${remCount} episode${remCount===1?"":"s"} left • ${item.season_watched_episodes ?? 0}/
+${item.season_total_episodes ?? "?"} watched` : "")
+        : mode === "radarr_missing"
+          ? (() => {
+              const raw = item.release_date || item.physicalRelease || item.digitalRelease || item.inCinemas || "";
+              let label = item._released_missing ? "Missing" : "Upcoming";
+              if (!raw) return label;
+              try {
+                const d = new Date(raw);
+                if (!Number.isFinite(d.getTime())) return label;
+                const when = d.toLocaleDateString(undefined, { month:"short", day:"numeric" });
+                return `${label} • ${when}`;
+              } catch {
+                return label;
+              }
+            })()
+        : mode === "sonarr"
+          ? (() => {
+              const s = item.season_number ?? "?";
+              const e = item.episode_number ?? "?";
+              const t = (item.title || "").trim();
+              const airRaw = item.air_date_utc || item.airDateUtc || item.airDate;
+              const epCount = Number(item._episode_count || 0);
+              const grouped = epCount > 1 || !!item._grouped;
+
+              let air = "";
+              try {
+                if (airRaw) {
+                  air = new Date(airRaw).toLocaleDateString(undefined, { month:"short", day:"numeric" });
+                }
+              } catch {}
+
+              const kind = item._missing ? "Missing" : "Upcoming";
+              const left = air ? `${kind} • ${air}` : kind;
+
+              let right = "";
+              if (grouped){
+                right = String(item._episode_label || `${epCount} episodes`).trim();
+              } else {
+                right = `S${s}E${e}${t ? " • " + t : ""}`;
+              }
+
+              return [left, right].filter(Boolean).join(" • ").trim();
+            })()
+        : (item.season && item.episode ? `${item.season} • E${item.episode}` :
+           item.premiere_date ? `Air: ${new Date(item.premiere_date).toLocaleDateString()}` :
+           item.air_date_utc ? `Air: ${new Date(item.air_date_utc).toLocaleString()}` :
+           item.date_added ? `Added: ${new Date(item.date_added).toLocaleDateString()}` :
+           "");
+
+      // Next episode line for Series Remaining
+      const meta3 = (() => {
+        if (mode !== "rem") return "";
+        const seasonStr = (item.season ?? "").toString();
+        const mm = seasonStr.match(/(\d+)/);
+        const sNum = mm ? parseInt(mm[1], 10) : null;
+        const eNum = (typeof item.episode === "number") ? item.episode : null;
+        const nTitle = (item.next_title ? String(item.next_title) : "").trim();
+
+        const pad2 = (n) => String(n).padStart(2,"0");
+        if (sNum !== null && eNum !== null){
+          return `Next: S${pad2(sNum)}E${pad2(eNum)}${nTitle ? " " + nTitle : ""}`.trim();
+        }
+        if (nTitle) return `Next: ${nTitle}`;
+        return "";
+      })();
+
+      let qdMeta2 = meta2;
+      let qdMeta3 = meta3;
+
+      if (mode === "rem" && typeof item.unwatched_count === "number") {
+        const s = item.latest_season_number;
+        const e = item.latest_episode_number;
+        const newest = (s !== undefined && s !== null && e !== undefined && e !== null)
+          ? `Newest: S${String(s).padStart(2,"0")}E${String(e).padStart(2,"0")}`
+          : "";
+
+        qdMeta2 = `${item.unwatched_count} unwatched episode${item.unwatched_count===1?"":"s"}${newest ? " • " + newest : ""}`;
+
+        const d = item.latest_added ? new Date(item.latest_added) : null;
+        qdMeta3 = (d && Number.isFinite(d.getTime()))
+          ? ("Latest added: " + d.toLocaleDateString())
+          : "";
+      }
+
+      let progress = null;
+      if (typeof item.progress_percent === "number") {
+        progress = item.progress_percent;
+      } else if (typeof (item.series_progress_pct ?? item.season_progress_pct) === "number") {
+        progress = (item.series_progress_pct ?? item.season_progress_pct);
+      }
+
+      const showProgress = (mode === "cw" || mode === "rem");
+
+
+
+      const primaryLink = item.jellyfin_web_url || "";
+      const playLink = (item.item_id && primaryLink && primaryLink.includes("/web/index.html#/details?id="))
+        ? primaryLink.replace("/web/index.html#/details?id=", "/web/index.html#!/video.html?id=")
+        : primaryLink;
+
+      const hideOpen = (mode === "sonarr" || mode === "radarr_missing");
+      const openBtn = hideOpen ? `` : (playLink ? `<a class="btn primary" href="${playLink}" target="_blank" rel="
+noopener">Play</a>` : `<span class="btn primary" style="opacity:.55;cursor:default;">Play</span>`);
+
+      let kind = "misc";
+      let sid = "";
+
+      if (mode === "sonarr"){
+        kind = "sonarr_episode";
+        sid = String(item.episode_id || "");
+      } else if (mode.startsWith("radarr")){
+        kind = "radarr_movie";
+        sid = String(item.item_id || item.id || item.tmdb_id || item.tmdbId || "");
+      } else if (mode === "rem"){
+        kind = "remaining_series";
+        sid = String(item.series_id || item.series || item.item_id || "");
+      } else {
+        kind = "jellyfin_episode";
+        sid = String(item.item_id || "");
+      }
+
+      const sonarrUrl = (mode === "sonarr" && item.series_id) ? `__SONARR__${item.series_id}` : "";
+
+      return `
+        <div class="${cardClass}" role="listitem" data-kind="${escapeHTML(kind)}" data-sid="${escapeHTML(sid)}" data-mod
+e="${escapeHTML(mode)}">
+          <div class="poster">
+            ${img ? `<img src="${img}" alt="">` : ``}
+          </div>
+          <div class="card-body">
+            <div class="title">${title}</div>
+            ${meta1 ? `<div class="meta">${escapeHTML(meta1)}</div>` : ``}
+            ${qdMeta2 ? `<div class="meta">${escapeHTML(qdMeta2)}</div>` : ``}
+            ${qdMeta3 ? `<div class="meta">${escapeHTML(qdMeta3)}</div>` : ``}
+            ${(showProgress && progress !== null) ? `
+              <div class="bar" title="${Number(progress).toFixed(1)}%">
+                <span style="width:${Math.max(0, Math.min(100, progress))}%"></span>
+              </div>
+            ` : ``}
+          </div>
+          <div class="card-actions">
+            <button class="btn ghost" type="button" data-action="menu">☰</button>
+            ${openBtn}
+          </div>
+          ${menuHTML(kind, {...item, _menu_id: sid, _sonarr: sonarrUrl})}
+        </div>
+      `;
+    }
+
+    function renderCards(secId, items, mode){
+      const sec = document.getElementById(secId);
+      const car = sec.querySelector(".carousel");
+      const emp = sec.querySelector(".empty");
+      const err = sec.querySelector(".error");
+
+      car.style.display = "flex";
+      emp.style.display = "none";
+      err.style.display = "none";
+
+      if (!items || !items.length){
+        showEmpty(secId, "Nothing here right now.");
+        return 0;
+      }
+
+      const filtered = items.filter(it => {
+        let kind = "misc";
+        let sid = "";
+        let seriesKind = "";
+        let seriesSid = "";
+
+        if (mode === "sonarr"){
+          kind = "sonarr_episode";
+          sid = String(it.episode_id || "");
+          seriesKind = "sonarr_series";
+          seriesSid = String(it.series_id || "");
+        } else if (mode.startsWith("radarr")){
+          kind = "radarr_movie";
+          sid = String(it.item_id || it.id || it.tmdb_id || it.tmdbId || "");
+        } else if (mode === "rem"){
+          kind = "remaining_series";
+          // ✅ FIX 2: use series_id so hide/snooze matches DB keying
+          sid = String(it.series_id || it.series || it.item_id || "");
+        } else {
+          kind = "jellyfin_episode";
+          sid = String(it.item_id || "");
+          seriesKind = "jellyfin_series";
+          seriesSid = String(it.series_id || it.seriesId || it.series_item_id || it.seriesItemId || "");
+        }
+
+        if (sid && isSuppressed(kind, sid)) return false;
+        if (seriesKind && seriesSid && isSuppressed(seriesKind, seriesSid)) return false;
+        return true;
+      });
+
+      if (!filtered.length){
+        showEmpty(secId, "Everything here is hidden / snoozed for now.");
+        return 0;
+      }
+
+      car.innerHTML = filtered.map(it => cardHTML(it, mode)).join("");
+
+      wireMenus(car);
+
+      setTimeout(()=> car.dispatchEvent(new Event("scroll")), 50);
+      return filtered.length;
+    }
+
+    function wireMenus(root){
+      root.querySelectorAll('button[data-action="menu"]').forEach(btn=>{
+        btn.addEventListener("click", (e)=>{
+          e.preventDefault();
+          e.stopPropagation();
+
+          const card = btn.closest(".card");
+          const menu = card.querySelector(".menu");
+          const wasOpen = menu.classList.contains("open");
+
+          closeAllMenus();
+          if (!wasOpen) showMenuNearButton(menu, btn);
+        });
+      });
+
+      root.querySelectorAll(".menu button[data-act]").forEach(mbtn=>{
+        mbtn.addEventListener("click", async (e)=>{
+          e.preventDefault();
+          e.stopPropagation();
+
+          const card = mbtn.closest(".card");
+          const kind = card.getAttribute("data-kind");
+          const sid = card.getAttribute("data-sid");
+          const menu = card.querySelector(".menu");
+
+          const act = mbtn.getAttribute("data-act");
+
+          try{
+            if (act === "hide"){
+              await doHide(kind, sid);
+              card.remove();
+              closeAllMenus();
+              return;
+            }
+
+            if (act === "hide-episode"){
+              await doHide(kind, sid);
+              card.remove();
+              closeAllMenus();
+              return;
+            }
+
+            if (act === "hide-series"){
+              const seriesKind = (menu && menu.getAttribute("data-series-hide-kind")) || "";
+              const seriesId = (menu && menu.getAttribute("data-series-hide-id")) || "";
+
+              if (seriesKind && seriesId){
+                await doHide(seriesKind, seriesId);
+
+                document.querySelectorAll(".card").forEach(c => {
+                  const sid =
+                    c.getAttribute("data-series-id") ||
+                    c.getAttribute("data-sonarr-series-id") ||
+                    c.getAttribute("data-jellyfin-series-id") ||
+                    "";
+
+                  if (sid && sid === seriesId){
+                    c.remove();
+                  }
+                });
+
+                card.remove();
+              }
+
+              closeAllMenus();
+              return;
+            }
+
+            if (act === "snooze"){
+              const seconds = Number(mbtn.getAttribute("data-seconds") || "0");
+              await doSnooze(kind, sid, seconds);
+              card.remove();
+              closeAllMenus();
+              return;
+            }
+
+            if (act === "mark-played"){
+              await fetchJSON("/api/jellyfin/mark-played", {
+                method:"POST",
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify({item_id: sid})
+              });
+              card.remove();
+              closeAllMenus();
+              return;
+            }
+
+            if (act === "mark-unplayed"){
+              await fetchJSON("/api/jellyfin/mark-unplayed", {
+                method:"POST",
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify({item_id: sid})
+              });
+              card.remove();
+              closeAllMenus();
+              return;
+            }
+
+            if (act === "open-series"){
+              const j = await fetchJSON(`/api/jellyfin/open-series?item_id=${encodeURIComponent(sid)}`);
+              if (j && j.url) window.open(j.url, "_blank", "noopener");
+              closeAllMenus();
+              return;
+            }
+
+            if (act === "open-sonarr"){
+              const seriesId = (menu && menu.getAttribute("data-sonarr-series-id")) || "";
+              if (seriesId){
+                const s = await fetchJSON("/settings/api");
+                const base = String((s.sonarr_url || "")).replace(/\/+$/,"");
+                const seriesSlug = (menu && menu.getAttribute("data-sonarr-series-slug")) || "";
+                  const target = String((seriesSlug || seriesId) || "").trim();
+                  if (base && target) window.open(`${base}/series/${target}`, "_blank", "noopener");
+              }
+              closeAllMenus();
+              return;
+            }
+
+          
+              if (act === "open-radarr"){
+                const tmdbId = (menu && menu.getAttribute("data-radarr-tmdb-id")) || "";
+                if (tmdbId){
+                  const s = await fetchJSON("/settings/api");
+                  const base = String((s.radarr_url || "")).replace(/\/+$/,"");
+                  if (base) window.open(`${base}/movie/${tmdbId}`, "_blank", "noopener");
+                }
+                closeAllMenus();
+                return;
+              }
+
+              if (act === "open-service"){
+                const serviceUrl = (menu && menu.getAttribute("data-service-url")) || "";
+                if (serviceUrl) window.open(serviceUrl, "_blank", "noopener");
+                closeAllMenus();
+                return;
+              }
+} catch(err){
+            console.error(err);
+            closeAllMenus();
+            alert("Action failed. Check container logs.");
+          }
+        });
+      });
+    }
+      document.addEventListener("click", () => { closeAllMenus(); closeAllHelp(); });
+
+      // QD: keep menus attached on ANY scroll (scroll events don't bubble)
+      const qdOnAnyScroll = (e) => {
+        try { qdRepositionOpenMenus(); } catch(_) {}
+        // Only close help on "page-ish" scroll; avoid closing it because a carousel moved
+        const t = e && e.target;
+        if (t === document || t === document.documentElement || t === document.body || t === window) {
+          closeAllHelp();
+        }
+      };
+
+      window.addEventListener("resize", qdOnAnyScroll, { passive:true });
+      window.addEventListener("scroll", qdOnAnyScroll, { passive:true });
+
+      // capture:true is the key: we see scrolls from any overflow container (carousels, etc.)
+      document.addEventListener("scroll", qdOnAnyScroll, { passive:true, capture:true });
+window.addEventListener("scroll", qdRepositionOpenMenus, { passive:true });
+    document.addEventListener("scroll", () => { qdRepositionOpenMenus(); closeAllHelp(); }, { passive:true });
+
+    async function loadAll(){
+      try{
+        setStatus(null, "Ready");
+        await loadState();
+
+          
+          // ---- QD_LIMITS: pull carousel limits from settings ----
+          let cfg = {};
+          try { cfg = await fetchJSON("/settings/api"); }
+          catch(e){ cfg = {}; }
+const L = {
+            cw: Number(cfg.limit_continue_watching ?? 12),
+            tv: Number(cfg.limit_nextup_tv ?? 60),
+            an: Number(cfg.limit_nextup_anime ?? 60),
+            rem: Number(cfg.limit_series_remaining ?? 30),
+            ltv: Number(cfg.limit_latest_unwatched_tv ?? 10),
+            lta: Number(cfg.limit_latest_unwatched_anime ?? 10),
+            rr: Number(cfg.limit_radarr_recent ?? 10),
+            ru: Number(cfg.limit_radarr_upcoming ?? 15),
+            rm: Number(cfg.limit_radarr_missing ?? 15),
+            su: Number(cfg.limit_sonarr_upcoming ?? 60),
+            sm: Number(cfg.limit_sonarr_missing ?? 60),
+            dl: Number(cfg.limit_download_activity ?? 12),
+            sr: Number(cfg.limit_seerr_requests ?? 10),
+          };
+          const clamp = (n, d) => (Number.isFinite(n) && n >= 1 && n <= 120) ? n : d;
+          L.cw = clamp(L.cw, 12); L.tv = clamp(L.tv, 60); L.an = clamp(L.an, 60); L.rem = clamp(L.rem, 30); L.ltv = clamp(L.ltv, 10); L.lta = clamp(L.lta, 10);
+          L.rr = clamp(L.rr, 10); L.ru = clamp(L.ru, 15); L.rm = clamp(L.rm, 15); L.su = clamp(L.su, 60); L.sm = clamp(L.sm, 60); L.dl = clamp(L.dl, 12); L.sr = (Number.isFinite(L.sr) && L.sr >= 1 && L.sr <= 40) ? L.sr : 10;
+          const hideDownloadActivity = String(cfg.hide_download_activity ?? "").trim().toLowerCase() === "1";
+const __qdSettings = await fetchJSON("/settings/api");
+          qdApplySectionHelp(__qdSettings);
+          const flags = qdApplyProviderVisibility(__qdSettings);
+
+          if (!flags.hasJellyfin && !flags.hasSonarr && !flags.hasRadarr && !flags.hasSeerr){
+            qdShowWelcomeSetupCard();
+            setStatus(true, "Waiting for services to be configured");
+            return;
+          }
+
+const [
+          cw,
+          nextupSplit,
+          remaining,
+          latestSplit,
+          radarrRecent,
+          radarrMissing,
+          sonarrUpcoming,
+          sonarrMissing,
+          sonarrQueue,
+          radarrQueue,
+          myRequests
+        ] = await Promise.all([
+          flags.hasJellyfin
+            ? fetchJSON(`/api/jellyfin/continue-watching?limit=${L.cw}`)
+            : Promise.resolve({ items: [] }),
+
+          flags.hasJellyfin
+            ? fetchJSON(`/api/jellyfin/nextup/split?limit=${Math.max(L.tv, L.an)}`)
+            : Promise.resolve({ tv_items: [], anime_items: [] }),
+
+          flags.hasJellyfin
+            ? fetchJSON(`/api/jellyfin/series-remaining?limit=${L.rem}`)
+            : Promise.resolve({ items: [] }),
+
+          flags.hasJellyfin
+            ? fetchJSON(`/api/jellyfin/latest-unwatched-split?tv_limit=${L.ltv}&anime_limit=${L.lta}`)
+            : Promise.resolve({ tv_items: [], anime_items: [] }),
+
+          flags.hasRadarr
+            ? fetchJSON(`/api/radarr/recent-unwatched?limit=${L.rr}`)
+            : Promise.resolve({ items: [] }),
+
+          flags.hasRadarr
+            ? fetchJSON(`/api/radarr/upcoming-missing?days=365&limit=120`)
+            : Promise.resolve({ items: [] }),
+
+          flags.hasSonarr
+            ? fetchJSON(`/api/sonarr/upcoming?days=14&limit=${L.su}`)
+            : Promise.resolve({ items: [] }),
+
+          flags.hasSonarr
+            ? fetchJSON(`/api/sonarr/missing?days=14&limit=${L.sm}`)
+            : Promise.resolve({ items: [] }),
+
+          (!hideDownloadActivity && flags.hasSonarr)
+            ? fetchJSON(`/api/sonarr/queue-summary?page_size=${L.dl}`).catch(() => ({ items: [] }))
+            : Promise.resolve({ items: [] }),
+
+          (!hideDownloadActivity && flags.hasRadarr)
+            ? fetchJSON(`/api/radarr/queue-summary?page_size=${L.dl}`).catch(() => ({ items: [] }))
+            : Promise.resolve({ items: [] }),
+
+          flags.hasSeerr
+            ? fetchJSON(`/api/seerr/my-requests?take=${L.sr}`).catch(() => ({ items: [] }))
+            : Promise.resolve({ items: [] }),
+        ]);
+
+        const cwItems = cw.items || cw.Items || [];
+        const remItems = remaining.items || remaining.Items || [];
+        const ltvItems = latestSplit.tv_items || latestSplit.tv || latestSplit.items || latestSplit.Items || [];
+        const tvItems = nextupSplit.tv_items || nextupSplit.tv || nextupSplit.television || [];
+        const animeItems = nextupSplit.anime_items || nextupSplit.anime || [];
+        const ltaItems = latestSplit.anime_items || latestSplit.anime || [];
+        const rrItems = radarrRecent.items || radarrRecent.Items || [];
+        const allRadarrItems = radarrMissing.items || radarrMissing.Items || [];
+
+        const _nowMs = Date.now();
+
+        const ruItemsAll = allRadarrItems.filter((m) => {
+          const raw = m.release_date || m.releaseDate || m.digitalRelease || m.physicalRelease || m.inCinemas;
+          if (!raw) return false;
+          const ms = new Date(raw).getTime();
+          return Number.isFinite(ms) && ms > _nowMs;
+        });
+
+        const rmItemsAll = allRadarrItems.filter((m) => {
+          const raw = m.release_date || m.releaseDate || m.digitalRelease || m.physicalRelease || m.inCinemas;
+          if (!raw) return false;
+          const ms = new Date(raw).getTime();
+          return Number.isFinite(ms) && ms <= _nowMs;
+        });
+
+        const ruLimit = Number.isFinite(Number(L.ru)) ? Number(L.ru) : 15;
+        const rmLimit = Number.isFinite(Number(L.rm)) ? Number(L.rm) : 15;
+
+        const ruItems = ruItemsAll.slice(0, ruLimit).map(x => ({ ...x, _released_missing: false }));
+        const rmItems = rmItemsAll.slice(0, rmLimit).map(x => ({ ...x, _released_missing: true }));
+        const combinedRadarrItems = [...rmItems, ...ruItems];
+        const suItems = sonarrUpcoming.items || sonarrUpcoming.Items || [];
+        const smItems = sonarrMissing.items || sonarrMissing.Items || [];
+        const qItems = sonarrQueue.items || sonarrQueue.Items || [];
+        const qMovieItems = radarrQueue.items || radarrQueue.Items || [];
+        const reqItems = myRequests.items || myRequests.Items || [];
+        const qMerged = [...qItems, ...qMovieItems].sort((a, b) => {
+          const ap = (typeof a.progress === "number") ? a.progress : -1;
+          const bp = (typeof b.progress === "number") ? b.progress : -1;
+          return bp - ap;
+        }).slice(0, L.dl);
+
+        try {
+          const strip = document.getElementById("downloadStrip");
+          const body = document.getElementById("downloadStripBody");
+          const count = document.getElementById("downloadCount");
+
+          if (hideDownloadActivity){
+            if (body) body.innerHTML = "";
+            if (count) count.textContent = "0";
+            if (strip) strip.classList.remove("show");
+          } else {
+            renderDownloadStrip(qMerged);
+          }
+        } catch (e) {
+          console.warn("download strip failed", e);
+        }
+
+        try {
+          await loadApprovalStrip();
+        } catch (e) {
+          console.warn("approval strip failed", e);
+        }
+
+        const combinedSonarr = qdGroupSonarrCards([
+          ...smItems.map(x => ({...x, _missing:true})),
+          ...suItems.map(x => ({...x, _missing:false})),
+        ]);
+
+        const nCW = renderCards("sec-cw", cwItems, "cw");
+        const nTV = renderCards("sec-nextup-tv", tvItems, "nextup_tv");
+        const nSO = renderCards("sec-sonarr", combinedSonarr, "sonarr");
+        const nAN = flags.hasAnime ? renderCards("sec-nextup-anime", animeItems, "nextup_anime") : 0;
+const nREM = renderCards("sec-rem", remItems, "rem");
+        const nLTV = renderCards("sec-latest-tv", ltvItems, "rem");
+        const nLTA = flags.hasAnime ? renderCards("sec-latest-anime", ltaItems, "rem") : 0;
+        const nRR = renderCards("sec-radarr-recent", rrItems, "radarr_recent");
+        const nRM = renderCards("sec-radarr-missing", combinedRadarrItems, "radarr_missing");
+        const nREQ = renderMyRequests(reqItems);
+
+        setCount("#chip-cw", nCW);
+        setCount("#chip-nextup-tv", nTV);
+        setCount("#chip-sonarr", nSO);
+        if (flags.hasAnime) setCount("#chip-nextup-anime", nAN);
+setCount("#chip-rem", nREM);
+        setCount("#chip-latest-tv", nLTV);
+        if (flags.hasAnime) setCount("#chip-latest-anime", nLTA);
+        setCount("#chip-radarr-recent", nRR);
+        setCount("#chip-radarr-missing", nRM);
+        setCount("#chip-my-requests", nREQ);
+
+        setStatus(true, "All systems go");
+      } catch (e){
+        console.error(e);
+        setStatus(false, "Session expired / API error");
+        showError("sec-cw", `${escapeHTML(e.message)} <br><br>If you were logged out, refresh and log back in.`);
+      }
+    }
+
+    // Boot
+    mountSections();
+    wireHelpPopovers();
+    loadAll();
+      // ---- QD_AUTO_REFRESH: refresh feeds every 60s (no full page reload) ----
+      const QD_REFRESH_MS = 60_000;
+      let qdRefreshTimer = null;
+      let qdRefreshInFlight = false;
+
+      async function qdRefreshTick(){
+        if (qdRefreshInFlight) return;
+        qdRefreshInFlight = true;
+        try{
+          // Don't fight with an open menu; keep UX stable
+          closeAllMenus();
+          closeAllHelp();
+          await loadAll();
+        }catch(e){
+          console.warn("Auto-refresh failed:", e);
+        }finally{
+          qdRefreshInFlight = false;
+        }
+      }
+
+      qdRefreshTimer = setInterval(qdRefreshTick, QD_REFRESH_MS);
+
+      // Refresh when tab becomes visible again (nice when you come back to it)
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) qdRefreshTick();
+      });
+      // ----------------------------------------------------------------------
+
+  
+
+// ---- QD: Legend popover ----
+function wireLegend(){
+  const btn = document.getElementById("legendBtn");
+  const pop = document.getElementById("legendPop");
+  if (!btn || !pop) return;
+
+  function close(){
+    pop.classList.remove("open");
+    pop.setAttribute("aria-hidden","true");
+  }
+  function open(){
+    pop.classList.add("open");
+    pop.setAttribute("aria-hidden","false");
+  }
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    pop.classList.contains("open") ? close() : open();
+  });
+
+  document.addEventListener("click", close);
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+}
+
+
+// ---- QD: right-click opens the same menu ----
+function showMenuAtPoint(menuEl, x, y){
+  if (!menuEl) return;
+  menuEl.classList.add("open");
+  menuEl.style.position = "fixed";
+  menuEl.style.zIndex = "9999";
+
+  const pad = 10;
+  const mw = menuEl.offsetWidth || 220;
+  const mh = menuEl.offsetHeight || 220;
+
+  const left = Math.max(pad, Math.min(x, window.innerWidth - mw - pad));
+  const top  = Math.max(pad, Math.min(y, window.innerHeight - mh - pad));
+
+  menuEl.style.left = `${left}px`;
+  menuEl.style.top  = `${top}px`;
+}
+
+(function wireRightClickMenus(){
+  document.addEventListener("contextmenu", (e) => {
+    const card = e.target.closest(".card");
+    if (!card) return;
+
+    const menu = card.querySelector(".menu");
+    if (!menu) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    try { closeAllMenus(); } catch(_e) {}
+    showMenuAtPoint(menu, e.clientX, e.clientY);
+  });
+})();
+
+
+
+// ---- QD: boot (legend) ----
+
+    function qdGetProviderFlags(settings){
+      const hasJellyfin = !!(
+        (settings?.jellyfin_url || "").trim() &&
+        (settings?.jellyfin_api_key || "").trim() &&
+        (settings?.jellyfin_user || "").trim()
+      );
+
+      const hasSonarr = !!(
+        (settings?.sonarr_url || "").trim() &&
+        (settings?.sonarr_api_key || "").trim()
+      );
+
+      const hasRadarr = !!(
+        (settings?.radarr_url || "").trim() &&
+        (settings?.radarr_api_key || "").trim()
+      );
+
+      const hasSeerr = !!(
+        (settings?.seerr_url || "").trim() &&
+        (settings?.seerr_api_key || "").trim()
+      );
+
+      const hasAnime = hasJellyfin && !!(
+        (settings?.anime_path || settings?.anime_paths || settings?.animePath || "").trim()
+      );
+
+      return { hasJellyfin, hasSonarr, hasRadarr, hasSeerr, hasAnime };
+    }
+
+    function qdApplyProviderVisibility(settings){
+      const flags = qdGetProviderFlags(settings);
+      const byId = (id) => document.getElementById(id);
+
+      const toggle = (id, on) => {
+        const el = byId(id);
+        if (el) el.style.display = on ? "" : "none";
+      };
+
+      toggle("qdOpenSeerrSearch", flags.hasSeerr);
+      qdApplySectionOrder(settings);
+
+      const isOn = (v, defaultOn = true) => {
+        const raw = String(v ?? (defaultOn ? "1" : "")).trim().toLowerCase();
+        return ["1","true","yes","on"].includes(raw);
+      };
+
+      const prefs = {
+        show_sec_cw: isOn(settings.show_sec_cw),
+        show_sec_nextup_tv: isOn(settings.show_sec_nextup_tv),
+        show_sec_sonarr: isOn(settings.show_sec_sonarr),
+        show_sec_nextup_anime: isOn(settings.show_sec_nextup_anime),
+        show_sec_rem: isOn(settings.show_sec_rem),
+        show_sec_latest_tv: isOn(settings.show_sec_latest_tv),
+        show_sec_latest_anime: isOn(settings.show_sec_latest_anime),
+        show_sec_radarr_recent: isOn(settings.show_sec_radarr_recent),
+        show_sec_radarr_missing: isOn(settings.show_sec_radarr_missing),
+        show_sec_downloads: isOn(settings.show_sec_downloads),
+        show_sec_my_requests: isOn(settings.show_sec_my_requests),
+      };
+
+      toggle("sec-cw", flags.hasJellyfin && prefs.show_sec_cw);
+      toggle("sec-nextup-tv", flags.hasJellyfin && prefs.show_sec_nextup_tv);
+      toggle("sec-rem", flags.hasJellyfin && prefs.show_sec_rem);
+      toggle("sec-latest-tv", flags.hasJellyfin && prefs.show_sec_latest_tv);
+
+      toggle("sec-nextup-anime", flags.hasAnime && prefs.show_sec_nextup_anime);
+      toggle("sec-latest-anime", flags.hasAnime && prefs.show_sec_latest_anime);
+
+      toggle("sec-sonarr", flags.hasSonarr && prefs.show_sec_sonarr);
+
+      toggle("sec-radarr-recent", flags.hasRadarr && prefs.show_sec_radarr_recent);
+      toggle("sec-radarr-missing", flags.hasRadarr && prefs.show_sec_radarr_missing);
+
+      toggle("sec-downloads", (flags.hasSonarr || flags.hasRadarr) && prefs.show_sec_downloads);
+      toggle("sec-my-requests", flags.hasSeerr && prefs.show_sec_my_requests);
+
+      return flags;
+    }
+
+    function qdShowWelcomeSetupCard(){
+      const grid = document.getElementById("grid");
+      if (!grid) return;
+
+      grid.innerHTML = `
+        <section class="section">
+          <div class="section-head">
+            <div class="section-title">
+              <h2><span>Welcome to QueueDeck</span></h2>
+              <div class="sub">Your dashboard has not been configured yet.</div>
+            </div>
+          </div>
+
+          <div class="empty" style="display:block;">
+            <div style="max-width:720px; line-height:1.6;">
+              <div style="font-size:16px; margin-bottom:10px;">
+                An administrator needs to configure your media services before QueueDeck can build your dashboard.
+              </div>
+              <div style="opacity:.82; margin-bottom:14px;">
+                Once services are connected, QueueDeck will automatically show sections such as:
+              </div>
+              <div style="display:grid; gap:8px; opacity:.9;">
+                <div>• Jellyfin → Continue Watching, Next Up, Series Remaining, Latest Unwatched</div>
+                <div>• Sonarr → Upcoming / Missing TV</div>
+                <div>• Radarr → Upcoming / Missing Movies</div>
+                <div>• Seerr → Search / Request + Recent Requests</div>
+              </div>
+              <div style="margin-top:16px;">
+                <a class="btn primary" href="/settings">Open Settings</a>
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+
+function qdSeerrEscape(s){
+  return String(s || "").replace(/[&<>"']/g, m => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[m]));
+}
+
+function qdApprovalEscape(s){
+  return String(s || "").replace(/[&<>"']/g, m => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[m]));
+}
+
+async function qdActOnApproval(reqId, action){
+  const url = action === "approve"
+    ? `/api/seerr/request/${reqId}/approve`
+    : `/api/seerr/request/${reqId}/decline`;
+
+  const r = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.ok){
+    throw new Error(j.error || ("HTTP " + r.status));
+  }
+  return j;
+}
+
+function renderApprovalStrip(items){
+  const strip = document.getElementById("approvalStrip");
+  const body = document.getElementById("approvalStripBody");
+  const count = document.getElementById("approvalCount");
+  if (!strip || !body || !count) return;
+
+  const rows = Array.isArray(items) ? items : [];
+  count.textContent = `${rows.length} pending`;
+
+  if (!rows.length){
+    body.innerHTML = "";
+    strip.classList.remove("show");
+    return;
+  }
+
+  body.innerHTML = rows.map(item => {
+    const poster = item.poster_url
+      ? `<img class="approvalPoster" src="${qdApprovalEscape(item.poster_url)}" alt="">`
+      : `<div class="approvalPoster"></div>`;
+
+    const media = String(item.media_type || "").toLowerCase() === "tv" ? "TV" : "Movie";
+
+    return `
+      <div class="approvalCard" data-approval-id="${qdApprovalEscape(item.id)}">
+        ${poster}
+        <div class="approvalMain">
+          <div class="approvalTitle">${qdApprovalEscape(item.title || "Untitled")}</div>
+          <div class="approvalMeta">${media} • Requested by ${qdApprovalEscape(item.requested_by || "Unknown")}</div>
+          <div class="approvalActions">
+            <button class="btn secondary" type="button" data-approve-request="${qdApprovalEscape(item.id)}">Approve</button>
+            <button class="btn secondary" type="button" data-decline-request="${qdApprovalEscape(item.id)}">Deny</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  strip.classList.add("show");
+
+  body.querySelectorAll("[data-approve-request]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const reqId = String(btn.getAttribute("data-approve-request") || "").trim();
+      if (!reqId) return;
+      btn.disabled = true;
+      const card = btn.closest(".approvalCard");
+      try{
+        await qdActOnApproval(reqId, "approve");
+        if (card) card.remove();
+        const remaining = body.querySelectorAll(".approvalCard").length;
+        count.textContent = `${remaining} pending`;
+        if (!remaining) strip.classList.remove("show");
+      }catch(e){
+        console.error(e);
+        btn.disabled = false;
+        alert("Approve failed: " + (e.message || e));
+      }
+    });
+  });
+
+  body.querySelectorAll("[data-decline-request]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const reqId = String(btn.getAttribute("data-decline-request") || "").trim();
+      if (!reqId) return;
+      btn.disabled = true;
+      const card = btn.closest(".approvalCard");
+      try{
+        await qdActOnApproval(reqId, "decline");
+        if (card) card.remove();
+        const remaining = body.querySelectorAll(".approvalCard").length;
+        count.textContent = `${remaining} pending`;
+        if (!remaining) strip.classList.remove("show");
+      }catch(e){
+        console.error(e);
+        btn.disabled = false;
+        alert("Decline failed: " + (e.message || e));
+      }
+    });
+  });
+}
+
+async function loadApprovalStrip(){
+  const strip = document.getElementById("approvalStrip");
+  const body = document.getElementById("approvalStripBody");
+  const count = document.getElementById("approvalCount");
+  if (!strip || !body || !count) return;
+
+  try{
+    const r = await fetch("/api/seerr/pending-requests?take=12", { cache: "no-store" });
+    const j = await r.json().catch(() => ({}));
+
+    if (!r.ok || !j.ok || !j.admin){
+      body.innerHTML = "";
+      count.textContent = "0";
+      strip.classList.remove("show");
+      return;
+    }
+
+    renderApprovalStrip(j.requests || []);
+  }catch(e){
+    console.warn("approval strip failed", e);
+    body.innerHTML = "";
+    count.textContent = "0";
+    strip.classList.remove("show");
+  }
+}
+
+function qdSeerrStatusLabel(v){
+  const n = Number(v);
+  if (Number.isNaN(n)) return v ? String(v) : "";
+  if (n === 1) return "Unknown";
+  if (n === 2) return "Pending";
+  if (n === 3) return "Processing";
+  if (n === 4) return "Partially Available";
+  if (n === 5) return "Available";
+  return "Status " + String(v);
+}
+
+function qdOpenSeerrSearch(){
+  const modal = document.getElementById("qdSeerrSearchModal");
+  if (modal) {
+    modal.style.display = "flex";
+    const input = document.getElementById("qdSeerrQuery");
+    if (input) {
+      input.focus();
+      const q = String(input.value || "").trim();
+      if (q.length >= 2) {
+        qdSeerrSearch(q);
+      }
+    }
+  }
+}
+
+function qdCloseSeerrSearch(){
+  const modal = document.getElementById("qdSeerrSearchModal");
+  if (modal) modal.style.display = "none";
+}
+
+let qdSeerrTvDestinations = [];
+let qdSeerrPendingTvItem = null;
+
+async function qdSeerrLoadTvDestinations(){
+  try {
+    const r = await fetch("/api/seerr/tv-destinations", { cache: "no-store" });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok && j.ok && Array.isArray(j.destinations)) {
+      qdSeerrTvDestinations = j.destinations;
+    } else {
+      qdSeerrTvDestinations = [];
+    }
+  } catch (e) {
+    qdSeerrTvDestinations = [];
+  }
+}
+
+function qdSeerrOpenTvChoice(item){
+  qdSeerrPendingTvItem = item;
+
+  const modal = document.getElementById("qdSeerrTvChoiceModal");
+  const title = document.getElementById("qdSeerrTvChoiceTitle");
+  const list = document.getElementById("qdSeerrTvChoiceList");
+
+  if (!modal || !title || !list) return;
+
+  title.textContent = "Choose TV destination for " + (item.title || "show");
+  list.innerHTML = "";
+
+  const dests = Array.isArray(qdSeerrTvDestinations) ? qdSeerrTvDestinations : [];
+  for (const d of dests) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn";
+    btn.style.textAlign = "left";
+    btn.style.padding = "12px 14px";
+    btn.innerHTML = `
+      <div style="font-weight:700;">${qdSeerrEscape(d.label || d.key || "Destination")}</div>
+      <div style="font-size:12px; opacity:.72; margin-top:4px;">
+        Root: ${qdSeerrEscape(d.rootFolder || "")}
+        • Profile ID: ${qdSeerrEscape(d.profileId || "")}
+        • Server ID: ${qdSeerrEscape(d.serverId || "")}
+      </div>
+    `;
+    btn.addEventListener("click", () => qdSeerrSendRequest(item, d.key || "tv"));
+    list.appendChild(btn);
+  }
+
+  modal.style.display = "flex";
+}
+
+function qdSeerrCloseTvChoice(){
+  const modal = document.getElementById("qdSeerrTvChoiceModal");
+  if (modal) modal.style.display = "none";
+  qdSeerrPendingTvItem = null;
+}
+
+async function qdSeerrSendRequest(item, forcedDestination=null){
+  const status = document.getElementById("qdSeerrStatus");
+  try {
+    const body = {
+      mediaType: item.media_type,
+      mediaId: item.tmdb_id
+    };
+
+    if (item.media_type === "tv") {
+      body.destination = forcedDestination || "tv";
+      if (item.tvdb_id) body.tvdbId = item.tvdb_id;
+    }
+
+    const r = await fetch("/api/seerr/request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+
+    const j = await r.json().catch(() => ({}));
+
+    if (!r.ok || !j.ok) {
+      const errText = String(j.error || j.message || ("HTTP " + r.status));
+      const bodyText = String(j.body || "");
+      const combined = (errText + " " + bodyText).toLowerCase();
+
+      if (combined.includes("already exists") || combined.includes("already requested")) {
+        status.textContent = "Already requested.";
+        return;
+      }
+
+      const extra = j.body ? (" — " + j.body) : "";
+      status.textContent = "Request failed: " + errText + extra;
+      return;
+    }
+
+    if (item.media_type === "tv") {
+      qdSeerrCloseTvChoice();
+    }
+
+    status.textContent = "Request sent for " + (item.title || "item") + ".";
+    await qdSeerrSearch(document.getElementById("qdSeerrQuery")?.value || "");
+  } catch (e) {
+    status.textContent = "Request failed: " + (e.message || e);
+  }
+}
+
+function qdSeerrResultCard(item){
+  const poster = item.poster_url || "";
+  const year = item.year || "";
+  const mediaType = item.media_type === "tv" ? "TV" : "Movie";
+  const requested = !!(item.request && item.request.id);
+  const status = qdSeerrStatusLabel(item.status || item.status4k || "");
+  const title = qdSeerrEscape(item.title || "");
+  const resultKey = `${item.media_type || ""}:${item.tmdb_id || item.title || ""}:${item.year || ""}`;
+
+  let badge = "";
+  if (requested) {
+    badge = '<div data-seerr-badge="1" style="margin-top:6px; font-size:12px; color:#9fe3a7;">Already Requested</div>';
+  } else if (status) {
+    badge = '<div data-seerr-badge="1" style="margin-top:6px; font-size:12px; color:#9ecbff;">' + qdSeerrEscape(status) + '</div>';
+  } else {
+    badge = '<div data-seerr-badge="1" style="margin-top:6px; font-size:12px; color:#9ecbff;">&nbsp;</div>';
+  }
+
+  const btnStyle = requested
+    ? 'margin-top:10px; width:100%; min-height:46px; border-radius:16px; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.06); color:rgba(255,255,255,.72); font-weight:800; font-size:14px; cursor:not-allowed; box-shadow:inset 0 1px 0 rgba(255,255,255,.04), 0 8px 22px rgba(0,0,0,.18);'
+    : 'margin-top:10px; width:100%; min-height:46px; border-radius:16px; border:1px solid rgba(255,255,255,.10); background:linear-gradient(135deg, #7c5cff, #4ea1ff); color:#fff; font-weight:800; font-size:14px; cursor:pointer; box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 10px 26px rgba(0,0,0,.22);';
+
+  return `
+    <div data-seerr-card="1" data-seerr-key="${qdSeerrEscape(resultKey)}" data-title="${title}" data-year="${qdSeerrEscape(year)}" data-media-type="${qdSeerrEscape(item.media_type || "")}" data-tmdb-id="${qdSeerrEscape(item.tmdb_id || "")}" data-imdb-id="${qdSeerrEscape(item.imdb_id || "")}" data-tvdb-id="${qdSeerrEscape(item.tvdb_id || "")}" style="background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.10); border-radius:16px; padding:10px;">
+      <div style="aspect-ratio:2/3; overflow:hidden; border-radius:12px; background:rgba(255,255,255,.03); display:flex; align-items:center; justify-content:center;">
+        ${poster ? `<img src="${poster}" alt="${title}" style="width:100%; height:100%; object-fit:cover;">` : `<div style="opacity:.45; font-size:12px;">No Poster</div>`}
+      </div>
+      <div style="margin-top:10px; font-size:15px; font-weight:800; line-height:1.25;">${title}</div>
+      <div style="margin-top:4px; font-size:12px; opacity:.78;">${qdSeerrEscape(mediaType)}${year ? " • " + qdSeerrEscape(year) : ""}</div>
+      ${badge}
+      <button type="button" data-seerr-request="${item.tmdb_id}" data-seerr-type="${item.media_type}" style="${btnStyle}" ${requested ? "disabled" : ""}>
+        ${requested ? "Already Requested" : (item.media_type === "tv" ? "Request TV" : "Request")}
+      </button>
+    </div>
+  `;
+}
+
+async function qdSeerrHydrateSearchState(){
+  const box = document.getElementById("qdSeerrResults");
+  if (!box) return;
+
+  const cards = [...box.querySelectorAll("[data-seerr-card='1']")];
+  if (!cards.length) return;
+
+  const items = cards.map(card => ({
+    key: String(card.getAttribute("data-seerr-key") || ""),
+    title: String(card.getAttribute("data-title") || ""),
+    year: String(card.getAttribute("data-year") || ""),
+    media_type: String(card.getAttribute("data-media-type") || "").toLowerCase(),
+    tmdb_id: String(card.getAttribute("data-tmdb-id") || ""),
+    imdb_id: String(card.getAttribute("data-imdb-id") || ""),
+    tvdb_id: String(card.getAttribute("data-tvdb-id") || "")
+  }));
+
+  try{
+    const r = await fetch("/api/discover/library-state", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items })
+    });
+
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.ok || !j.items) return;
+
+    cards.forEach(card => {
+      const key = String(card.getAttribute("data-seerr-key") || "");
+      const hit = j.items[key] || {};
+      const btn = card.querySelector("[data-seerr-request]");
+      const badge = card.querySelector("[data-seerr-badge='1']");
+      if (!btn || !badge) return;
+
+      if (hit.in_library){
+        btn.disabled = true;
+        btn.textContent = "In Library";
+        btn.style.background = "rgba(80,200,120,.16)";
+        btn.style.borderColor = "rgba(120,220,150,.28)";
+        btn.style.color = "#dff7e7";
+        btn.style.cursor = "not-allowed";
+        badge.textContent = "In Library";
+        badge.style.color = "#9fe3a7";
+      } else if (hit.in_sonarr || hit.in_radarr){
+        btn.disabled = true;
+        btn.textContent = "Already Requested";
+        btn.style.background = "rgba(255,255,255,.06)";
+        btn.style.borderColor = "rgba(255,255,255,.10)";
+        btn.style.color = "rgba(255,255,255,.72)";
+        btn.style.cursor = "not-allowed";
+        badge.textContent = "Already Requested";
+        badge.style.color = "#9fe3a7";
+      }
+    });
+  }catch(_){
+  }
+}
+
+async function qdSeerrSearch(q){
+  const status = document.getElementById("qdSeerrStatus");
+  const box = document.getElementById("qdSeerrResults");
+  if (!status || !box) return;
+
+  q = String(q || "").trim();
+
+  if (q.length < 2) {
+    box.innerHTML = "";
+    status.textContent = "Type 2+ characters to search.";
+    return;
+  }
+
+  status.textContent = "Searching...";
+  box.innerHTML = "";
+
+  try {
+    const r = await fetch("/api/seerr/search?q=" + encodeURIComponent(q), { cache: "no-store" });
+    const j = await r.json().catch(() => ({}));
+
+    if (!r.ok || j.ok === false) {
+      status.textContent = "Search failed: " + (j.error || ("HTTP " + r.status));
+      return;
+    }
+
+    if (j.configured === false) {
+      status.textContent = "Seerr is not configured for this user.";
+      return;
+    }
+
+    const items = Array.isArray(j.results) ? j.results : [];
+    if (!items.length) {
+      status.textContent = "No results.";
+      return;
+    }
+
+    status.textContent = "Found " + items.length + " result" + (items.length === 1 ? "" : "s") + ".";
+    box.innerHTML = items.map(qdSeerrResultCard).join("");
+    await qdSeerrHydrateSearchState();
+
+    box.querySelectorAll("[data-seerr-request]").forEach(btn => {
+      const id = String(btn.getAttribute("data-seerr-request") || "");
+      const item = items.find(x => String(x.tmdb_id) === id);
+      if (!item || btn.disabled) return;
+      btn.addEventListener("click", () => {
+        if (item.media_type === "tv") {
+          qdSeerrOpenTvChoice(item);
+        } else {
+          qdSeerrSendRequest(item);
+        }
+      });
+    });
+
+  } catch (e) {
+    status.textContent = "Search failed: " + (e.message || e);
+  }
+}
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Legend removed for now; help will move to per-section tooltips.
+
+  qdSeerrLoadTvDestinations();
+
+  const qdSearchInputReset = document.getElementById("qdSeerrQuery");
+  const qdSearchResultsReset = document.getElementById("qdSeerrResults");
+  const qdSearchStatusReset = document.getElementById("qdSeerrStatus");
+  if (qdSearchInputReset) qdSearchInputReset.value = "";
+  if (qdSearchResultsReset) qdSearchResultsReset.innerHTML = "";
+  if (qdSearchStatusReset) qdSearchStatusReset.textContent = "Type 2+ characters to search.";
+
+  const qdOpenBtn = document.getElementById("qdOpenSeerrSearch");
+  const qdCloseBtn = document.getElementById("qdCloseSeerrSearch");
+  const qdModal = document.getElementById("qdSeerrSearchModal");
+  const qdInput = document.getElementById("qdSeerrQuery");
+  const qdTvChoiceModal = document.getElementById("qdSeerrTvChoiceModal");
+  const qdTvChoiceClose = document.getElementById("qdSeerrTvChoiceClose");
+
+  if (qdOpenBtn) qdOpenBtn.addEventListener("click", qdOpenSeerrSearch);
+  if (qdCloseBtn) qdCloseBtn.addEventListener("click", qdCloseSeerrSearch);
+  if (qdTvChoiceClose) qdTvChoiceClose.addEventListener("click", qdSeerrCloseTvChoice);
+
+  if (qdModal) {
+    qdModal.addEventListener("click", (e) => {
+      if (e.target === qdModal) qdCloseSeerrSearch();
+    });
+  }
+
+  if (qdTvChoiceModal) {
+    qdTvChoiceModal.addEventListener("click", (e) => {
+      if (e.target === qdTvChoiceModal) qdSeerrCloseTvChoice();
+    });
+  }
+
+  if (qdInput) {
+    let qdTimer;
+    qdInput.addEventListener("input", () => {
+      clearTimeout(qdTimer);
+      qdTimer = setTimeout(() => qdSeerrSearch(qdInput.value), 350);
+    });
+  }
+});
+
+</script>
+
+<div id="qdSeerrSearchModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.68); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+  <div style="width:min(1100px, 96vw); max-height:90vh; overflow:auto; background:#0f131a; border:1px solid rgba(255,255,255,.12); border-radius:18px; box-shadow:0 30px 80px rgba(0,0,0,.45); padding:18px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;">
+      <div>
+        <div style="font-size:18px; font-weight:800;">Search & Request</div>
+        <div style="font-size:13px; opacity:.72;">Search Seerr and request movies or shows from your dashboard.</div>
+      </div>
+      <button id="qdCloseSeerrSearch" class="btn secondary" type="button">Close</button>
+    </div>
+
+    <input
+      id="qdSeerrQuery"
+        autocomplete="off"
+        spellcheck="false"
+      type="text"
+      placeholder="Search movies or TV..."
+      style="width:100%; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:#fff; outline:none;"
+    />
+
+    <div id="qdSeerrStatus" style="margin-top:10px; font-size:13px; opacity:.78;">Type 2+ characters to search.</div>
+    <div id="qdSeerrResults" style="margin-top:14px; display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:14px;"></div>
+  </div>
+</div>
+
+<div id="qdSeerrTvChoiceModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.68); z-index:10000; align-items:center; justify-content:center; padding:20px;">
+  <div style="width:min(720px, 96vw); background:#0f131a; border:1px solid rgba(255,255,255,.12); border-radius:18px; box-shadow:0 30px 80px rgba(0,0,0,.45); padding:18px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px;">
+      <div>
+        <div id="qdSeerrTvChoiceTitle" style="font-size:17px; font-weight:800;">Choose TV destination</div>
+        <div style="font-size:13px; opacity:.72;">Select where this show should go.</div>
+      </div>
+      <button id="qdSeerrTvChoiceClose" class="btn secondary" type="button">Close</button>
+    </div>
+
+    <div id="qdSeerrTvChoiceList" style="display:grid; gap:10px;"></div>
+  </div>
+</div>
+
+  <script>
+    (function(){
+      const menu = document.getElementById("userMenu");
+      const btn = document.getElementById("userMenuBtn");
+      const dropdown = document.getElementById("userDropdown");
+      if (!menu || !btn || !dropdown) return;
+
+      function closeMenu(){
+        menu.classList.remove("open");
+        btn.setAttribute("aria-expanded", "false");
+      }
+
+      function openMenu(){
+        menu.classList.add("open");
+        btn.setAttribute("aria-expanded", "true");
+      }
+
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (menu.classList.contains("open")){
+          closeMenu();
+        } else {
+          openMenu();
+        }
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!menu.contains(e.target)){
+          closeMenu();
+        }
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape"){
+          closeMenu();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

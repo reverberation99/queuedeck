@@ -1,0 +1,155 @@
+import sqlite3
+from datetime import datetime, timezone
+
+from flask import Blueprint, render_template, request, redirect, url_for, session
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from ..db import get_db
+
+bp = Blueprint("auth", __name__)
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _user_count() -> int:
+    db = get_db()
+    row = db.execute("SELECT COUNT(*) AS c FROM users").fetchone()
+    return int(row["c"] or 0)
+
+
+def _get_user_by_username(username: str):
+    db = get_db()
+    return db.execute(
+        """
+        SELECT id, username, password_hash, is_admin, is_active, last_login_at
+        FROM users
+        WHERE lower(username) = lower(?)
+        """,
+        (username.strip(),),
+    ).fetchone()
+
+
+def _create_user(username: str, password: str, is_admin: bool = False):
+    db = get_db()
+    now = _now_iso()
+    db.execute(
+        """
+        INSERT INTO users (username, password_hash, is_admin, is_active, created_at, updated_at)
+        VALUES (?, ?, ?, 1, ?, ?)
+        """,
+        (
+            username.strip(),
+            generate_password_hash(password),
+            1 if is_admin else 0,
+            now,
+            now,
+        ),
+    )
+    db.commit()
+
+    return db.execute(
+        """
+        SELECT id, username, is_admin, is_active
+        FROM users
+        WHERE lower(username) = lower(?)
+        """,
+        (username.strip(),),
+    ).fetchone()
+
+
+def _login_user(user_row) -> None:
+    session.clear()
+    session["logged_in"] = True
+    session["user_id"] = int(user_row["id"])
+    session["username"] = str(user_row["username"])
+    session["is_admin"] = int(user_row["is_admin"] or 0)
+
+
+@bp.route("/login", methods=["GET", "POST"])
+def login():
+    if _user_count() == 0:
+        return redirect(url_for("auth.setup"))
+
+    if session.get("logged_in") and session.get("user_id"):
+        return redirect(url_for("dashboard.root"))
+
+    if request.method == "POST":
+        username = (request.form.get("username") or "").strip()
+        password = request.form.get("password") or ""
+
+        if not username or not password:
+            return render_template("login.html", error="Username and password are required.")
+
+        user = _get_user_by_username(username)
+
+        if not user:
+            return render_template("login.html", error="Invalid credentials.")
+
+        if int(user["is_active"] or 0) != 1:
+            return render_template("login.html", error="This account is inactive.")
+
+        if not check_password_hash(user["password_hash"], password):
+            return render_template("login.html", error="Invalid credentials.")
+
+        db = get_db()
+        db.execute(
+            "UPDATE users SET last_login_at = ?, updated_at = ? WHERE id = ?",
+            (_now_iso(), _now_iso(), int(user["id"])),
+        )
+        db.commit()
+
+        _login_user(user)
+        return redirect(url_for("dashboard.root"))
+
+    return render_template("login.html")
+
+
+@bp.route("/setup", methods=["GET", "POST"])
+def setup():
+    """
+    First-run wizard:
+    only available when there are zero users.
+    The first created user becomes admin.
+    """
+    if _user_count() > 0:
+        if session.get("logged_in") and session.get("user_id"):
+            return redirect(url_for("dashboard.root"))
+        return redirect(url_for("auth.login"))
+
+    if request.method == "POST":
+        username = (request.form.get("username") or "").strip()
+        password = request.form.get("password") or ""
+        confirm_password = request.form.get("confirm_password") or ""
+
+        if not username:
+            return render_template("setup.html", error="Username is required.")
+
+        if len(username) < 3:
+            return render_template("setup.html", error="Username must be at least 3 characters.")
+
+        if not password:
+            return render_template("setup.html", error="Password is required.")
+
+        if len(password) < 8:
+            return render_template("setup.html", error="Password must be at least 8 characters.")
+
+        if password != confirm_password:
+            return render_template("setup.html", error="Passwords do not match.")
+
+        try:
+            user = _create_user(username=username, password=password, is_admin=True)
+        except sqlite3.IntegrityError:
+            return render_template("setup.html", error="That username already exists.")
+
+        _login_user(user)
+        return redirect(url_for("settings.settings_page", first_run=1))
+
+    return render_template("setup.html")
+
+
+@bp.route("/logout", methods=["GET", "POST"])
+def logout():
+    session.clear()
+    return redirect(url_for("auth.login"))
