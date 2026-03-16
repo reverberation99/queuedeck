@@ -239,6 +239,93 @@ def _series_progress_for_series(base: str, api_key: str, user_id: str, series_id
 
 
 # --------------------------------------------------
+# Jellyfin: Active Sessions
+# --------------------------------------------------
+
+@bp.get("/api/jellyfin/active-sessions")
+@login_required
+def api_jellyfin_active_sessions():
+    me = current_user() or {}
+    if not bool(me.get("is_admin")):
+        return jsonify(ok=True, items=[])
+
+    try:
+        limit = int(request.args.get("limit", "2"))
+        limit = max(1, min(limit, 10))
+
+        base = _cfg("jellyfin_url", "JELLYFIN_URL").rstrip("/")
+        api_key = _cfg("jellyfin_api_key", "JELLYFIN_API_KEY")
+
+        if not base or not api_key:
+            return jsonify(ok=True, items=[])
+
+        sessions = _jf_get(
+            base,
+            api_key,
+            "/Sessions",
+            params={},
+            timeout=20,
+        )
+
+        out = []
+        for s in sessions if isinstance(sessions, list) else []:
+            now_playing = s.get("NowPlayingItem") or {}
+            if not now_playing:
+                continue
+
+            user_name = str(s.get("UserName") or "").strip() or "Unknown user"
+            title = str(now_playing.get("Name") or "").strip() or "Unknown title"
+            media_type = str(now_playing.get("Type") or "").strip().lower()
+
+            playback = s.get("PlayState") or {}
+            is_paused = bool(playback.get("IsPaused", False))
+            state_label = "Paused" if is_paused else "Playing"
+
+            position_ticks = int(playback.get("PositionTicks") or 0)
+            run_time_ticks = int(now_playing.get("RunTimeTicks") or 0)
+
+            progress_pct = 0
+            if run_time_ticks > 0 and position_ticks > 0:
+                try:
+                    progress_pct = int(round((position_ticks / float(run_time_ticks)) * 100))
+                    progress_pct = max(0, min(100, progress_pct))
+                except Exception:
+                    progress_pct = 0
+
+            season_num = now_playing.get("ParentIndexNumber")
+            episode_num = now_playing.get("IndexNumber")
+            series_name = str(now_playing.get("SeriesName") or "").strip()
+
+            subtitle = ""
+            if media_type == "episode":
+                parts = []
+                if series_name:
+                    parts.append(series_name)
+                if season_num is not None and episode_num is not None:
+                    try:
+                        parts.append(f"S{int(season_num):02d}E{int(episode_num):02d}")
+                    except Exception:
+                        pass
+                subtitle = " • ".join(parts)
+            else:
+                year = str(now_playing.get("ProductionYear") or "").strip()
+                subtitle = year or (media_type.title() if media_type else "Video")
+
+            out.append({
+                "user": user_name,
+                "title": title,
+                "subtitle": subtitle,
+                "state": state_label,
+                "progress_pct": progress_pct,
+            })
+
+        return jsonify(ok=True, items=out[:limit])
+    except Exception as e:
+        return jsonify(ok=False, error=str(e), items=[]), 500
+
+
+
+# --------------------------------------------------
 # Jellyfin: Continue Watching
 # --------------------------------------------------
 
@@ -857,6 +944,10 @@ def _build_sonarr_missing_items(days: int = 14, limit: int = 60):
 @bp.get("/api/sonarr/queue-summary")
 @login_required
 def api_sonarr_queue_summary():
+    me = current_user() or {}
+    if not bool(me.get("is_admin")):
+        return jsonify(items=[])
+
     try:
         page_size = int(request.args.get("page_size", "50"))
         page_size = max(1, min(page_size, 200))
@@ -1053,6 +1144,10 @@ def api_sonarr_queue_summary():
 @bp.get("/api/radarr/queue-summary")
 @login_required
 def api_radarr_queue_summary():
+    me = current_user() or {}
+    if not bool(me.get("is_admin")):
+        return jsonify(items=[])
+
     try:
         page_size = int(request.args.get("page_size", "50"))
         page_size = max(1, min(page_size, 200))

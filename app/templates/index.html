@@ -3,13 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/favicon-16.png" />
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png" />
+    <link rel="icon" sizes="192x192" href="/static/icons/icon-192.png" />
+    <link rel="icon" sizes="512x512" href="/static/icons/icon-512.png" />
+
+
   <title>QueueDeck</title>
-
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=5" />
-
-  <!-- iOS / Home Screen icon -->
-  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png?v=5" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
+<!-- iOS / Home Screen icon -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="QueueDeck" />
 
@@ -336,12 +340,12 @@ ce; }
     .brand{
       display:flex;
       align-items:center;
-      gap:14px;
+      gap:16px;
       min-width: 260px;
     }
     .logo{
-      width:50px;
-      height:50px;
+      width:54px;
+        height:54px;
       border-radius:16px;
       background:
         linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
@@ -358,10 +362,13 @@ ce; }
       flex: 0 0 auto;
     }
     .logo img{
-      width:34px;
-      height:34px;
+      width:50px;
+        height:50px;
       display:block;
-      border-radius:10px;
+                              object-fit: contain;
+object-fit: contain;
+object-fit: contain;
+border-radius:10px;
       filter:
         drop-shadow(0 6px 16px rgba(0,0,0,.40))
         saturate(1.08);
@@ -928,6 +935,159 @@ ce; }
       box-shadow: 0 0 10px rgba(239,68,68,.42);
     }
 
+    .watchingStrip{
+      display:none;
+      margin: 0 0 14px 0;
+      border:1px solid rgba(255,255,255,.10);
+      background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.03));
+      border-radius:20px;
+      overflow:hidden;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .watchingStrip.show{ display:block; }
+
+    .watchingStripHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:10px 14px;
+      border-bottom:1px solid rgba(255,255,255,.07);
+      background: linear-gradient(180deg, rgba(124,92,255,.09), rgba(78,161,255,.03));
+    }
+
+    .watchingStripTitle{
+      font-size:12px;
+      font-weight:900;
+      color: rgba(255,255,255,.92);
+      letter-spacing:.35px;
+      text-transform:uppercase;
+    }
+
+    .watchingStripBody{
+      display:flex;
+      gap:10px;
+      overflow:auto;
+      padding:10px 12px;
+      align-items:stretch;
+    }
+
+    .watchingStripBody::-webkit-scrollbar{ height: 8px; }
+    .watchingStripBody::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.12); border-radius:999px; }
+
+    .watchingCard{
+      min-width: 320px;
+      max-width: 420px;
+      flex: 0 0 auto;
+      border:1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(0,0,0,.12));
+      border-radius:16px;
+      padding:10px 12px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+    .watchingCard.isPlaying{
+      border-color: rgba(124,92,255,.55);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.04),
+        0 0 0 1px rgba(124,92,255,.12),
+        0 10px 26px rgba(124,92,255,.12);
+    }
+
+    .watchingCard.isPaused{
+      border-color: rgba(255,110,110,.45);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.04),
+        0 0 0 1px rgba(255,110,110,.10),
+        0 10px 26px rgba(255,110,110,.10);
+    }
+
+    .watchingUser{
+      font-size:11px;
+      color: rgba(255,255,255,.62);
+      margin-bottom:4px;
+      font-weight:800;
+      letter-spacing:.2px;
+      text-transform:uppercase;
+    }
+
+    .watchingTitle{
+      font-size:18px;
+      font-weight:900;
+      color: rgba(255,255,255,.97);
+      line-height:1.1;
+      margin-bottom:4px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .watchingMeta{
+      font-size:12px;
+      color: rgba(255,255,255,.72);
+      line-height:1.25;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      margin-bottom:7px;
+    }
+
+    .watchingProgressRow{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .watchingState{
+      flex:0 0 auto;
+      font-size:11px;
+      font-weight:900;
+      color: rgba(255,255,255,.88);
+      letter-spacing:.2px;
+      text-transform:uppercase;
+      min-width:58px;
+    }
+
+    .watchingProgress{
+      flex:1 1 auto;
+      height:8px;
+      border-radius:999px;
+      background: rgba(255,255,255,.10);
+      overflow:hidden;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,.28);
+    }
+
+    .watchingProgressBar{
+      height:100%;
+      min-width: 10px;
+      border-radius:999px;
+      background: linear-gradient(90deg, #8a6cff, #4ea1ff);
+      box-shadow: 0 0 10px rgba(124,92,255,.35);
+    }
+
+    .watchingProgressText{
+      flex:0 0 auto;
+      font-size:11px;
+      font-weight:800;
+      color: rgba(255,255,255,.70);
+      min-width:34px;
+      text-align:right;
+    }
+
+    @media (max-width: 900px){
+      .watchingCard{
+        min-width: 280px;
+        max-width: 340px;
+      }
+      .watchingTitle{
+        font-size:16px;
+      }
+    }
+
     .downloadStrip{
       margin-top: 12px;
       border: 1px solid rgba(255,255,255,.10);
@@ -1228,8 +1388,8 @@ ce; }
 }
 
 .logo{
-  width:48px;
-  height:48px;
+  width:56px;
+  height:56px;
   border-radius:16px;
   border:1px solid rgba(255,255,255,.12);
   background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
@@ -1244,9 +1404,10 @@ ce; }
 }
 
 .logo img{
-  width:28px;
-  height:28px;
+  width:48px;
+  height:48px;
   display:block;
+  object-fit: contain;
   filter: drop-shadow(0 4px 10px rgba(0,0,0,.35));
 }
 
@@ -1381,7 +1542,7 @@ ce; }
   <div class="wrap">
     <div class="topbar">
       <div class="brand">
-        <div class="logo" aria-hidden="true"><img src="/favicon.svg?v=5" alt=""></div>
+        <div class="logo" aria-hidden="true"><img src="/static/icons/favicon.svg" alt=""></div>
         <div>
           <h1>QueueDeck</h1>
           <div class="sub">Your <strong>local</strong> watch queue — clean, fast, and unified.</div>
@@ -1440,6 +1601,13 @@ ce; }
         <div class="approvalStripCount" id="approvalCount">0 pending</div>
       </div>
       <div class="approvalStripBody" id="approvalStripBody"></div>
+    </div>
+
+    <div class="watchingStrip" id="watchingStrip">
+      <div class="watchingStripHead">
+        <div class="watchingStripTitle">Now Watching</div>
+      </div>
+      <div class="watchingStripBody" id="watchingStripBody"></div>
     </div>
 
     <div class="downloadStrip" id="downloadStrip">
@@ -1848,6 +2016,84 @@ function airsTonight(dateStr){
       const e = item.episode_number ?? item.episodeNumber;
       if (s === undefined || s === null || e === undefined || e === null || s === "" || e === "") return "";
       return `S${String(s).padStart(2,"0")}E${String(e).padStart(2,"0")}`;
+    }
+
+    let qdWatchingLastPayload = "";
+    const qdIsAdmin = {{ "true" if (me and me.get("is_admin")) else "false" }};
+    const qdDashboardIsAdmin = qdIsAdmin;
+
+    function renderWatchingStrip(items){
+      const strip = document.getElementById("watchingStrip");
+      const body = document.getElementById("watchingStripBody");
+      if (!strip || !body) return;
+
+      const qdWatchEsc = (value) => String(value || "").replace(/[&<>"']/g, ch => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[ch] || ch));
+
+      const rows = Array.isArray(items) ? items : [];
+      const payloadKey = JSON.stringify(rows);
+
+      if (payloadKey === qdWatchingLastPayload){
+        return;
+      }
+      qdWatchingLastPayload = payloadKey;
+
+      if (!rows.length){
+        strip.classList.remove("show");
+        body.innerHTML = "";
+        return;
+      }
+
+      body.innerHTML = rows.map(item => {
+        const user = qdWatchEsc(item.user || "Unknown user");
+        const title = qdWatchEsc(item.title || "Unknown title");
+        const subtitle = qdWatchEsc(item.subtitle || "");
+        const rawState = String(item.state || "Playing");
+        const state = qdWatchEsc(rawState);
+        const progress = Math.max(0, Math.min(100, Number(item.progress_pct || 0)));
+        const stateClass = rawState.toLowerCase() === "paused" ? "isPaused" : "isPlaying";
+
+        return `
+          <div class="watchingCard ${stateClass}">
+            <div class="watchingUser">${user}</div>
+            <div class="watchingTitle">${title}</div>
+            <div class="watchingMeta">${subtitle || "&nbsp;"}</div>
+            <div class="watchingProgressRow">
+              <div class="watchingState">${state}</div>
+              <div class="watchingProgress">
+                <div class="watchingProgressBar" style="width:${progress > 0 ? progress : 0}%; min-width:${progress > 0 ? 10 : 0}px;"></div>
+              </div>
+              <div class="watchingProgressText">${progress}%</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      strip.classList.add("show");
+    }
+
+    async function refreshWatchingStrip(){
+      if (!qdIsAdmin){
+        renderWatchingStrip([]);
+        return;
+      }
+
+      try{
+        const watchingResp = await fetch("/api/jellyfin/active-sessions?limit=20", { cache: "no-store" });
+        const watchingJson = await watchingResp.json().catch(() => ({ ok:false, items:[] }));
+        if (watchingResp.ok && watchingJson.ok){
+          renderWatchingStrip(watchingJson.items || []);
+        } else {
+          renderWatchingStrip([]);
+        }
+      }catch(_){
+        renderWatchingStrip([]);
+      }
     }
 
     function renderDownloadStrip(items){
@@ -2912,11 +3158,17 @@ const [
         }).slice(0, L.dl);
 
         try {
+          await refreshWatchingStrip();
+
           const strip = document.getElementById("downloadStrip");
           const body = document.getElementById("downloadStripBody");
           const count = document.getElementById("downloadCount");
 
-          if (hideDownloadActivity){
+          if (!qdDashboardIsAdmin){
+            if (body) body.innerHTML = "";
+            if (count) count.textContent = "0";
+            if (strip) strip.classList.remove("show");
+          } else if (hideDownloadActivity){
             if (body) body.innerHTML = "";
             if (count) count.textContent = "0";
             if (strip) strip.classList.remove("show");
@@ -2939,6 +3191,11 @@ const [
         ]);
 
         const nCW = renderCards("sec-cw", cwItems, "cw");
+        {
+          const sec = document.getElementById("sec-cw");
+          if (sec) sec.style.display = nCW > 0 ? "" : "none";
+        }
+
         const nTV = renderCards("sec-nextup-tv", tvItems, "nextup_tv");
         const nSO = renderCards("sec-sonarr", combinedSonarr, "sonarr");
         const nAN = flags.hasAnime ? renderCards("sec-nextup-anime", animeItems, "nextup_anime") : 0;
@@ -2995,6 +3252,12 @@ setCount("#chip-rem", nREM);
     }
 
     loadAll();
+    if (qdIsAdmin){
+      refreshWatchingStrip();
+      setInterval(refreshWatchingStrip, 5000);
+    } else {
+      renderWatchingStrip([]);
+    }
     warmDiscoverInBackground();
       // ---- QD_AUTO_REFRESH: refresh feeds every 60s (no full page reload) ----
       const QD_REFRESH_MS = 60_000;

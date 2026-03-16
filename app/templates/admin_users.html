@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>QueueDeck • User Management</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" />
+  <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg" />
 
   <style>
     :root{
@@ -570,8 +570,8 @@
 }
 
 .logoBox{
-  width:46px;
-  height:46px;
+  width:54px;
+  height:54px;
   border-radius:14px;
   background: linear-gradient(
     180deg,
@@ -588,8 +588,8 @@
 }
 
 .logoBox img{
-  width:28px;
-  height:28px;
+  width:50px;
+  height:50px;
   filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
 }
 
@@ -615,7 +615,7 @@
         
 <div class="brandHeader">
   <div class="logoBox">
-    <img src="/favicon.svg?v=6" alt="">
+    <img src="/static/icons/favicon.svg" alt="">
   </div>
 
   <div class="brandText">
@@ -644,7 +644,7 @@
               <div class="userDropdownSub">QueueDeck admin</div>
             </div>
             <a href="/">Dashboard</a>
-            <a href="/settings">Preferences</a>
+              <a href="/discover">Discover</a>
             <a href="/stats">Statistics</a>
             <a href="/hidden">Hidden Items</a>
             {% if me and me.get("is_admin") %}<a href="/admin/settings">Admin Settings</a>{% endif %}

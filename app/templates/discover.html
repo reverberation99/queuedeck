@@ -3,10 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>QueueDeck Discover</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=6" />
+    <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/favicon-16.png" />
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png" />
 
-  <style>
+  <title>QueueDeck Discover</title>
+<style>
     :root{
       --bg0:#07090c;
       --bg1:#0b0f14;
@@ -46,12 +49,12 @@
     .brand{
       display:flex;
       align-items:flex-start;
-      gap:14px;
+      gap:16px;
     }
 
     .logo{
-      width:46px;
-      height:46px;
+      width:54px;
+        height:54px;
       border-radius:14px;
       display:grid;
       place-items:center;
@@ -64,10 +67,13 @@
     }
 
     .logo img{
-      width:28px;
-      height:28px;
+      width:50px;
+        height:50px;
       display:block;
-      filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
+                              object-fit: contain;
+object-fit: contain;
+object-fit: contain;
+filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
     }
 
     h1{
@@ -1327,13 +1333,46 @@
       transform: scale(.96);
     }
 
+
+      .backToTopBtn{
+        position: fixed;
+        right: 20px;
+        bottom: 24px;
+        z-index: 60;
+        border: 1px solid rgba(255,255,255,.14);
+        background: rgba(15,18,24,.88);
+        color: rgba(255,255,255,.96);
+        box-shadow: 0 16px 40px rgba(0,0,0,.35);
+        backdrop-filter: blur(10px);
+        border-radius: 999px;
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(10px);
+        transition: opacity .18s ease, transform .18s ease, background .18s ease, border-color .18s ease;
+      }
+
+      .backToTopBtn.show{
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+      }
+
+      .backToTopBtn:hover{
+        background: rgba(28,33,42,.96);
+        border-color: rgba(255,255,255,.22);
+      }
+
 </style>
 </head>
 <body>
   <div class="wrap">
     <div class="topbar">
       <div class="brand">
-        <div class="logo"><img src="/favicon.svg?v=6" alt="QueueDeck"></div>
+        <div class="logo"><img src="/static/icons/favicon.svg" alt="QueueDeck"></div>
         <div>
           <h1>Discover</h1>
           <div class="sub">Find trending movies and TV, then request them directly through your existing QueueDeck + Seerr flow.</div>
@@ -1357,7 +1396,7 @@
               <div class="userDropdownSub">QueueDeck user</div>
             </div>
             <a href="/">Dashboard</a>
-            <a href="/settings">Preferences</a>
+              <a href="/settings">Preferences</a>
             <a href="/stats">Statistics</a>
             <a href="/hidden">Hidden Items</a>
             {% if me and me.get("is_admin") %}<a href="/admin/settings">Admin Settings</a>{% endif %}
@@ -1508,6 +1547,7 @@
       <div class="discoverGrid" id="discoverGrid"></div>
       <div class="discoverMoreWrap">
         <button class="btn secondary" id="discoverLoadMoreBtn" type="button" style="display:none;">Load More</button>
+        <button class="btn secondary" id="discoverBackToTopBtn" type="button">Back to Top</button>
       </div>
 
       <div class="foot">
@@ -1569,6 +1609,7 @@
     const discoverMinRating = document.getElementById("discoverMinRating");
     const discoverReloadBtn = document.getElementById("discoverReloadBtn");
     const discoverLoadMoreBtn = document.getElementById("discoverLoadMoreBtn");
+    const discoverBackToTopBtn = document.getElementById("discoverBackToTopBtn");
 
     const qdAniListGenres = [
       "Action",
@@ -3195,6 +3236,40 @@
     }
 
 
+
+    function getDiscoverScrollParent(el){
+      let node = el;
+      while (node && node.parentElement){
+        node = node.parentElement;
+        const style = window.getComputedStyle(node);
+        const overflowY = style ? style.overflowY : "";
+        const canScroll = overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay";
+        if (canScroll && node.scrollHeight > node.clientHeight){
+          return node;
+        }
+      }
+      return window;
+    }
+
+    function updateDiscoverBackToTopVisibility(){
+      if (!discoverBackToTopBtn) return;
+
+      const scrollParent = getDiscoverScrollParent(discoverGrid);
+      let y = 0;
+
+      if (scrollParent === window){
+        y = window.scrollY || document.documentElement.scrollTop || 0;
+      } else {
+        y = scrollParent.scrollTop || 0;
+      }
+
+      if (y > 200){
+        discoverBackToTopBtn.classList.add("show");
+      } else {
+        discoverBackToTopBtn.classList.remove("show");
+      }
+    }
+
     function closeAllWhyBoxes(){
       discoverGrid.querySelectorAll("[data-why-box]").forEach(el => {
         el.classList.remove("open");
@@ -3367,9 +3442,41 @@
       }
     }
 
+    discoverSource && discoverSource.addEventListener("change", () => {
+      qdAdjustDiscoverMediaForSource();
+      loadDiscover(1, false);
+    });
+
     discoverReloadBtn.addEventListener("click", () => loadDiscover(1, false));
+
+    if (discoverBackToTopBtn){
+      discoverBackToTopBtn.addEventListener("click", () => {
+        const scrollParent = getDiscoverScrollParent(discoverGrid);
+        if (scrollParent === window){
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          scrollParent.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      });
+
+      const scrollParent = getDiscoverScrollParent(discoverGrid);
+      if (scrollParent === window){
+        window.addEventListener("scroll", updateDiscoverBackToTopVisibility, { passive: true });
+      } else {
+        scrollParent.addEventListener("scroll", updateDiscoverBackToTopVisibility, { passive: true });
+      }
+
+      updateDiscoverBackToTopVisibility();
+    }
+
+    qdAdjustDiscoverMediaForSource();
     if (discoverLoadMoreBtn){
       discoverLoadMoreBtn.addEventListener("click", () => loadDiscover(discoverPage + 1, true));
+    }
+    if (discoverBackToTopBtn){
+      discoverBackToTopBtn.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
     }
     if (discoverAdvancedToggle && discoverAdvancedPanel){
       discoverAdvancedToggle.addEventListener("click", () => {
@@ -3437,6 +3544,41 @@
         '"':"&quot;",
         "'":"&#39;"
       }[m]));
+    }
+
+    function qdAdjustDiscoverMediaForSource(){
+      if (!discoverSource || !discoverMedia) return;
+
+      const src = String(discoverSource.value || "").trim();
+
+      const movieOnlySources = new Set([
+        "letterboxd",
+        "letterboxd_aggregate"
+      ]);
+
+      const tvOnlySources = new Set([
+        "anime_aggregate",
+        "anilist_trending",
+        "anilist_popular",
+        "anilist_genre",
+        "jikan_anime_hot",
+        "jikan_anime_rising",
+        "tvmaze_airing"
+      ]);
+
+      if (movieOnlySources.has(src)){
+        if (String(discoverMedia.value || "") !== "all"){
+          discoverMedia.value = "all";
+        }
+        return;
+      }
+
+      if (tvOnlySources.has(src)){
+        if (String(discoverMedia.value || "") !== "tv"){
+          discoverMedia.value = "tv";
+        }
+        return;
+      }
     }
 
     function qdSeerrStatusLabel(v){
@@ -3813,5 +3955,6 @@
       });
     })();
   </script>
+
 </body>
 </html>

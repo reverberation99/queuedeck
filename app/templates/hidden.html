@@ -3,10 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>QueueDeck Preferences • Hidden Items</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=6" />
+    <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/favicon-16.png" />
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png" />
 
-  <style>
+  <title>QueueDeck Preferences • Hidden Items</title>
+<style>
     :root{
       --bg0:#07090c;
       --bg1:#0b0f14;
@@ -69,8 +72,8 @@
       min-width:0;
     }
     .logoBox{
-      width:46px;
-      height:46px;
+      width:54px;
+      height:54px;
       border-radius:14px;
       background: linear-gradient(
         180deg,
@@ -88,10 +91,12 @@
       overflow:hidden;
     }
     .logoBox img{
-      width:28px;
-      height:28px;
+      width:50px;
+      height:50px;
       display:block;
-      filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
+                      object-fit: contain;
+object-fit: contain;
+filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
     }
 
     .brandText h1{
@@ -447,7 +452,7 @@
   <div class="wrap">
     <div class="topbar">
       <div class="brandHeader">
-        <div class="logoBox" aria-hidden="true"><img src="/favicon.svg?v=6" alt=""></div>
+        <div class="logoBox" aria-hidden="true"><img src="/static/icons/favicon.svg" alt=""></div>
         <div class="brandText" style="min-width:0">
           <h1>Hidden Items</h1>
           <div class="sub">Manage shows and episodes you have hidden or snoozed from your QueueDeck homepage.</div>
@@ -470,8 +475,8 @@
             </div>
             <a href="/">Dashboard</a>
               <a href="/settings">Preferences</a>
+              <a href="/discover">Discover</a>
             <a href="/stats">Statistics</a>
-            <a href="/hidden">Hidden Items</a>
             {% if me and me.get("is_admin") %}<a href="/admin/settings">Admin Settings</a>{% endif %}
             <a class="danger" href="/logout">Log out</a>
           </div>

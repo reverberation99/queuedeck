@@ -6,6 +6,7 @@ services:
     volumes:
       - ./app:/app/app
       - ./data:/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       HOST: "0.0.0.0"
       PORT: "7071"
@@ -13,13 +14,9 @@ services:
 
       # Security/session
       SECRET_KEY: "${SECRET_KEY}"
-      QD_ADMIN_USER: "${QD_ADMIN_USER}"
-      QD_ADMIN_PASS: "${QD_ADMIN_PASS}"
-
-#      SECRET_KEY: "jkfldalieafldajfeliajfldkasjfea"
+      #QD_ADMIN_USER: "${QD_ADMIN_USER}"
+      #QD_ADMIN_PASS: "${QD_ADMIN_PASS}"
       DB_PATH: "/data/queuedb.sqlite"
-#      QD_ADMIN_USER: "remy"
-#      QD_ADMIN_PASS: "whowhatwhenwherehownow"
     command: sh -lc "pip -q install --no-cache-dir flask requests && python -m app"
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:7071/health').read()\""]

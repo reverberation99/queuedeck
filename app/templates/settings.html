@@ -3,10 +3,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>QueueDeck Preferences</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" />
+    <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/favicon-16.png" />
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png" />
 
-    <style>
+    <title>QueueDeck Preferences</title>
+<style>
       :root{
         --bg0:#07090c;
         --bg1:#0b0f14;
@@ -48,12 +51,12 @@
       .brand{
         display:flex;
         align-items:flex-start;
-        gap:14px;
+        gap:16px;
       }
 
       .logo{
-        width:40px;
-        height:40px;
+        width:54px;
+        height:54px;
         border-radius:12px;
         display:grid;
         place-items:center;
@@ -64,10 +67,13 @@
       }
 
       .logo img{
-        width:26px;
-        height:26px;
+        width:50px;
+        height:50px;
         display:block;
-      }
+                              object-fit: contain;
+object-fit: contain;
+object-fit: contain;
+}
 
       h1{
         margin:0;
@@ -911,7 +917,7 @@
     <div class="wrap">
       <div class="topbar">
         <div class="brand">
-          <div class="logo"><img src="/favicon.svg" alt="QueueDeck" /></div>
+          <div class="logo"><img src="/static/icons/favicon.svg" alt="QueueDeck" /></div>
           <div>
             <h1>QueueDeck Preferences</h1>
             <div class="sub">Personalize your QueueDeck homepage layout, limits, and behavior.</div>
@@ -933,7 +939,7 @@
                 <div class="userDropdownSub">QueueDeck user</div>
               </div>
               <a href="/">Dashboard</a>
-              <a href="/settings">Preferences</a>
+              <a href="/discover">Discover</a>
               <a href="/stats">Statistics</a>
               <a href="/hidden">Hidden Items</a>
               {% if me and me.get("is_admin") %}<a href="/admin/settings">Admin Settings</a>{% endif %}

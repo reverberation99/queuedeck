@@ -152,34 +152,94 @@ def _build_nextup_split_for_user(user_id: int, limit: int):
     base = _cfg_for(user_id, "jellyfin_url").rstrip("/")
     api_key = _cfg_for(user_id, "jellyfin_api_key")
     username = _cfg_for(user_id, "jellyfin_user")
+    view_id = _cfg_for(user_id, "mytv_view_id").strip()
 
     if not base or not api_key or not username:
         return {"tv": [], "anime": []}
 
     jf_user_id = find_user_id_by_name(username)
-    data = _jf_get(
-        base,
-        api_key,
-        "/Shows/NextUp",
-        params={
-            "UserId": jf_user_id,
-            "Limit": str(limit),
-            "Fields": "PrimaryImageAspectRatio,ImageTags,UserData,Path",
-        },
-        timeout=25,
-    )
 
-    items = data.get("Items", []) or []
+    merged = []
+
+    try:
+        data = _jf_get(
+            base,
+            api_key,
+            "/Shows/NextUp",
+            params={
+                "UserId": jf_user_id,
+                "Limit": str(max(limit, 200)),
+                "Fields": "PrimaryImageAspectRatio,ImageTags,UserData,Path,DateCreated,PremiereDate",
+            },
+            timeout=25,
+        )
+        merged.extend(data.get("Items", []) or [])
+    except Exception:
+        pass
+
+    if view_id:
+        try:
+            series_data = _jf_get(
+                base,
+                api_key,
+                f"/Users/{jf_user_id}/Items",
+                params={
+                    "ParentId": view_id,
+                    "IncludeItemTypes": "Series",
+                    "Recursive": "true",
+                    "Limit": "500",
+                    "Fields": "Path",
+                },
+                timeout=30,
+            )
+            series_items = series_data.get("Items", []) or []
+
+            for s in series_items:
+                sid = s.get("Id")
+                if not sid:
+                    continue
+
+                try:
+                    ep_data = _jf_get(
+                        base,
+                        api_key,
+                        "/Shows/NextUp",
+                        params={
+                            "UserId": jf_user_id,
+                            "SeriesId": sid,
+                            "Limit": "1",
+                            "Fields": "PrimaryImageAspectRatio,ImageTags,Path,UserData,DateCreated,PremiereDate",
+                        },
+                        timeout=25,
+                    )
+                    ep_items = ep_data.get("Items", []) or []
+                    if ep_items:
+                        merged.append(ep_items[0])
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+    by_series = {}
+    deduped = []
+    for ep in merged:
+        series_id = str(ep.get("SeriesId") or "").strip()
+        series_name = str(ep.get("SeriesName") or ep.get("Series") or ep.get("Name") or "Series").strip()
+        key = series_id or series_name
+        if not key or key in by_series:
+            continue
+        by_series[key] = 1
+        deduped.append(ep)
 
     raw_paths = _cfg_for(user_id, "anime_paths")
-    anime_paths = [p.strip() for p in str(raw_paths or "").split(",") if p.strip()]
+    anime_paths = [p.strip().rstrip("/") for p in str(raw_paths or "").split(",") if p.strip()]
 
     anime = []
     tv = []
 
-    for it in items:
-        p = it.get("Path") or ""
-        is_anime = any(p.startswith(ap) for ap in anime_paths)
+    for it in deduped:
+        item_path = str(it.get("Path") or "")
+        is_anime = any(item_path.startswith(ap) for ap in anime_paths)
 
         ud = it.get("UserData") or {}
         primary_tag = (it.get("ImageTags") or {}).get("Primary")
@@ -192,7 +252,7 @@ def _build_nextup_split_for_user(user_id: int, limit: int):
             "episode": it.get("IndexNumber"),
             "title": it.get("Name") or "",
             "premiere_date": it.get("PremiereDate") or "",
-            "path": p,
+            "path": item_path,
             "progress_percent": round(ud.get("PlayedPercentage") or 0, 1),
             "item_id": str(it.get("Id") or ""),
             "primary_image_url": (
@@ -205,7 +265,7 @@ def _build_nextup_split_for_user(user_id: int, limit: int):
 
         (anime if is_anime else tv).append(cleaned)
 
-    return {"tv": tv, "anime": anime}
+    return {"tv": tv[:limit], "anime": anime[:limit]}
 
 
 def _fmt_rss_dt(val: str) -> str:
@@ -443,16 +503,40 @@ def _build_latest_unwatched_movies_for_user(user_id: int, limit: int):
         return []
 
     try:
-        rows = get_recent_unwatched_movies(limit=limit) or []
+        jf_user_id = find_user_id_by_name(jf_username)
+        data = _jf_get(
+            jf_base,
+            jf_api_key,
+            f"/Users/{jf_user_id}/Items",
+            params={
+                "IncludeItemTypes": "Movie",
+                "SortBy": "DateCreated",
+                "SortOrder": "Descending",
+                "Limit": str(limit),
+                "Recursive": "true",
+                "Fields": "PrimaryImageAspectRatio,ImageTags,DateCreated,UserData,ProductionYear",
+            },
+            timeout=30,
+        )
+        rows = data.get("Items") or []
     except Exception:
         rows = []
 
     out = []
     for it in rows[:limit]:
-        title = str(it.get("title") or "").strip()
-        year = str(it.get("year") or "").strip()
-        item_id = str(it.get("item_id") or it.get("jellyfin_item_id") or "").strip()
-        premiered = str(it.get("premiere_date") or it.get("PremiereDate") or it.get("date_created") or "").strip()
+        ud = it.get("UserData") or {}
+        if ud.get("Played") is True:
+            continue
+        try:
+            if int(ud.get("PlayCount") or 0) > 0:
+                continue
+        except Exception:
+            pass
+
+        item_id = str(it.get("Id") or "").strip()
+        title = str(it.get("Name") or "").strip()
+        year = str(it.get("ProductionYear") or "").strip()
+        date_added = str(it.get("DateCreated") or "").strip()
 
         label = f"{title} ({year})" if title and year else (title or "Latest Unwatched Movie")
         link = f"{jf_base}/web/index.html#!/details?id={item_id}" if item_id and jf_base else (f"{radarr_url}/movie" if radarr_url else "")
@@ -462,7 +546,8 @@ def _build_latest_unwatched_movies_for_user(user_id: int, limit: int):
             "season": "",
             "episode": None,
             "title": label,
-            "premiere_date": premiered,
+            "premiere_date": date_added,
+            "date_added": date_added,
             "item_id": item_id or label,
             "jellyfin_web_url": link,
             "_rss_title": label,
@@ -575,7 +660,7 @@ def rss_latest_unwatched_movies():
         user_id,
         "latest-unwatched-movies",
         items,
-        key_fields=["item_id", "title"],
+        key_fields=["item_id", "date_added"],
     )
 
     host = request.host_url.rstrip("/")

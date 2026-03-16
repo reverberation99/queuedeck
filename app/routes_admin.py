@@ -1,4 +1,9 @@
 import requests
+import os
+import shutil
+import time
+import json
+import socket
 from flask import Blueprint, render_template, request, redirect, flash, jsonify
 from .db import get_db
 from .models_settings import get_user_admin_settings, update_user_admin_settings
@@ -516,3 +521,157 @@ def admin_user_connections_clear_data(user_id: int):
     flash(f"Cleared saved data for {user['username']}.", "success")
 
     return redirect(f"/admin/users/{user_id}/connections")
+
+@bp.get("/api/admin/system-usage")
+def api_admin_system_usage():
+    try:
+        sock_path = "/var/run/docker.sock"
+        if not os.path.exists(sock_path):
+            return jsonify(
+                ok=False,
+                error="docker_socket_not_mounted",
+                hint='Add /var/run/docker.sock:/var/run/docker.sock:ro to the queuedeck-dev service volumes in docker-compose.yml, then restart the container.'
+            ), 500
+
+        def _docker_get(path: str) -> dict:
+            req = (
+                f"GET {path} HTTP/1.1\r\n"
+                f"Host: docker\r\n"
+                f"Connection: close\r\n\r\n"
+            ).encode("utf-8")
+
+            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            s.settimeout(10)
+            s.connect(sock_path)
+            s.sendall(req)
+
+            chunks = []
+            while True:
+                chunk = s.recv(65536)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+            s.close()
+
+            raw = b"".join(chunks)
+            if b"\r\n\r\n" not in raw:
+                raise RuntimeError("Invalid Docker API response")
+
+            header, body = raw.split(b"\r\n\r\n", 1)
+            status_line = header.split(b"\r\n", 1)[0].decode("utf-8", "replace")
+            if " 200 " not in status_line:
+                raise RuntimeError(status_line)
+
+            # Handle chunked transfer encoding from Docker API
+            header_text = header.decode("utf-8", "replace").lower()
+            if "transfer-encoding: chunked" in header_text:
+                decoded = bytearray()
+                rest = body
+                while rest:
+                    line_end = rest.find(b"\r\n")
+                    if line_end == -1:
+                        break
+                    size_line = rest[:line_end].decode("utf-8", "replace").strip()
+                    if not size_line:
+                        break
+                    size = int(size_line, 16)
+                    rest = rest[line_end + 2:]
+                    if size == 0:
+                        break
+                    decoded.extend(rest[:size])
+                    rest = rest[size + 2:]
+                body = bytes(decoded)
+
+            return json.loads(body.decode("utf-8", "replace") or "{}")
+
+        def _dir_size(path: str) -> int:
+            total = 0
+            if not os.path.exists(path):
+                return 0
+            for root, dirs, files in os.walk(path):
+                for name in files:
+                    fp = os.path.join(root, name)
+                    try:
+                        if not os.path.islink(fp):
+                            total += os.path.getsize(fp)
+                    except Exception:
+                        pass
+            return total
+
+        try:
+            with open("/etc/hostname", "r", encoding="utf-8") as f:
+                container_id = f.read().strip()
+        except Exception:
+            container_id = str(os.environ.get("HOSTNAME") or "").strip()
+
+        if not container_id:
+            return jsonify(ok=False, error="container_id_unavailable"), 500
+
+        stats = _docker_get(f"/containers/{container_id}/stats?stream=false")
+        info = _docker_get(f"/containers/{container_id}/json?size=1")
+
+        cpu_stats = stats.get("cpu_stats") or {}
+        precpu = stats.get("precpu_stats") or {}
+
+        cpu_percent = 0.0
+        try:
+            cpu_total = (cpu_stats.get("cpu_usage") or {}).get("total_usage", 0)
+            precpu_total = (precpu.get("cpu_usage") or {}).get("total_usage", 0)
+            system_total = cpu_stats.get("system_cpu_usage", 0)
+            presystem_total = precpu.get("system_cpu_usage", 0)
+
+            cpu_delta = cpu_total - precpu_total
+            system_delta = system_total - presystem_total
+
+            online_cpus = cpu_stats.get("online_cpus") or len((cpu_stats.get("cpu_usage") or {}).get("percpu_usage", [])) or 1
+
+            if cpu_delta > 0 and system_delta > 0:
+                cpu_percent = (cpu_delta / system_delta) * float(online_cpus) * 100.0
+        except Exception:
+            cpu_percent = 0.0
+
+        mem = stats.get("memory_stats") or {}
+        mem_used = int(mem.get("usage") or 0)
+        mem_limit = int(mem.get("limit") or 0)
+        mem_percent = (mem_used / mem_limit * 100.0) if mem_limit > 0 else 0.0
+
+        size_rw = int(info.get("SizeRw") or 0)
+        size_root_fs = int(info.get("SizeRootFs") or 0)
+
+        app_size = _dir_size("/app")
+        data_size = _dir_size("/data")
+
+        name = str(info.get("Name") or "").strip().lstrip("/") or container_id[:12]
+        image = str((info.get("Config") or {}).get("Image") or "").strip()
+        state = info.get("State") or {}
+        status_text = str(state.get("Status") or "").strip()
+        running = bool(state.get("Running", False))
+        started_at = str(state.get("StartedAt") or "").strip()
+        finished_at = str(state.get("FinishedAt") or "").strip()
+        restart_count = int(info.get("RestartCount") or 0)
+
+        health_obj = state.get("Health") or {}
+        health_status = str(health_obj.get("Status") or "").strip()
+
+        return jsonify(
+            ok=True,
+            cpu_percent=round(max(0.0, cpu_percent), 2),
+            mem_used=mem_used,
+            mem_limit=mem_limit,
+            mem_percent=round(max(0.0, mem_percent), 2),
+            size_rw=size_rw,
+            size_root_fs=size_root_fs,
+            app_size=app_size,
+            data_size=data_size,
+            container_id=container_id,
+            container_name=name,
+            image=image,
+            running=running,
+            status=status_text,
+            started_at=started_at,
+            finished_at=finished_at,
+            restart_count=restart_count,
+            health_status=health_status,
+        )
+    except Exception as e:
+        return jsonify(ok=False, error=str(e)), 500
