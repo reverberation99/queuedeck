@@ -1,0 +1,21 @@
+services:
+  queuedeck:
+    image: reverberation99/queuedeck:latest
+    container_name: queuedeck
+
+    ports:
+      - "7071:7071"
+
+    volumes:
+      - ./data:/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "7071"
+      APP_NAME: "QueueDeck"
+      SECRET_KEY: "change-this-secret"
+      DB_PATH: "/data/queuedb.sqlite"
+
+    restart: unless-stopped
+
