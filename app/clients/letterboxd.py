@@ -14,6 +14,9 @@ TMDB_SEARCH_URL = "https://api.themoviedb.org/3/search/movie"
 _LETTERBOXD_RAW_CACHE: Dict[str, Dict[str, Any]] = {}
 _LETTERBOXD_RAW_CACHE_TTL = 900
 
+_LETTERBOXD_TMDB_SEARCH_CACHE: Dict[str, Dict[str, Any]] = {}
+_LETTERBOXD_TMDB_SEARCH_CACHE_TTL = 43200  # 12 hours
+
 
 def _app_setting(key: str, default: str = "") -> str:
     db = get_db()
@@ -171,6 +174,15 @@ def _search_tmdb_movie(title: str, year: str = "", source_label: str = "Letterbo
     if not title:
         return None
 
+    import time
+
+    cache_key = f"{str(title).strip().lower()}||{str(year).strip()}||{str(source_label).strip().lower()}"
+    cached = _LETTERBOXD_TMDB_SEARCH_CACHE.get(cache_key)
+    if cached:
+        age = time.time() - float(cached.get("ts") or 0)
+        if age <= _LETTERBOXD_TMDB_SEARCH_CACHE_TTL:
+            return cached.get("payload")
+
     params = _tmdb_params({
         "query": title,
         "page": 1,
@@ -190,11 +202,19 @@ def _search_tmdb_movie(title: str, year: str = "", source_label: str = "Letterbo
     data = r.json() or {}
     results = data.get("results") or []
     if not results:
+        _LETTERBOXD_TMDB_SEARCH_CACHE[cache_key] = {
+            "ts": time.time(),
+            "payload": None,
+        }
         return None
 
     best = results[0]
     tmdb_id = best.get("id")
     if not tmdb_id:
+        _LETTERBOXD_TMDB_SEARCH_CACHE[cache_key] = {
+            "ts": time.time(),
+            "payload": None,
+        }
         return None
 
     poster_path = str(best.get("poster_path") or "").strip()
@@ -203,7 +223,7 @@ def _search_tmdb_movie(title: str, year: str = "", source_label: str = "Letterbo
     release_date = str(best.get("release_date") or "").strip()
     release_year = release_date[:4] if len(release_date) >= 4 else (year or "")
 
-    return {
+    payload = {
         "tmdb_id": int(tmdb_id),
         "media_type": "movie",
         "title": str(best.get("title") or title).strip(),
@@ -219,6 +239,12 @@ def _search_tmdb_movie(title: str, year: str = "", source_label: str = "Letterbo
             "letterboxd": 0.58,
         },
     }
+
+    _LETTERBOXD_TMDB_SEARCH_CACHE[cache_key] = {
+        "ts": time.time(),
+        "payload": payload,
+    }
+    return payload
 
 
 def _get_letterboxd_popular_for_url(rss_url: str, page: int = 1, source_label: str = "Letterboxd") -> List[Dict[str, Any]]:

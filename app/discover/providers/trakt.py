@@ -4,6 +4,8 @@ from ..engine import clamp01
 
 TRAKT_API_BASE = "https://api.trakt.tv"
 
+_TRAKT_SESSION = requests.Session()
+
 
 def trakt_get(path: str, client_id: str, params: dict | None = None) -> list | dict:
     headers = {
@@ -12,7 +14,7 @@ def trakt_get(path: str, client_id: str, params: dict | None = None) -> list | d
         "Content-Type": "application/json",
     }
 
-    r = requests.get(
+    r = _TRAKT_SESSION.get(
         f"{TRAKT_API_BASE}{path}",
         headers=headers,
         params=params or {},
@@ -75,14 +77,18 @@ def normalize_trakt_item(item: dict, media: str) -> dict | None:
 
 
 def fetch_trakt_trending(media: str, client_id: str, limit: int = 40, page: int = 1) -> list[dict]:
+    from concurrent.futures import ThreadPoolExecutor
+
     limit = max(1, min(int(limit), 100))
     page = max(1, int(page or 1))
 
     if media == "all":
-        items = []
-        items.extend(fetch_trakt_trending("movie", client_id, limit=limit, page=page))
-        items.extend(fetch_trakt_trending("tv", client_id, limit=limit, page=page))
-        return items
+        with ThreadPoolExecutor(max_workers=2) as ex:
+            fut_movie = ex.submit(fetch_trakt_trending, "movie", client_id, limit, page)
+            fut_tv = ex.submit(fetch_trakt_trending, "tv", client_id, limit, page)
+            movie_items = fut_movie.result()
+            tv_items = fut_tv.result()
+        return list(movie_items or []) + list(tv_items or [])
 
     path = "/movies/trending" if media == "movie" else "/shows/trending"
     data = trakt_get(path, client_id=client_id, params={"limit": limit, "page": page})
@@ -118,7 +124,7 @@ def fetch_trakt_popular(media: str, client_id: str, limit: int = 40, page: int =
     out = []
 
     for media_type, path_part in endpoints:
-        r = requests.get(
+        r = _TRAKT_SESSION.get(
             f"https://api.trakt.tv/{path_part}/popular",
             headers=headers,
             params={"limit": limit, "page": page},

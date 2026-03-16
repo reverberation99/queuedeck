@@ -1643,6 +1643,59 @@
     }
 
     let discoverPage = 1;
+    let discoverLoadInFlightKey = "";
+    const discoverPrefetchCache = new Map();
+    const discoverPrefetchInFlight = new Set();
+
+    function discoverBuildUrl(page=1){
+      const source = discoverSource.value || "tmdb_trending";
+      const media = discoverMedia.value || "all";
+      const genre = discoverGenre ? (discoverGenre.value || "all") : "all";
+      const provider = discoverProvider ? (discoverProvider.value || "all") : "all";
+      const minRating = discoverMinRating ? String(discoverMinRating.value || "").trim() : "";
+      const yearFrom = discoverYearFrom ? String(discoverYearFrom.value || "").trim() : "";
+      const yearTo = discoverYearTo ? String(discoverYearTo.value || "").trim() : "";
+
+      return `/api/discover/items?source=${encodeURIComponent(source)}&media=${encodeURIComponent(media)}&genre=${encodeURIComponent(genre)}&provider=${encodeURIComponent(provider)}&min_rating=${encodeURIComponent(minRating)}&year_from=${encodeURIComponent(yearFrom)}&year_to=${encodeURIComponent(yearTo)}&page=${encodeURIComponent(page)}`;
+    }
+
+    function discoverPrefetchKey(page=1){
+      return discoverBuildUrl(page);
+    }
+
+    async function fetchDiscoverPayload(page=1){
+      const key = discoverPrefetchKey(page);
+      if (discoverPrefetchCache.has(key)){
+        const cached = discoverPrefetchCache.get(key);
+        discoverPrefetchCache.delete(key);
+        return cached;
+      }
+
+      const r = await fetch(discoverBuildUrl(page), {
+        cache: "no-store"
+      });
+      const j = await r.json().catch(() => ({}));
+      return { r, j };
+    }
+
+    function prefetchDiscoverPage(page=1){
+      const key = discoverPrefetchKey(page);
+      if (discoverPrefetchCache.has(key) || discoverPrefetchInFlight.has(key)) return;
+
+      discoverPrefetchInFlight.add(key);
+
+      fetch(discoverBuildUrl(page), { cache: "no-store" })
+        .then(async (r) => {
+          const j = await r.json().catch(() => ({}));
+          if (r.ok && j && j.ok){
+            discoverPrefetchCache.set(key, { r: { ok: true, status: r.status }, j });
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          discoverPrefetchInFlight.delete(key);
+        });
+    }
     let discoverHasMore = true;
     let discoverLoadMoreTimeout = null;
     let discoverRequestSeq = 0;
@@ -1958,6 +2011,49 @@
     }
 
     let qdDiscoverResultsLimit = 24;
+
+    let discoverPosterObserver = null;
+
+    function ensureDiscoverPosterObserver(){
+      if (discoverPosterObserver) return discoverPosterObserver;
+
+      discoverPosterObserver = new IntersectionObserver((entries) => {
+        for (const entry of entries){
+          if (!entry.isIntersecting) continue;
+
+          const img = entry.target;
+          const src = img.getAttribute("data-src") || "";
+          if (src && !img.getAttribute("src")){
+            img.setAttribute("src", src);
+          }
+          discoverPosterObserver.unobserve(img);
+        }
+      }, {
+        root: null,
+        rootMargin: "1200px 0px",
+        threshold: 0.01
+      });
+
+      return discoverPosterObserver;
+    }
+
+    function hydrateDiscoverPosters(){
+      const observer = ensureDiscoverPosterObserver();
+
+      discoverGrid.querySelectorAll("img[data-discover-poster='1']").forEach(img => {
+        if (img.dataset.posterBound === "1") return;
+        img.dataset.posterBound = "1";
+
+        img.addEventListener("error", () => {
+          const wrap = img.closest(".poster");
+          if (wrap){
+            wrap.innerHTML = '<div class="posterPlaceholder">No poster</div>';
+          }
+        }, { once: true });
+
+        observer.observe(img);
+      });
+    }
 
     function renderItems(items, append=false){
       const consensusMode = discoverConsensus ? discoverConsensus.value : "all";
@@ -2469,7 +2565,9 @@
           ? `${scoreSourceLabel} ${ratingDot(item.vote_average)} ${Number(item.vote_average).toFixed(1)}`
           : "";
         const source = esc(item.source || "");
-        const poster = item.poster_url ? `<img src="${esc(item.poster_url)}" alt="${title}">` : `<div class="posterPlaceholder">No poster</div>`;
+        const poster = item.poster_url
+          ? `<img data-discover-poster="1" data-src="${esc(item.poster_url)}" alt="${title}" loading="lazy" decoding="async">`
+          : `<div class="posterPlaceholder">No poster</div>`;
         const letterboxdLabels = Array.isArray(item.letterboxd_labels) ? item.letterboxd_labels.filter(Boolean) : [];
         const letterboxdFeedsText = letterboxdLabels.join(" + ");
 
@@ -2738,6 +2836,7 @@
       wireWhyButtons();
       wireWhyCloseButtons();
       wireDiscoverHideButtons();
+      hydrateDiscoverPosters();
       hydrateLibraryState();
 
       if (discoverLoadMoreBtn){
@@ -2822,6 +2921,25 @@
     }
 
     async function loadDiscover(page=1, append=false){
+      const inFlightKey = JSON.stringify({
+        page: Number(page || 1),
+        append: !!append,
+        source: (discoverSource && discoverSource.value) || "",
+        media: (discoverMedia && discoverMedia.value) || "",
+        genre: (discoverGenre && discoverGenre.value) || "",
+        provider: (discoverProvider && discoverProvider.value) || "",
+        min_rating: (discoverMinRating && discoverMinRating.value) || "",
+        year_from: (discoverYearFrom && discoverYearFrom.value) || "",
+        year_to: (discoverYearTo && discoverYearTo.value) || "",
+      });
+
+      if (discoverLoadInFlightKey === inFlightKey){
+        console.warn("Skipping duplicate discover load", inFlightKey);
+        return;
+      }
+
+      discoverLoadInFlightKey = inFlightKey;
+
       const source = discoverSource.value || "tmdb_trending";
       await qdLoadForYouProfile();
       const media = discoverMedia.value || "all";
@@ -2864,10 +2982,7 @@
       }
 
       try{
-        const r = await fetch(`/api/discover/items?source=${encodeURIComponent(source)}&media=${encodeURIComponent(media)}&genre=${encodeURIComponent(genre)}&provider=${encodeURIComponent(provider)}&min_rating=${encodeURIComponent(minRating)}&year_from=${encodeURIComponent(yearFrom)}&year_to=${encodeURIComponent(yearTo)}&page=${encodeURIComponent(page)}`, {
-          cache: "no-store"
-        });
-        const j = await r.json().catch(() => ({}));
+        const { r, j } = await fetchDiscoverPayload(page);
 
         if (requestSeq !== discoverActiveRequestSeq){
           return;
@@ -2914,6 +3029,10 @@
         discoverPage = page;
         renderItems(debugItems, append);
 
+        if (discoverHasMore){
+          prefetchDiscoverPage(Number(page || 1) + 1);
+        }
+
         if (discoverLoadMoreTimeout){
           clearTimeout(discoverLoadMoreTimeout);
           discoverLoadMoreTimeout = null;
@@ -2936,7 +3055,10 @@
         }
         setStatus("Discover failed: " + (e.message || e), "bad");
       }
+    
+      discoverLoadInFlightKey = "";
     }
+
 
     async function requestItem(card, btn, destination=""){
       const mediaType = String(card.getAttribute("data-media-type") || "");
@@ -3012,19 +3134,29 @@
 
       if (!items.length) return;
 
-      try{
-        const r = await fetch("/api/discover/library-state", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ items }),
-        });
+      const itemByKey = new Map(items.map(x => [x.key, x]));
+      const chunkSize = 80;
+      const mergedHits = {};
 
-        const j = await r.json().catch(() => ({}));
-        if (!r.ok || !j.ok || !j.items) return;
+      try{
+        for (let i = 0; i < items.length; i += chunkSize){
+          const chunk = items.slice(i, i + chunkSize);
+
+          const r = await fetch("/api/discover/library-state", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: chunk }),
+          });
+
+          const j = await r.json().catch(() => ({}));
+          if (!r.ok || !j.ok || !j.items) continue;
+
+          Object.assign(mergedHits, j.items || {});
+        }
 
         for (const card of cards){
           const key = String(card.getAttribute("data-discover-key") || "");
-          const hit = j.items[key] || {};
+          const hit = mergedHits[key] || {};
 
           const btn = card.querySelector("[data-request]");
           if (!btn) continue;

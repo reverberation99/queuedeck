@@ -2971,7 +2971,31 @@ setCount("#chip-rem", nREM);
     // Boot
     mountSections();
     wireHelpPopovers();
+    let discoverWarmStarted = false;
+
+    async function warmDiscoverInBackground(){
+      if (discoverWarmStarted) return;
+      discoverWarmStarted = true;
+
+      try{
+        setTimeout(async () => {
+          try{
+            await fetch("/api/discover/warm", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              cache: "no-store"
+            });
+          }catch(e){
+            console.warn("discover warm failed", e);
+          }
+        }, 2500);
+      }catch(e){
+        console.warn("discover warm scheduling failed", e);
+      }
+    }
+
     loadAll();
+    warmDiscoverInBackground();
       // ---- QD_AUTO_REFRESH: refresh feeds every 60s (no full page reload) ----
       const QD_REFRESH_MS = 60_000;
       let qdRefreshTimer = null;

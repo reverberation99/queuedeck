@@ -619,7 +619,25 @@
             </div>
 
             <div class="adminField full">
+              <div style="display:flex; gap:10px; align-items:center; margin:8px 0 14px 0;">
+                <button type="button" class="btn secondary" id="clearDiscoverCacheBtn">Clear Discover Cache</button>
+                <span id="clearDiscoverCacheStatus" style="font-size:12px; opacity:.75;"></span>
+              </div>
+              <div style="margin:14px 0 16px 0; padding:12px; border:1px solid rgba(255,255,255,.10); border-radius:12px; background:rgba(255,255,255,.03);">
+                <div style="font-weight:700; margin-bottom:8px;">Per-User Anime Safety</div>
+                <div style="font-size:12px; opacity:.78; margin-bottom:10px;">Admin-only. Toggle NSFW anime filtering per user.</div>
+                <div style="display:flex; gap:10px; align-items:center; margin-bottom:12px;">
+                  <button type="button" class="btn secondary" id="refreshUserAnimeSafetyBtn">Refresh Users</button>
+                  <span id="userAnimeSafetyStatus" style="font-size:12px; opacity:.75;"></span>
+                </div>
+                <div id="userAnimeSafetyList" style="display:grid; gap:8px;"></div>
+              </div>
+
               <label for="discover_title_overrides">Title Override Rules</label>
+              <div style="display:flex; gap:10px; align-items:center; margin:8px 0 10px 0;">
+                <button type="button" class="btn secondary" id="generateDiscoverOverridesBtn">Generate Suggestions</button>
+                <span id="generateDiscoverOverridesStatus" style="font-size:12px; opacity:.75;"></span>
+              </div>
               <textarea id="discover_title_overrides" rows="6" placeholder="Original Title | Override Title"></textarea>
               <div class="adminHint">Used when QueueDeck needs help matching items to requestable TMDb entries.</div>
             </div>
@@ -899,5 +917,189 @@
 
       load();
     </script>
-  </body>
+  
+<script>
+(function(){
+  const btn = document.getElementById("generateDiscoverOverridesBtn");
+  const status = document.getElementById("generateDiscoverOverridesStatus");
+  const ta = document.getElementById("discover_title_overrides");
+  if (!btn || !ta) return;
+
+  btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    if (status) status.textContent = "Generating suggestions...";
+    try{
+      const r = await fetch("/api/discover/generate-title-overrides", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store"
+      });
+      const data = await r.json();
+      if (!r.ok || !data.ok){
+        throw new Error(data.error || "generation_failed");
+      }
+
+      const suggestions = Array.isArray(data.suggestions) ? data.suggestions : [];
+      if (!suggestions.length){
+        if (status) status.textContent = "No suggestions found right now.";
+        return;
+      }
+
+      const existing = (ta.value || "").trim();
+      const append = suggestions.join("\n");
+      ta.value = existing ? (existing + "\n" + append) : append;
+      if (status) status.textContent = `Added ${suggestions.length} suggestion(s). Review and click Save.`;
+    }catch(e){
+      if (status) status.textContent = "Generate failed.";
+      console.error(e);
+    }finally{
+      btn.disabled = false;
+    }
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  const btn = document.getElementById("clearDiscoverCacheBtn");
+  const status = document.getElementById("clearDiscoverCacheStatus");
+  if (!btn) return;
+
+  btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    if (status) status.textContent = "Clearing discover cache...";
+    try{
+      const r = await fetch("/api/discover/clear-cache", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store"
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data.ok){
+        throw new Error(data.error || "clear_failed");
+      }
+      if (status) status.textContent = "Discover cache cleared.";
+    }catch(e){
+      if (status) status.textContent = "Clear failed.";
+      console.error(e);
+    }finally{
+      btn.disabled = false;
+    }
+  });
+})();
+</script>
+
+
+
+
+
+<script>
+(function(){
+  const refreshBtn = document.getElementById("refreshUserAnimeSafetyBtn");
+  const listBox = document.getElementById("userAnimeSafetyList");
+  const status = document.getElementById("userAnimeSafetyStatus");
+
+  if (!refreshBtn || !listBox) return;
+
+  function setStatus(msg){
+    if (status) status.textContent = msg || "";
+  }
+
+  function esc(s){
+    return String(s || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
+  async function saveUser(username, enabled, statusNode){
+    try{
+      const r = await fetch("/api/discover/admin-user-nsfw-anime", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify({
+          user: username,
+          hide_nsfw_anime: !!enabled
+        })
+      });
+
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok){
+        throw new Error(j.error || "save_failed");
+      }
+
+      if (statusNode) statusNode.textContent = "Saved";
+      setStatus("Saved.");
+    }catch(e){
+      console.error(e);
+      if (statusNode) statusNode.textContent = "Save failed";
+      setStatus("Save failed.");
+    }
+  }
+
+  function renderUsers(users){
+    if (!Array.isArray(users) || !users.length){
+      listBox.innerHTML = '<div style="opacity:.7; font-size:13px;">No users found.</div>';
+      return;
+    }
+
+    listBox.innerHTML = users.map(u => `
+      <div style="display:grid; grid-template-columns:minmax(160px, 220px) 1fr auto; gap:12px; align-items:center; padding:10px 12px; border:1px solid rgba(255,255,255,.08); border-radius:12px; background:rgba(255,255,255,.02);">
+        <div>
+          <div style="font-weight:700;">${esc(u.username)}</div>
+          <div style="font-size:12px; opacity:.68;">${u.is_admin ? "Admin" : "User"}</div>
+        </div>
+        <label style="display:flex; align-items:center; gap:10px; margin:0;">
+          <input type="checkbox" data-nsfw-user="${esc(u.username)}" ${u.hide_nsfw_anime ? "checked" : ""} />
+          <span>Hide NSFW anime</span>
+        </label>
+        <span data-nsfw-user-status="${esc(u.username)}" style="font-size:12px; opacity:.72;"></span>
+      </div>
+    `).join("");
+
+    listBox.querySelectorAll("[data-nsfw-user]").forEach(cb => {
+      cb.addEventListener("change", async () => {
+        const username = String(cb.getAttribute("data-nsfw-user") || "");
+        const rowStatus = cb.closest("div").querySelector("[data-nsfw-user-status]");
+        if (rowStatus) rowStatus.textContent = "Saving...";
+        cb.disabled = true;
+        await saveUser(username, cb.checked, rowStatus);
+        cb.disabled = false;
+      });
+    });
+  }
+
+  async function loadUsers(){
+    refreshBtn.disabled = true;
+    setStatus("Loading users...");
+    try{
+      const r = await fetch("/api/discover/admin-user-nsfw-anime/list", {
+        cache: "no-store"
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok || !Array.isArray(j.users)){
+        throw new Error(j.error || "load_failed");
+      }
+
+      renderUsers(j.users);
+      setStatus("Loaded.");
+    }catch(e){
+      console.error(e);
+      listBox.innerHTML = '<div style="opacity:.7; font-size:13px;">Failed to load users.</div>';
+      setStatus("Load failed.");
+    }finally{
+      refreshBtn.disabled = false;
+    }
+  }
+
+  refreshBtn.addEventListener("click", loadUsers);
+  loadUsers();
+})();
+</script>
+
+</body>
 </html>

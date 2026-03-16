@@ -47,6 +47,209 @@ from .clients.jellyfin_for_you import build_for_you_profile
 
 bp = Blueprint("discover", __name__)
 
+_DISCOVER_WARM_STATE = {
+    "last_started": 0.0,
+    "last_finished": 0.0,
+    "last_elapsed": 0.0,
+    "running": False,
+}
+_DISCOVER_WARM_COOLDOWN_SEC = 900  # 15 minutes
+
+
+def _ensure_user_discover_flags_table():
+    db = get_db()
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS user_discover_flags (
+            user_id INTEGER PRIMARY KEY,
+            hide_nsfw_anime INTEGER NOT NULL DEFAULT 0
+        )
+    """)
+    db.commit()
+
+
+def _lookup_user_row_for_admin(identifier: str):
+    db = get_db()
+    ident = str(identifier or "").strip()
+    if not ident:
+        return None
+
+    row = None
+    try:
+        row = db.execute(
+            "SELECT id, username FROM users WHERE username = ?",
+            (ident,),
+        ).fetchone()
+    except Exception:
+        row = None
+
+    if row:
+        return row
+
+    try:
+        row = db.execute(
+            "SELECT id, username FROM users WHERE email = ?",
+            (ident,),
+        ).fetchone()
+    except Exception:
+        row = None
+
+    return row
+
+
+def _get_user_hide_nsfw_anime_flag(user_id) -> bool:
+    try:
+        uid = int(user_id or 0)
+    except Exception:
+        return False
+
+    if uid <= 0:
+        return False
+
+    _ensure_user_discover_flags_table()
+    db = get_db()
+    try:
+        row = db.execute(
+            "SELECT hide_nsfw_anime FROM user_discover_flags WHERE user_id = ?",
+            (uid,),
+        ).fetchone()
+    except Exception:
+        return False
+
+    return bool(int(row["hide_nsfw_anime"] or 0)) if row else False
+
+
+def _set_user_hide_nsfw_anime_flag(user_id, enabled: bool):
+    uid = int(user_id or 0)
+    if uid <= 0:
+        return
+
+    _ensure_user_discover_flags_table()
+    db = get_db()
+    db.execute(
+        """
+        INSERT INTO user_discover_flags (user_id, hide_nsfw_anime)
+        VALUES (?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET hide_nsfw_anime = excluded.hide_nsfw_anime
+        """,
+        (uid, 1 if enabled else 0),
+    )
+    db.commit()
+
+
+def _current_user_hide_nsfw_anime() -> bool:
+    me = current_user() or {}
+
+    user_id = me.get("id")
+    if user_id:
+        enabled = _get_user_hide_nsfw_anime_flag(user_id)
+        print(f"[discover-nsfw-user] username={me.get('username')!r} id={user_id!r} enabled={enabled}", flush=True)
+        return enabled
+
+    username = str(me.get("username") or "").strip()
+    if username:
+        row = _lookup_user_row_for_admin(username)
+        if row:
+            enabled = _get_user_hide_nsfw_anime_flag(row["id"])
+            print(f"[discover-nsfw-user] username={username!r} resolved_id={row['id']!r} enabled={enabled}", flush=True)
+            return enabled
+
+    print(f"[discover-nsfw-user] username={me.get('username')!r} id={me.get('id')!r} enabled=False reason='no_user_match'", flush=True)
+    return False
+
+
+def _is_nsfw_anime_item(item: dict) -> bool:
+    import re
+
+    if bool(item.get("is_adult")) or bool(item.get("adult")) or bool(item.get("nsfw")):
+        return True
+
+    rating = str(item.get("rating") or item.get("content_rating") or "").strip().lower()
+    if rating:
+        if "rx" in rating and "hentai" in rating:
+            return True
+        if "r+" in rating and ("nudity" in rating or "mild nudity" in rating):
+            return True
+        if "pg-13" not in rating and ("hentai" in rating or "nudity" in rating):
+            return True
+        if rating.startswith("r") and ("nudity" in rating or "suggestive" in rating):
+            return True
+
+    title = str(item.get("title") or "").strip()
+    title_english = str(item.get("title_english") or "").strip()
+    title_japanese = str(item.get("title_japanese") or "").strip()
+
+    bits = [title, title_english, title_japanese]
+
+    for key in ("overview", "description", "synopsis", "rating", "content_rating", "anime_type", "anime_source"):
+        val = item.get(key)
+        if val:
+            bits.append(str(val))
+
+    for key in ("genres", "genre_names", "tags", "themes", "demographics", "studios"):
+        val = item.get(key)
+        if isinstance(val, (list, tuple)):
+            bits.extend([str(x) for x in val if x])
+        elif val:
+            bits.append(str(val))
+
+    hay = " ".join(bits).lower()
+    hay = re.sub(r"\s+", " ", hay).strip()
+    title_hay = " ".join([title, title_english, title_japanese]).lower()
+
+    hard_terms = [
+        "hentai",
+        "erotica",
+        "ecchi",
+        "softcore",
+        "uncensored",
+        "nsfw",
+        "18+",
+        "sexually explicit",
+        "explicit sexual",
+        "pornographic",
+        "fuuzoku",
+        "fuzoku",
+        "breeder",
+        "oppai",
+        "paizuri",
+        "milf",
+        "big breasts",
+        "large breasts",
+        "immoral routine",
+        "gal no tamariba",
+        "bitch",
+        "slut",
+    ]
+    if any(term in hay for term in hard_terms):
+        return True
+
+    genre_terms = [
+        "hentai",
+        "erotica",
+        "ecchi",
+        "adult cast",
+        "love hotel",
+        "sexual content",
+        "nudity",
+        "suggestive",
+    ]
+    if any(term in hay for term in genre_terms):
+        return True
+
+    combo_terms = ["the animation", "ova", "uncensored"]
+    if any(flag in title_hay for flag in combo_terms):
+        if any(term in hay for term in ["breeder", "fuuzoku", "immoral", "hentai", "ecchi", "nudity", "suggestive"]):
+            return True
+
+    return False
+
+
+_DISCOVER_ANIME_TMDB_RESOLVE_CACHE: dict[tuple[str, str, str], dict] = {}
+_DISCOVER_ANIME_TMDB_RESOLVE_CACHE_TTL_SEC = 43200  # 12 hours
+
+_DISCOVER_ANIME_ENRICHED_ITEM_CACHE: dict[tuple[str, str, str], dict] = {}
+_DISCOVER_ANIME_ENRICHED_ITEM_CACHE_TTL_SEC = 43200  # 12 hours
+
 _DISCOVER_CACHE: dict[tuple[str, str, str, str, str, str, int, str], dict] = {}
 _DISCOVER_CACHE_TTL = 300
 
@@ -183,10 +386,17 @@ def _timed(label: str, fn):
 
 
 def _aggregate_enrich_limit(page: int) -> int:
-    try:
-        page = int(page)
-    except Exception:
-        page = 1
+    page = max(1, int(page or 1))
+
+    # Keep page 1 richest, but never let later pages drop to zero.
+    # This preserves posters/artwork deeper into Discover.
+    if page == 1:
+        return 80
+    if page == 2:
+        return 48
+    if page == 3:
+        return 32
+    return 24
 
     if page <= 1:
         base = 80
@@ -568,6 +778,7 @@ def _tmdb_search_id_for_item(title: str, media_type: str, year: str = "") -> str
         return ""
 
     import re
+    import time
 
     original_title = str(title or "").strip()
     title = original_title
@@ -579,6 +790,20 @@ def _tmdb_search_id_for_item(title: str, media_type: str, year: str = "") -> str
 
     media_type = str(media_type or "").strip().lower()
     year = str(year or "").strip()[:4]
+
+    norm_title = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", original_title.lower())).strip()
+    cache_key = (norm_title, media_type, year)
+
+    cached = _DISCOVER_ANIME_TMDB_RESOLVE_CACHE.get(cache_key)
+    if cached:
+        age = time.time() - float(cached.get("ts") or 0)
+        if age <= _DISCOVER_ANIME_TMDB_RESOLVE_CACHE_TTL_SEC:
+            tmdb_id = str(cached.get("tmdb_id") or "").strip()
+            if tmdb_id:
+                print(f"[anime-resolve-cache] HIT title={original_title!r} year={year!r} id={tmdb_id!r}", flush=True)
+            else:
+                print(f"[anime-resolve-cache] NEGATIVE-HIT title={original_title!r} year={year!r}", flush=True)
+            return tmdb_id
 
     # If an admin override is being used, trust the override title and do not
     # constrain the TMDb search by AniList's season/year value.
@@ -718,9 +943,23 @@ def _tmdb_search_id_for_item(title: str, media_type: str, year: str = "") -> str
                 if want and cand_norm == want:
                     if "first_air_date_year" not in params and "year" not in params:
                         _qd_tmdb_debug("match-found", query=query_title, kind=kind, cand_title=cand_title, cand_date=cand_date, cand_id=cand_id, reason="exact-no-year")
+                        _DISCOVER_ANIME_TMDB_RESOLVE_CACHE[cache_key] = {
+                            "ts": time.time(),
+                            "tmdb_id": str(cand_id or "").strip(),
+                            "original_title": original_title,
+                            "media_type": media_type,
+                            "year": year,
+                        }
                         return cand_id
                     if not year_val or not cand_date or cand_date == year_val:
                         _qd_tmdb_debug("match-found", query=query_title, kind=kind, cand_title=cand_title, cand_date=cand_date, cand_id=cand_id, reason="exact-with-year")
+                        _DISCOVER_ANIME_TMDB_RESOLVE_CACHE[cache_key] = {
+                            "ts": time.time(),
+                            "tmdb_id": str(cand_id or "").strip(),
+                            "original_title": original_title,
+                            "media_type": media_type,
+                            "year": year,
+                        }
                         return cand_id
 
             _qd_tmdb_debug("no-match-for-query", query=query_title, kind=kind, year_val=year_val)
@@ -762,12 +1001,33 @@ def _tmdb_search_id_for_item(title: str, media_type: str, year: str = "") -> str
                 return found
 
     _qd_tmdb_debug("resolve-miss", original_title=original_title, effective_title=title, media_type=media_type, year=year)
+    _DISCOVER_ANIME_TMDB_RESOLVE_CACHE[cache_key] = {
+        "ts": time.time(),
+        "tmdb_id": "",
+        "original_title": original_title,
+        "media_type": media_type,
+        "year": year,
+    }
     return ""
 
 def _enrich_anilist_items_with_tmdb(items):
+    import re
+
     out = []
+    seen_request_keys = set()
+
     for raw in (items or []):
         item = dict(raw or {})
+
+        req_title = str(item.get("title") or "").strip()
+        req_media_type = str(item.get("media_type") or "").strip().lower() or "tv"
+        req_year = str(item.get("year") or "").strip()[:4]
+        req_norm_title = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", req_title.lower())).strip()
+        request_key = (req_norm_title, req_media_type, req_year)
+
+        if request_key in seen_request_keys:
+            continue
+        seen_request_keys.add(request_key)
 
         tmdb_id = str(item.get("tmdb_id") or "").strip()
         media_type = str(item.get("media_type") or "").strip().lower()
@@ -875,7 +1135,7 @@ def api_discover_library_state():
             return jsonify(ok=False, error="invalid_items"), 400
 
         items = []
-        for idx, raw in enumerate(raw_items[:100]):
+        for idx, raw in enumerate(raw_items[:500]):
             if not isinstance(raw, dict):
                 continue
             items.append({
@@ -931,6 +1191,427 @@ def api_discover_library_state():
         return jsonify(ok=True, items=merged)
     except Exception as e:
         return jsonify(ok=False, error=str(e), items={}), 502
+
+
+@bp.post("/api/discover/warm")
+@login_required
+def api_discover_warm():
+    import time
+
+    now = time.time()
+
+    if bool(_DISCOVER_WARM_STATE.get("running")):
+        elapsed_since_start = round(now - float(_DISCOVER_WARM_STATE.get("last_started") or now), 3)
+        print(
+            f"[discover-warm] skipped already_running elapsed_since_start={elapsed_since_start}s",
+            flush=True
+        )
+        return jsonify(
+            ok=True,
+            skipped=True,
+            reason="already_running",
+            elapsed_since_start=elapsed_since_start,
+            last_elapsed=round(float(_DISCOVER_WARM_STATE.get("last_elapsed") or 0.0), 3),
+            warmed=[],
+            errors=[],
+        )
+
+    last_finished = float(_DISCOVER_WARM_STATE.get("last_finished") or 0.0)
+    cooldown_remaining = max(0.0, _DISCOVER_WARM_COOLDOWN_SEC - (now - last_finished))
+
+    if last_finished > 0 and cooldown_remaining > 0:
+        elapsed_since_finish = round(now - last_finished, 3)
+        print(
+            f"[discover-warm] skipped cooldown_remaining={round(cooldown_remaining, 3)}s elapsed_since_finish={elapsed_since_finish}s",
+            flush=True
+        )
+        return jsonify(
+            ok=True,
+            skipped=True,
+            reason="cooldown_active",
+            cooldown_remaining=round(cooldown_remaining, 3),
+            last_elapsed=round(float(_DISCOVER_WARM_STATE.get("last_elapsed") or 0.0), 3),
+            warmed=[],
+            errors=[],
+        )
+
+    started = time.time()
+    _DISCOVER_WARM_STATE["last_started"] = started
+    _DISCOVER_WARM_STATE["running"] = True
+
+    warmed = []
+    errors = []
+
+    try:
+        # -------------------------
+        # Aggregate prewarm
+        # -------------------------
+        try:
+            _get_tmdb_trending_cached(media="all", page=1)
+            warmed.append("aggregate:tmdb_trending")
+        except Exception as e:
+            errors.append(f"aggregate:tmdb_trending:{str(e)[:180]}")
+
+        aggregate_seed = []
+
+        try:
+            tmdb_items = _get_tmdb_trending_cached(media="all", page=1) or []
+            aggregate_seed.extend(tmdb_items)
+            warmed.append(f"aggregate:tmdb_trending:{len(tmdb_items)}")
+        except Exception as e:
+            errors.append(f"aggregate:tmdb_trending:{str(e)[:180]}")
+
+        try:
+            if _trakt_is_configured():
+                trakt_items = _get_trakt_trending_cached(media="all", page=1) or []
+                aggregate_seed.extend(trakt_items)
+                warmed.append(f"aggregate:trakt_trending:{len(trakt_items)}")
+        except Exception as e:
+            errors.append(f"aggregate:trakt_trending:{str(e)[:180]}")
+
+        try:
+            lb_items = get_letterboxd_popular_aggregate(page=1) or []
+            aggregate_seed.extend(lb_items)
+            warmed.append(f"aggregate:letterboxd_aggregate:{len(lb_items)}")
+        except Exception as e:
+            errors.append(f"aggregate:letterboxd_aggregate:{str(e)[:180]}")
+
+        # Prewarm TMDb enrich-by-id cache for aggregate page 1
+        try:
+            seen = set()
+            enrich_targets = []
+            for item in aggregate_seed:
+                tmdb_id = int(item.get("tmdb_id") or 0)
+                media_type = str(item.get("media_type") or "").strip().lower()
+                if not tmdb_id or media_type not in ("movie", "tv"):
+                    continue
+                key = (media_type, tmdb_id)
+                if key in seen:
+                    continue
+                seen.add(key)
+                enrich_targets.append(key)
+
+            warmed_count = 0
+            for media_type, tmdb_id in enrich_targets[:80]:
+                try:
+                    enriched = enrich_tmdb_item_by_id(
+                        tmdb_id=tmdb_id,
+                        media_type=media_type,
+                        headers=_tmdb_auth_headers(),
+                        auth_params=_tmdb_auth_params(),
+                    )
+                    if enriched:
+                        warmed_count += 1
+                except Exception:
+                    pass
+
+            warmed.append(f"aggregate:tmdb_enrich:{warmed_count}")
+        except Exception as e:
+            errors.append(f"aggregate:tmdb_enrich:{str(e)[:180]}")
+
+        # -------------------------
+        # Anime aggregate prewarm
+        # -------------------------
+        anime_seed = []
+
+        try:
+            anilist_items = _get_anilist_trending_cached(page=1) or []
+            anime_seed.extend(anilist_items)
+            warmed.append(f"anime:anilist_trending:{len(anilist_items)}")
+        except Exception as e:
+            errors.append(f"anime:anilist_trending:{str(e)[:180]}")
+
+        try:
+            jikan_hot_items = _get_jikan_anime_hot_cached(page=1) or []
+            anime_seed.extend(jikan_hot_items)
+            warmed.append(f"anime:jikan_hot:{len(jikan_hot_items)}")
+        except Exception as e:
+            errors.append(f"anime:jikan_hot:{str(e)[:180]}")
+
+        try:
+            jikan_rising_items = _get_jikan_anime_rising_cached(page=1) or []
+            anime_seed.extend(jikan_rising_items)
+            warmed.append(f"anime:jikan_rising:{len(jikan_rising_items)}")
+        except Exception as e:
+            errors.append(f"anime:jikan_rising:{str(e)[:180]}")
+
+        # Warm TMDb resolve cache for anime titles
+        try:
+            anime_enriched = []
+            if anime_seed:
+                anime_enriched = _enrich_anilist_items_with_tmdb(list(anime_seed)) or []
+                warmed.append(f"anime:tmdb_resolve:{len(anime_seed)}")
+            else:
+                anime_enriched = []
+        except Exception as e:
+            anime_enriched = []
+            errors.append(f"anime:tmdb_resolve:{str(e)[:180]}")
+
+        # Prewarm TMDb enrich-by-id cache for resolved anime page 1 items
+        try:
+            seen = set()
+            enrich_targets = []
+            for item in anime_enriched:
+                tmdb_id = int(item.get("tmdb_id") or 0)
+                media_type = str(item.get("media_type") or "").strip().lower()
+                if not tmdb_id or media_type not in ("movie", "tv"):
+                    continue
+                key = (media_type, tmdb_id)
+                if key in seen:
+                    continue
+                seen.add(key)
+                enrich_targets.append(key)
+
+            warmed_count = 0
+            for media_type, tmdb_id in enrich_targets[:80]:
+                try:
+                    enriched = enrich_tmdb_item_by_id(
+                        tmdb_id=tmdb_id,
+                        media_type=media_type,
+                        headers=_tmdb_auth_headers(),
+                        auth_params=_tmdb_auth_params(),
+                    )
+                    if enriched:
+                        warmed_count += 1
+                except Exception:
+                    pass
+
+            warmed.append(f"anime:tmdb_enrich:{warmed_count}")
+        except Exception as e:
+            errors.append(f"anime:tmdb_enrich:{str(e)[:180]}")
+
+        elapsed = round(time.time() - started, 3)
+        _DISCOVER_WARM_STATE["last_finished"] = time.time()
+        _DISCOVER_WARM_STATE["last_elapsed"] = elapsed
+        _DISCOVER_WARM_STATE["running"] = False
+
+        print(
+            f"[discover-warm] elapsed={elapsed}s warmed={len(warmed)} errors={len(errors)} details={warmed}",
+            flush=True
+        )
+
+        return jsonify(
+            ok=True,
+            skipped=False,
+            warmed=warmed,
+            errors=errors,
+            elapsed=elapsed,
+        )
+
+    except Exception as e:
+        _DISCOVER_WARM_STATE["running"] = False
+        return jsonify(ok=False, error=str(e)[:300]), 500
+
+
+@bp.post("/api/discover/generate-title-overrides")
+@login_required
+def api_discover_generate_title_overrides():
+    import re
+    import time
+
+    if not _tmdb_is_configured():
+        return jsonify(ok=False, error="tmdb_not_configured", suggestions=[]), 400
+
+    def _norm(s: str) -> str:
+        return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", str(s or "").lower())).strip()
+
+    def _strip_season_terms(s: str) -> str:
+        out = str(s or "").strip()
+        out = re.sub(r"\s+final\s+season(\s+part\s+\d+)?$", "", out, flags=re.I).strip(" :-")
+        out = re.sub(r"\s+season\s+\d+(\s+part\s+\d+)?$", "", out, flags=re.I).strip(" :-")
+        out = re.sub(r"\s+\d+(st|nd|rd|th)\s+season$", "", out, flags=re.I).strip(" :-")
+        out = re.sub(r"\s+part\s+\d+$", "", out, flags=re.I).strip(" :-")
+        return out
+
+    def _variants(title: str) -> list[str]:
+        title = str(title or "").strip()
+        vals = [title, _strip_season_terms(title)]
+        if ":" in title:
+            left, right = title.split(":", 1)
+            vals.append(left.strip())
+            vals.append(right.strip())
+        out = []
+        seen = set()
+        for v in vals:
+            v = str(v or "").strip()
+            if not v:
+                continue
+            k = _norm(v)
+            if k in seen:
+                continue
+            seen.add(k)
+            out.append(v)
+        return out
+
+    def _search_best(title: str, media_type: str, year: str = "") -> str:
+        kind_order = [media_type] if media_type in ("tv", "movie") else ["tv", "movie"]
+
+        for query_title in _variants(title):
+            for kind in kind_order:
+                param_sets = []
+                p1 = dict(_tmdb_auth_params())
+                p1["query"] = query_title
+                if year:
+                    if kind == "tv":
+                        p1["first_air_date_year"] = year
+                    else:
+                        p1["year"] = year
+                param_sets.append(p1)
+
+                p2 = dict(_tmdb_auth_params())
+                p2["query"] = query_title
+                param_sets.append(p2)
+
+                for params in param_sets:
+                    try:
+                        r = requests.get(
+                            f"https://api.themoviedb.org/3/search/{kind}",
+                            headers=_tmdb_auth_headers(),
+                            params=params,
+                            timeout=15,
+                        )
+                        r.raise_for_status()
+                        results = (r.json() or {}).get("results") or []
+                    except Exception:
+                        results = []
+
+                    for row in results[:5]:
+                        cand_title = (
+                            str(row.get("name") or "").strip()
+                            or str(row.get("title") or "").strip()
+                            or str(row.get("original_name") or "").strip()
+                            or str(row.get("original_title") or "").strip()
+                        )
+                        cand_id = str(row.get("id") or "").strip()
+                        if cand_title and cand_id:
+                            return cand_title
+        return ""
+
+    rows = []
+    now = time.time()
+
+    for key, payload in (_DISCOVER_ANIME_TMDB_RESOLVE_CACHE or {}).items():
+        try:
+            age = now - float(payload.get("ts") or 0)
+        except Exception:
+            age = 999999
+
+        if age > _DISCOVER_ANIME_TMDB_RESOLVE_CACHE_TTL_SEC:
+            continue
+
+        if str(payload.get("tmdb_id") or "").strip():
+            continue
+
+        original_title = str(payload.get("original_title") or "").strip()
+        media_type = str(payload.get("media_type") or "tv").strip().lower()
+        year = str(payload.get("year") or "").strip()[:4]
+
+        if not original_title:
+            continue
+
+        suggestion = _search_best(original_title, media_type=media_type, year=year)
+        if not suggestion:
+            continue
+
+        if _norm(original_title) == _norm(suggestion):
+            continue
+
+        rows.append((original_title, suggestion))
+
+    deduped = []
+    seen = set()
+    for left, right in rows:
+        line = f"{left} | {right}"
+        if line.lower() in seen:
+            continue
+        seen.add(line.lower())
+        deduped.append(line)
+
+    return jsonify(ok=True, suggestions=deduped[:30])
+
+@bp.get("/api/discover/admin-user-nsfw-anime/list")
+@login_required
+def api_discover_admin_user_nsfw_anime_list():
+    me = current_user() or {}
+    if not bool(me.get("is_admin")):
+        return jsonify(ok=False, error="forbidden"), 403
+
+    _ensure_user_discover_flags_table()
+    db = get_db()
+
+    rows = db.execute("""
+        SELECT
+            u.id,
+            u.username,
+            u.is_admin,
+            COALESCE(f.hide_nsfw_anime, 0) AS hide_nsfw_anime
+        FROM users u
+        LEFT JOIN user_discover_flags f
+          ON f.user_id = u.id
+        ORDER BY lower(u.username) ASC
+    """).fetchall()
+
+    users = []
+    for row in rows:
+        users.append({
+            "id": int(row["id"]),
+            "username": str(row["username"] or ""),
+            "is_admin": bool(row["is_admin"]),
+            "hide_nsfw_anime": bool(int(row["hide_nsfw_anime"] or 0)),
+        })
+
+    return jsonify(ok=True, users=users)
+
+
+@bp.get("/api/discover/admin-user-nsfw-anime")
+@login_required
+def api_discover_admin_user_nsfw_anime_get():
+    me = current_user() or {}
+    if not bool(me.get("is_admin")):
+        return jsonify(ok=False, error="forbidden"), 403
+
+    identifier = str(request.args.get("user") or "").strip()
+    row = _lookup_user_row_for_admin(identifier)
+    if not row:
+        return jsonify(ok=False, error="user_not_found"), 404
+
+    return jsonify(
+        ok=True,
+        user={
+            "id": int(row["id"]),
+            "username": str(row["username"] or ""),
+            "email": "" ,
+            "hide_nsfw_anime": _get_user_hide_nsfw_anime_flag(row["id"]),
+        },
+    )
+
+
+@bp.post("/api/discover/admin-user-nsfw-anime")
+@login_required
+def api_discover_admin_user_nsfw_anime_set():
+    me = current_user() or {}
+    if not bool(me.get("is_admin")):
+        return jsonify(ok=False, error="forbidden"), 403
+
+    payload = request.get_json(silent=True) or {}
+    identifier = str(payload.get("user") or "").strip()
+    enabled = bool(payload.get("hide_nsfw_anime"))
+
+    row = _lookup_user_row_for_admin(identifier)
+    if not row:
+        return jsonify(ok=False, error="user_not_found"), 404
+
+    _set_user_hide_nsfw_anime_flag(row["id"], enabled)
+
+    return jsonify(
+        ok=True,
+        user={
+            "id": int(row["id"]),
+            "username": str(row["username"] or ""),
+            "email": "" ,
+            "hide_nsfw_anime": enabled,
+        },
+    )
 
 
 @bp.get("/api/discover/letterboxd-sources")
@@ -1158,56 +1839,14 @@ def api_discover_items():
                 enrich_loop_elapsed = round(time.time() - enrich_loop_started, 3)
                 print(f"[discover-enrich-loop] source={source} page={page} block=letterboxd_merge elapsed={enrich_loop_elapsed}s", flush=True)
 
-            trakt_pop_items = _timed(
-                f"trakt_popular media={media} page={page}",
-                lambda: _get_trakt_popular_cached(
-                    media=media,
-                    page=page,
-                )
-            )
-
-            enrich_loop_started = time.time()
-            for tr in trakt_pop_items:
-                key = (str(tr.get("media_type") or ""), int(tr.get("tmdb_id") or 0))
-                if key in by_key:
-                    existing = by_key[key]
-                    merged_scores = dict(existing.get("provider_scores") or {})
-                    merged_scores.update(tr.get("provider_scores") or {})
-                    existing["provider_scores"] = merged_scores
-                    existing["source"] = "TMDb + Trakt"
-                else:
-                    enriched = None
-                    if enrich_used < enrich_budget:
-                        enriched = enrich_tmdb_item_by_id(
-                            tmdb_id=int(tr.get("tmdb_id") or 0),
-                            media_type=str(tr.get("media_type") or ""),
-                            headers=_tmdb_auth_headers(),
-                            auth_params=_tmdb_auth_params(),
-                        )
-                        enrich_used += 1
-
-                    if enriched:
-                        merged = dict(enriched)
-                        merged["source"] = "TMDb + Trakt"
-
-                        merged_scores = dict(enriched.get("provider_scores") or {})
-                        merged_scores.update(tr.get("provider_scores") or {})
-                        merged["provider_scores"] = merged_scores
-                        items.append(merged)
-                    else:
-                        items.append(tr)
-
-            enrich_loop_elapsed = round(time.time() - enrich_loop_started, 3)
-            print(f"[discover-enrich-loop] source={source} page={page} block=trakt_popular_merge elapsed={enrich_loop_elapsed}s", flush=True)
+            # Performance pass:
+            # skip trakt_popular inside aggregate mode to reduce first-load latency.
+            # Users can still access Trakt Popular from its dedicated source.
+            trakt_pop_items = []
 
             if media == "tv" and int(page) == 1:
-                tvmaze_items = _timed(
-                    f"tvmaze_airing media=tv page={page}",
-                    lambda: _get_tvmaze_airing_cached(
-                        media="tv",
-                        page=page,
-                    )
-                )
+                # Performance pass: skip tvmaze_airing inside aggregate mode
+                tvmaze_items = []
 
                 def _mk_title_year_key(x):
                     title = str(x.get("title") or "").strip().lower()
@@ -1424,6 +2063,24 @@ def api_discover_items():
                 f"anilist_genre tmdb_resolve genre={anime_genre} page={page}",
                 lambda: _enrich_anilist_items_with_tmdb(items)
             )
+
+        if source in ("anime_aggregate", "anilist_trending", "anilist_popular", "anilist_genre", "jikan_anime_hot", "jikan_anime_rising"):
+            if _current_user_hide_nsfw_anime():
+                before_items = list(items or [])
+                filtered = []
+                removed_titles = []
+
+                for x in before_items:
+                    if _is_nsfw_anime_item(x):
+                        removed_titles.append(str(x.get("title") or "").strip())
+                    else:
+                        filtered.append(x)
+
+                items = filtered
+
+                print(f"[discover-nsfw] source={source} before={len(before_items)} after={len(items)} removed={len(removed_titles)}", flush=True)
+                if removed_titles:
+                    print(f"[discover-nsfw] removed_titles={removed_titles[:25]}", flush=True)
 
         enrich_stats = consume_tmdb_enrich_stats()
         try:

@@ -14,6 +14,8 @@ def _get(path: str, params: dict | None = None) -> dict:
 
 def _normalize(item: dict, source_key: str) -> dict:
     title = item.get("title") or ""
+    title_english = item.get("title_english") or ""
+    title_japanese = item.get("title_japanese") or ""
     year = item.get("year")
 
     poster = ""
@@ -26,14 +28,33 @@ def _normalize(item: dict, source_key: str) -> dict:
     members = int(item.get("members") or 0)
     popularity = float(item.get("popularity") or 0)
 
+    synopsis = str(item.get("synopsis") or "").strip()
+    rating = str(item.get("rating") or "").strip()
+    anime_type = str(item.get("type") or "").strip()
+    source = str(item.get("source") or "").strip()
+
+    genres = [str(x.get("name") or "").strip() for x in (item.get("genres") or []) if isinstance(x, dict) and str(x.get("name") or "").strip()]
+    themes = [str(x.get("name") or "").strip() for x in (item.get("themes") or []) if isinstance(x, dict) and str(x.get("name") or "").strip()]
+    demographics = [str(x.get("name") or "").strip() for x in (item.get("demographics") or []) if isinstance(x, dict) and str(x.get("name") or "").strip()]
+
     provider_score = 0.0
     if score > 0:
         provider_score = min(max(score / 10.0, 0.0), 1.0)
 
     return {
         "title": title,
+        "title_english": title_english,
+        "title_japanese": title_japanese,
         "year": year,
         "poster_url": poster,
+        "overview": synopsis,
+        "synopsis": synopsis,
+        "rating": rating,
+        "anime_type": anime_type,
+        "anime_source": source,
+        "genres": genres,
+        "themes": themes,
+        "demographics": demographics,
         "vote_average": score,
         "vote_count": members,
         "popularity": popularity,
