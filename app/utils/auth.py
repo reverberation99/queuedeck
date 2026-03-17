@@ -42,6 +42,19 @@ def login_required(f):
     return decorated
 
 
+def login_required_401(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not users_exist():
+            return ("Setup required", 503)
+
+        if not is_logged_in():
+            return ("Unauthorized", 401)
+
+        return f(*args, **kwargs)
+    return decorated
+
+
 def admin_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):

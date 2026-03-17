@@ -7,6 +7,7 @@ import socket
 from flask import Blueprint, render_template, request, redirect, flash, jsonify
 from .db import get_db
 from .models_settings import get_user_admin_settings, update_user_admin_settings
+from .utils.auth import admin_required
 
 bp = Blueprint("admin_connections", __name__)
 
@@ -307,15 +308,9 @@ def _test_jellyfin(jellyfin_url: str, api_key: str, username: str) -> dict:
 
 
 
-def admin_required():
-    """
-    Placeholder guard.
-    Replace with your real admin check later if needed.
-    """
-    return True
-
 
 @bp.get("/admin/users/<int:user_id>/connections")
+@admin_required
 def admin_user_connections(user_id: int):
     db = get_db()
 
@@ -338,6 +333,7 @@ def admin_user_connections(user_id: int):
 
 
 @bp.post("/admin/users/<int:user_id>/connections/jellyfin/users")
+@admin_required
 def admin_user_connections_jellyfin_users(user_id: int):
     db = get_db()
 
@@ -360,6 +356,7 @@ def admin_user_connections_jellyfin_users(user_id: int):
 
 
 @bp.post("/admin/users/<int:user_id>/connections/jellyfin/views")
+@admin_required
 def admin_user_connections_jellyfin_views(user_id: int):
     db = get_db()
 
@@ -383,6 +380,7 @@ def admin_user_connections_jellyfin_views(user_id: int):
 
 
 @bp.post("/admin/users/<int:user_id>/connections/seerr/users")
+@admin_required
 def admin_user_connections_seerr_users(user_id: int):
     db = get_db()
 
@@ -406,6 +404,7 @@ def admin_user_connections_seerr_users(user_id: int):
 
 
 @bp.post("/admin/users/<int:user_id>/connections/test")
+@admin_required
 def admin_user_connections_test(user_id: int):
     db = get_db()
 
@@ -458,6 +457,7 @@ def admin_user_connections_test(user_id: int):
 
 
 @bp.post("/admin/users/<int:user_id>/connections")
+@admin_required
 def admin_user_connections_save(user_id: int):
     db = get_db()
 
@@ -501,6 +501,7 @@ def admin_user_connections_save(user_id: int):
 
 
 @bp.post("/admin/users/<int:user_id>/connections/clear-data")
+@admin_required
 def admin_user_connections_clear_data(user_id: int):
 
     db = get_db()
@@ -523,6 +524,7 @@ def admin_user_connections_clear_data(user_id: int):
     return redirect(f"/admin/users/{user_id}/connections")
 
 @bp.get("/api/admin/system-usage")
+@admin_required
 def api_admin_system_usage():
     try:
         sock_path = "/var/run/docker.sock"

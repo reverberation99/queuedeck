@@ -6,6 +6,9 @@ import xml.etree.ElementTree as ET
 from typing import Any, Dict, List
 
 import requests
+from urllib.parse import urlparse
+import ipaddress
+import socket
 
 from app.db import get_db
 
@@ -31,6 +34,39 @@ def _app_setting(key: str, default: str = "") -> str:
     if not row:
         return default
     return str(row["value"] or default)
+
+
+def _is_safe_letterboxd_rss_url(url: str) -> bool:
+    try:
+        parsed = urlparse(str(url or "").strip())
+        if parsed.scheme.lower() != "https":
+            return False
+
+        host = (parsed.hostname or "").strip().lower()
+        if not host:
+            return False
+
+        allowed_hosts = {"letterboxd.com", "www.letterboxd.com"}
+        if host not in allowed_hosts and not host.endswith(".letterboxd.com"):
+            return False
+
+        infos = socket.getaddrinfo(host, 443, proto=socket.IPPROTO_TCP)
+        for info in infos:
+            sockaddr = info[4]
+            ip = ipaddress.ip_address(sockaddr[0])
+            if (
+                ip.is_private
+                or ip.is_loopback
+                or ip.is_link_local
+                or ip.is_multicast
+                or ip.is_reserved
+                or ip.is_unspecified
+            ):
+                return False
+
+        return True
+    except Exception:
+        return False
 
 
 def _letterboxd_rss_url() -> str:
@@ -259,6 +295,10 @@ def _get_letterboxd_popular_for_url(rss_url: str, page: int = 1, source_label: s
     rss_url = str(rss_url or "").strip()
     if not rss_url:
         print("[letterboxd] no RSS URL configured", flush=True)
+        return []
+
+    if not _is_safe_letterboxd_rss_url(rss_url):
+        print(f"[letterboxd] rejected unsafe RSS URL: {rss_url}", flush=True)
         return []
 
     import time

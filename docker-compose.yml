@@ -1,10 +1,9 @@
 services:
   queuedeck-dev:
-    image: python:3.12-slim
+    build: .
+    image: reverberation99/queuedeck:latest
     container_name: queuedeck-dev
-    working_dir: /app
     volumes:
-      - ./app:/app/app
       - ./data:/data
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
@@ -17,7 +16,6 @@ services:
       #QD_ADMIN_USER: "${QD_ADMIN_USER}"
       #QD_ADMIN_PASS: "${QD_ADMIN_PASS}"
       DB_PATH: "/data/queuedb.sqlite"
-    command: sh -lc "pip -q install --no-cache-dir flask requests && python -m app"
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:7071/health').read()\""]
       interval: 5s

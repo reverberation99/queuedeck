@@ -1,4 +1,6 @@
 import sqlite3
+import time
+from collections import defaultdict, deque
 from datetime import datetime, timezone
 
 from flask import Blueprint, render_template, request, redirect, url_for, session
@@ -7,6 +9,41 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from ..db import get_db
 
 bp = Blueprint("auth", __name__)
+
+_LOGIN_WINDOW_SECONDS = 60
+_LOGIN_MAX_ATTEMPTS = 10
+_LOGIN_ATTEMPTS = defaultdict(deque)
+
+
+def _login_attempt_key(username: str = "") -> str:
+    forwarded = (request.headers.get("X-Forwarded-For") or "").split(",")[0].strip()
+    ip = forwarded or (request.remote_addr or "unknown")
+    return f"{ip.lower()}|{(username or '').strip().lower()}"
+
+
+def _prune_login_attempts(key: str) -> deque:
+    now = time.time()
+    dq = _LOGIN_ATTEMPTS[key]
+    while dq and (now - dq[0]) > _LOGIN_WINDOW_SECONDS:
+        dq.popleft()
+    return dq
+
+
+def _is_login_rate_limited(username: str = "") -> bool:
+    key = _login_attempt_key(username)
+    dq = _prune_login_attempts(key)
+    return len(dq) >= _LOGIN_MAX_ATTEMPTS
+
+
+def _record_login_failure(username: str = "") -> None:
+    key = _login_attempt_key(username)
+    dq = _prune_login_attempts(key)
+    dq.append(time.time())
+
+
+def _clear_login_failures(username: str = "") -> None:
+    key = _login_attempt_key(username)
+    _LOGIN_ATTEMPTS.pop(key, None)
 
 
 def _now_iso() -> str:
@@ -82,15 +119,21 @@ def login():
         if not username or not password:
             return render_template("login.html", error="Username and password are required.")
 
+        if _is_login_rate_limited(username):
+            return render_template("login.html", error="Too many login attempts. Please wait a minute and try again.")
+
         user = _get_user_by_username(username)
 
         if not user:
+            _record_login_failure(username)
             return render_template("login.html", error="Invalid credentials.")
 
         if int(user["is_active"] or 0) != 1:
-            return render_template("login.html", error="This account is inactive.")
+            _record_login_failure(username)
+            return render_template("login.html", error="Invalid credentials.")
 
         if not check_password_hash(user["password_hash"], password):
+            _record_login_failure(username)
             return render_template("login.html", error="Invalid credentials.")
 
         db = get_db()
@@ -100,6 +143,7 @@ def login():
         )
         db.commit()
 
+        _clear_login_failures(username)
         _login_user(user)
         return redirect(url_for("dashboard.root"))
 

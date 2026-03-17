@@ -31,7 +31,10 @@ def create_app() -> Flask:
     )
 
     # sessions/login
-    app.secret_key = os.getenv("SECRET_KEY", "dev-secret-change-me")
+    app.secret_key = os.getenv("SECRET_KEY", "")
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.config["SESSION_COOKIE_SECURE"] = bool(int(os.getenv("SESSION_COOKIE_SECURE", "0") or "0"))
 
     # sqlite cleanup hooks
     init_app(app)

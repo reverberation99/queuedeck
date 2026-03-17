@@ -14,4 +14,4 @@ RUN mkdir -p /data
 
 EXPOSE 7071
 
-CMD ["python", "-m", "app"]
+CMD ["gunicorn", "-w", "2", "--timeout", "120", "-b", "0.0.0.0:7071", "app.app:app"]

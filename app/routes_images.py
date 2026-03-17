@@ -3,6 +3,7 @@ from flask import Blueprint, Response
 import requests
 
 from .models_settings import get_setting
+from .utils.auth import login_required_401
 
 bp = Blueprint("images", __name__)
 
@@ -36,6 +37,7 @@ def _proxy_image(url: str, headers: dict | None = None) -> Response:
 # ---------------------------
 
 @bp.get("/img/jellyfin/primary/<item_id>")
+@login_required_401
 def jellyfin_primary(item_id: str):
     base = _cfg("jellyfin_url", "JELLYFIN_URL", "").rstrip("/")
     api_key = _cfg("jellyfin_api_key", "JELLYFIN_API_KEY", "")
@@ -50,6 +52,7 @@ def jellyfin_primary(item_id: str):
 
 
 @bp.get("/img/jellyfin/series/<series_id>")
+@login_required_401
 def jellyfin_series(series_id: str):
     base = _cfg("jellyfin_url", "JELLYFIN_URL", "").rstrip("/")
     api_key = _cfg("jellyfin_api_key", "JELLYFIN_API_KEY", "")
@@ -67,6 +70,7 @@ def jellyfin_series(series_id: str):
 # ---------------------------
 
 @bp.get("/img/sonarr/series/<int:tvdb_id>.jpg")
+@login_required_401
 def sonarr_series_poster(tvdb_id: int):
     base = _cfg("sonarr_url", "SONARR_URL", "").rstrip("/")
     api_key = _cfg("sonarr_api_key", "SONARR_API_KEY", "")
@@ -97,6 +101,7 @@ def sonarr_series_poster(tvdb_id: int):
 # ---------------------------
 
 @bp.get("/img/radarr/tmdb/<int:tmdb_id>.jpg")
+@login_required_401
 def radarr_movie_poster(tmdb_id: int):
     base = _cfg("radarr_url", "RADARR_URL", "").rstrip("/")
     api_key = _cfg("radarr_api_key", "RADARR_API_KEY", "")
