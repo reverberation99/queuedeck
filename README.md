@@ -14,6 +14,14 @@ Built for homelab users who want something **faster, cleaner, and more customiza
 
 ---
 
+# 🤖 AI Usage
+
+QueueDeck was developed with the assistance of AI tools to accelerate development, improve code quality, and iterate quickly on features.
+
+All logic, integrations, and architecture have been reviewed and tested in real-world homelab environments.
+
+---
+
 # ✨ Features
 
 * 🎯 **Unified Dashboard**
