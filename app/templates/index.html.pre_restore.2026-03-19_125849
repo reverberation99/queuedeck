@@ -1948,86 +1948,6 @@ border-radius:10px;
   }
 }
 
-
-
-
-/* =========================
-   MOBILE: REAL CARD MENU FIX
-   ========================= */
-@media (max-width: 768px){
-
-  /* The dashboard card action menu is .menu, not .contextMenu */
-  .card:has(.menu.open),
-  .card:has([aria-expanded="true"]){
-    z-index: 10070 !important;
-  }
-
-  .menu,
-  .menu.open{
-    z-index: 10080 !important;
-  }
-}
-
-
-/* =========================
-   MOBILE: CARD MENU AS BOTTOM SHEET
-   ========================= */
-@media (max-width: 768px){
-
-  .card:has(.menu.open),
-  .card:has([aria-expanded="true"]){
-    z-index: 10070 !important;
-  }
-
-  .menu.open{
-    position: fixed !important;
-    left: 12px !important;
-    right: 12px !important;
-    top: auto !important;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 12px) !important;
-    width: auto !important;
-    max-width: none !important;
-    max-height: min(60vh, 420px) !important;
-    overflow-y: auto !important;
-    border-radius: 18px !important;
-    z-index: 10100 !important;
-    transform: none !important;
-    box-shadow: 0 24px 70px rgba(0,0,0,.55) !important;
-    backdrop-filter: blur(10px);
-  }
-
-  .menu.open::before{
-    content: "";
-    display: block;
-    width: 42px;
-    height: 4px;
-    border-radius: 999px;
-    background: rgba(255,255,255,.20);
-    margin: 8px auto 10px;
-  }
-}
-
-
-/* =========================
-   MOBILE: DETACHED MENU SHEET
-   ========================= */
-@media (max-width: 768px){
-  .menu.open{
-    border-radius: 18px !important;
-    box-shadow: 0 24px 70px rgba(0,0,0,.55) !important;
-  }
-  .menu.open::before{
-    content: "";
-    display: block;
-    width: 42px;
-    height: 4px;
-    border-radius: 999px;
-    background: rgba(255,255,255,.20);
-    margin: 8px auto 10px;
-  }
-}
-
-
 </style>
 </head>
 
@@ -2870,65 +2790,22 @@ function airsTonight(dateStr){
         m.classList.remove("open");
         m.style.left = "";
         m.style.top = "";
-        m.style.right = "";
-        m.style.bottom = "";
-        m.style.width = "";
-        m.style.maxWidth = "";
-        m.style.maxHeight = "";
-        m.style.overflowY = "";
-        m.style.position = "";
-        m.style.zIndex = "";
-
-        // Restore detached mobile menu back to its original parent
-        if (m._qdDetachedParent){
-          const parent = m._qdDetachedParent;
-          const next = m._qdDetachedNextSibling || null;
-          try{
-            if (next && next.parentNode === parent){
-              parent.insertBefore(m, next);
-            } else {
-              parent.appendChild(m);
-            }
-          }catch(_){}
-          m._qdDetachedParent = null;
-          m._qdDetachedNextSibling = null;
-        }
-
-        m._qdAnchorBtn = null;
-        m._qdAnchorCard = null;
+              m._qdAnchorBtn = null;
         m._qdAnchor = null;
-      });
+});
     }
 
     function showMenuNearButton(menuEl, btnEl){
       menuEl.classList.add("open");
-      menuEl._qdAnchorBtn = btnEl;
-      menuEl._qdAnchorCard = btnEl ? btnEl.closest(".card") : null;
-
-      // Mobile: detach to body and use a bottom-sheet style menu
-      if (window.innerWidth <= 768){
-        if (!menuEl._qdDetachedParent){
-          menuEl._qdDetachedParent = menuEl.parentNode;
-          menuEl._qdDetachedNextSibling = menuEl.nextSibling;
-          document.body.appendChild(menuEl);
-        }
-
+                // QD: anchor to the button + use viewport coordinates
+        menuEl._qdAnchorBtn = btnEl;
         menuEl.style.position = "fixed";
-        menuEl.style.zIndex = "10100";
-        menuEl.style.left = "12px";
-        menuEl.style.right = "12px";
-        menuEl.style.top = "auto";
-        menuEl.style.bottom = "calc(env(safe-area-inset-bottom, 0px) + 12px)";
-        menuEl.style.width = "auto";
-        menuEl.style.maxWidth = "none";
-        menuEl.style.maxHeight = "min(60vh, 420px)";
-        menuEl.style.overflowY = "auto";
-        return;
-      }
-
-      // Desktop: anchor near the button
-      menuEl.style.position = "fixed";
-      menuEl.style.zIndex = "9999";
+        menuEl.style.zIndex = "9999";
+// QD: remember the button we opened from, so we can follow it on scroll
+        menuEl._qdAnchorBtn = btnEl;
+        // Make positioning stable relative to viewport
+        menuEl.style.position = "fixed";
+        menuEl.style.zIndex = "9999";
 
       const rect = btnEl.getBoundingClientRect();
       const pad = 10;
@@ -2944,38 +2821,11 @@ function airsTonight(dateStr){
 
       menuEl.style.left = `${left}px`;
       menuEl.style.top  = `${top}px`;
-      menuEl.style.right = "";
-      menuEl.style.bottom = "";
-      menuEl.style.width = "";
-      menuEl.style.maxWidth = "";
-      menuEl.style.maxHeight = "";
-      menuEl.style.overflowY = "";
     }
 
       // ---- QD: keep context menus attached on scroll/resize ----
       function qdRepositionOpenMenus(){
         document.querySelectorAll(".menu.open").forEach(m => {
-          // Mobile: keep detached bottom-sheet placement stable
-          if (window.innerWidth <= 768){
-            if (!m._qdDetachedParent){
-              m._qdDetachedParent = m.parentNode;
-              m._qdDetachedNextSibling = m.nextSibling;
-              document.body.appendChild(m);
-            }
-
-            m.style.position = "fixed";
-            m.style.zIndex = "10100";
-            m.style.left = "12px";
-            m.style.right = "12px";
-            m.style.top = "auto";
-            m.style.bottom = "calc(env(safe-area-inset-bottom, 0px) + 12px)";
-            m.style.width = "auto";
-            m.style.maxWidth = "none";
-            m.style.maxHeight = "min(60vh, 420px)";
-            m.style.overflowY = "auto";
-            return;
-          }
-
           const a = m._qdAnchorBtn;
           if (!a || !document.contains(a)) return;
           try { showMenuNearButton(m, a); } catch(e) {}
@@ -3441,15 +3291,10 @@ e="${escapeHTML(mode)}">
           e.preventDefault();
           e.stopPropagation();
 
-          const menu = mbtn.closest(".menu");
-          const card = mbtn.closest(".card") || (menu && menu._qdAnchorCard) || null;
-          if (!card) {
-            console.warn("Menu action lost card context", { act: mbtn.getAttribute("data-act") });
-            return;
-          }
-
+          const card = mbtn.closest(".card");
           const kind = card.getAttribute("data-kind");
           const sid = card.getAttribute("data-sid");
+          const menu = card.querySelector(".menu");
 
           const act = mbtn.getAttribute("data-act");
 
@@ -3510,12 +3355,6 @@ e="${escapeHTML(mode)}">
               });
               card.remove();
               closeAllMenus();
-
-              // Invalidate any stale in-flight dashboard refresh and force a fresh one
-              qdLoadAllGeneration++;
-              setTimeout(() => { try { loadAll(); } catch(_) {} }, 120);
-              setTimeout(() => { try { loadAll(); } catch(_) {} }, 1400);
-
               return;
             }
 
@@ -3527,11 +3366,6 @@ e="${escapeHTML(mode)}">
               });
               card.remove();
               closeAllMenus();
-
-              qdLoadAllGeneration++;
-              setTimeout(() => { try { loadAll(); } catch(_) {} }, 120);
-              setTimeout(() => { try { loadAll(); } catch(_) {} }, 1400);
-
               return;
             }
 
@@ -3583,41 +3417,9 @@ e="${escapeHTML(mode)}">
     }
       document.addEventListener("click", () => { closeAllMenus(); closeAllHelp(); });
 
-      // Mobile Safari helper:
-      // if a detached bottom-sheet menu button gets touchend, explicitly trigger click()
-      let qdLastMenuTouchTs = 0;
-
-      document.addEventListener("touchend", (e) => {
-        if (window.innerWidth > 768) return;
-
-        const btn = e.target && e.target.closest ? e.target.closest(".menu button[data-act]") : null;
-        if (!btn) return;
-
-        // prevent the touch from turning into weird outside-click behavior
-        e.preventDefault();
-        e.stopPropagation();
-
-        const now = Date.now();
-        if (now - qdLastMenuTouchTs < 350) return;
-        qdLastMenuTouchTs = now;
-
-        // trigger the existing click handler path
-        setTimeout(() => {
-          try { btn.click(); } catch(_) {}
-        }, 0);
-      }, { passive: false });
-
-
       // QD: keep menus attached on ANY scroll (scroll events don't bubble)
       const qdOnAnyScroll = (e) => {
-        try{
-          if (window.innerWidth <= 768){
-            closeAllMenus();
-          } else {
-            qdRepositionOpenMenus();
-          }
-        }catch(_){}
-
+        try { qdRepositionOpenMenus(); } catch(_) {}
         // Only close help on "page-ish" scroll; avoid closing it because a carousel moved
         const t = e && e.target;
         if (t === document || t === document.documentElement || t === document.body || t === window) {
@@ -3630,31 +3432,13 @@ e="${escapeHTML(mode)}">
 
       // capture:true is the key: we see scrolls from any overflow container (carousels, etc.)
       document.addEventListener("scroll", qdOnAnyScroll, { passive:true, capture:true });
-window.addEventListener("scroll", () => {
-      if (window.innerWidth <= 768){
-        closeAllMenus();
-      } else {
-        qdRepositionOpenMenus();
-      }
-    }, { passive:true });
-
-    document.addEventListener("scroll", () => {
-      if (window.innerWidth <= 768){
-        closeAllMenus();
-      } else {
-        qdRepositionOpenMenus();
-      }
-      closeAllHelp();
-    }, { passive:true });
-
-    let qdLoadAllGeneration = 0;
+window.addEventListener("scroll", qdRepositionOpenMenus, { passive:true });
+    document.addEventListener("scroll", () => { qdRepositionOpenMenus(); closeAllHelp(); }, { passive:true });
 
     async function loadAll(){
-      const qdGen = ++qdLoadAllGeneration;
       try{
         setStatus(null, "Ready");
         await loadState();
-        if (qdGen !== qdLoadAllGeneration) return;
 
           
           // ---- QD_LIMITS: pull carousel limits from settings ----
@@ -3681,7 +3465,6 @@ const L = {
           L.rr = clamp(L.rr, 10); L.ru = clamp(L.ru, 15); L.rm = clamp(L.rm, 15); L.su = clamp(L.su, 60); L.sm = clamp(L.sm, 60); L.dl = clamp(L.dl, 12); L.sr = (Number.isFinite(L.sr) && L.sr >= 1 && L.sr <= 40) ? L.sr : 10;
           const hideDownloadActivity = String(cfg.hide_download_activity ?? "").trim().toLowerCase() === "1";
 const __qdSettings = await fetchJSON("/settings/api");
-          if (qdGen !== qdLoadAllGeneration) return;
           qdApplySectionHelp(__qdSettings);
           const flags = qdApplyProviderVisibility(__qdSettings);
 
@@ -3748,7 +3531,6 @@ const [
             ? fetchJSON(`/api/seerr/my-requests?take=${L.sr}`).catch(() => ({ items: [] }))
             : Promise.resolve({ items: [] }),
         ]);
-        if (qdGen !== qdLoadAllGeneration) return;
 
         const cwItems = cw.items || cw.Items || [];
         const remItems = remaining.items || remaining.Items || [];
@@ -3852,7 +3634,6 @@ setCount("#chip-rem", nREM);
         setCount("#chip-radarr-missing", nRM);
         setCount("#chip-my-requests", nREQ);
 
-        if (qdGen !== qdLoadAllGeneration) return;
         setStatus(true, "All systems go");
       } catch (e){
         console.error(e);

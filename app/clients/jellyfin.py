@@ -230,8 +230,16 @@ def get_next_up(limit: int = 60) -> Dict[str, Any]:
         by_series[key] = ep
 
     out = list(by_series.values())
-    _cache_set(ck, out, ttl=120)
+    _cache_set(ck, out, ttl=15)
     return {"Items": out}
+
+# ----------------------------
+# Cache invalidation
+# ----------------------------
+def clear_nextup_cache():
+    keys = [k for k in list(_cache.keys()) if k.startswith("jf_nextup_merged:")]
+    for k in keys:
+        _cache.pop(k, None)
 
 
 # ----------------------------

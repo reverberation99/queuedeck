@@ -2895,7 +2895,6 @@ function airsTonight(dateStr){
         }
 
         m._qdAnchorBtn = null;
-        m._qdAnchorCard = null;
         m._qdAnchor = null;
       });
     }
@@ -2903,7 +2902,6 @@ function airsTonight(dateStr){
     function showMenuNearButton(menuEl, btnEl){
       menuEl.classList.add("open");
       menuEl._qdAnchorBtn = btnEl;
-      menuEl._qdAnchorCard = btnEl ? btnEl.closest(".card") : null;
 
       // Mobile: detach to body and use a bottom-sheet style menu
       if (window.innerWidth <= 768){
@@ -2979,7 +2977,7 @@ function airsTonight(dateStr){
           const a = m._qdAnchorBtn;
           if (!a || !document.contains(a)) return;
           try { showMenuNearButton(m, a); } catch(e) {}
-        });
+        }); */
       }
 
 
@@ -3436,20 +3434,16 @@ e="${escapeHTML(mode)}">
         });
       });
 
-      root.querySelectorAll(".menu button[data-act]").forEach(mbtn=>{
+      /* DISABLED: moved to delegated handler */
+// root.querySelectorAll(".menu button[data-act]").forEach(mbtn=>{
         mbtn.addEventListener("click", async (e)=>{
           e.preventDefault();
           e.stopPropagation();
 
-          const menu = mbtn.closest(".menu");
-          const card = mbtn.closest(".card") || (menu && menu._qdAnchorCard) || null;
-          if (!card) {
-            console.warn("Menu action lost card context", { act: mbtn.getAttribute("data-act") });
-            return;
-          }
-
+          const card = mbtn.closest(".card");
           const kind = card.getAttribute("data-kind");
           const sid = card.getAttribute("data-sid");
+          const menu = card.querySelector(".menu");
 
           const act = mbtn.getAttribute("data-act");
 
@@ -3510,12 +3504,6 @@ e="${escapeHTML(mode)}">
               });
               card.remove();
               closeAllMenus();
-
-              // Invalidate any stale in-flight dashboard refresh and force a fresh one
-              qdLoadAllGeneration++;
-              setTimeout(() => { try { loadAll(); } catch(_) {} }, 120);
-              setTimeout(() => { try { loadAll(); } catch(_) {} }, 1400);
-
               return;
             }
 
@@ -3527,11 +3515,6 @@ e="${escapeHTML(mode)}">
               });
               card.remove();
               closeAllMenus();
-
-              qdLoadAllGeneration++;
-              setTimeout(() => { try { loadAll(); } catch(_) {} }, 120);
-              setTimeout(() => { try { loadAll(); } catch(_) {} }, 1400);
-
               return;
             }
 
@@ -3583,29 +3566,95 @@ e="${escapeHTML(mode)}">
     }
       document.addEventListener("click", () => { closeAllMenus(); closeAllHelp(); });
 
-      // Mobile Safari helper:
-      // if a detached bottom-sheet menu button gets touchend, explicitly trigger click()
-      let qdLastMenuTouchTs = 0;
+      // =========================
+      // GLOBAL MENU ACTION HANDLER (FIXES MOBILE)
+      // =========================
+      document.addEventListener("click", async (e) => {
+        const mbtn = e.target.closest(".menu button[data-act]");
+        if (!mbtn) return;
 
-      document.addEventListener("touchend", (e) => {
-        if (window.innerWidth > 768) return;
-
-        const btn = e.target && e.target.closest ? e.target.closest(".menu button[data-act]") : null;
-        if (!btn) return;
-
-        // prevent the touch from turning into weird outside-click behavior
         e.preventDefault();
-        e.stopPropagation();
 
-        const now = Date.now();
-        if (now - qdLastMenuTouchTs < 350) return;
-        qdLastMenuTouchTs = now;
+        try {
+          const act = mbtn.getAttribute("data-act");
+          const menu = mbtn.closest(".menu");
+          if (!menu) return;
 
-        // trigger the existing click handler path
-        setTimeout(() => {
-          try { btn.click(); } catch(_) {}
-        }, 0);
-      }, { passive: false });
+          const id = menu.getAttribute("data-menu-for");
+
+          if (act === "hide"){
+            await hideItem(id);
+            closeAllMenus();
+            return;
+          }
+
+          if (act === "hide-episode"){
+            await hideItem(id);
+            closeAllMenus();
+            return;
+          }
+
+          if (act === "hide-series"){
+            const kind = menu.getAttribute("data-series-hide-kind");
+            const sid  = menu.getAttribute("data-series-hide-id");
+            if (kind && sid){
+              await hideItem(sid, kind);
+            }
+            closeAllMenus();
+            return;
+          }
+
+          if (act === "snooze"){
+            const seconds = Number(mbtn.getAttribute("data-seconds") || "0");
+            await snoozeItem(id, seconds);
+            closeAllMenus();
+            return;
+          }
+
+          if (act === "mark-played"){
+            await markPlayed(id);
+            closeAllMenus();
+            return;
+          }
+
+          if (act === "mark-unplayed"){
+            await markUnplayed(id);
+            closeAllMenus();
+            return;
+          }
+
+          if (act === "open-series"){
+            window.open(`/series/${id}`, "_blank");
+            closeAllMenus();
+            return;
+          }
+
+          if (act === "open-sonarr"){
+            const sid = menu.getAttribute("data-sonarr-series-id");
+            if (sid) window.open(`/sonarr/series/${sid}`, "_blank");
+            closeAllMenus();
+            return;
+          }
+
+          if (act === "open-radarr"){
+            const tid = menu.getAttribute("data-radarr-tmdb-id");
+            if (tid) window.open(`/radarr/movie/${tid}`, "_blank");
+            closeAllMenus();
+            return;
+          }
+
+          if (act === "open-service"){
+            const url = menu.getAttribute("data-service-url");
+            if (url) window.open(url, "_blank");
+            closeAllMenus();
+            return;
+          }
+
+        } catch (e) {
+          closeAllMenus();
+          alert("Action failed. Check container logs.");
+        }
+      });
 
 
       // QD: keep menus attached on ANY scroll (scroll events don't bubble)
@@ -3647,14 +3696,10 @@ window.addEventListener("scroll", () => {
       closeAllHelp();
     }, { passive:true });
 
-    let qdLoadAllGeneration = 0;
-
     async function loadAll(){
-      const qdGen = ++qdLoadAllGeneration;
       try{
         setStatus(null, "Ready");
         await loadState();
-        if (qdGen !== qdLoadAllGeneration) return;
 
           
           // ---- QD_LIMITS: pull carousel limits from settings ----
@@ -3681,7 +3726,6 @@ const L = {
           L.rr = clamp(L.rr, 10); L.ru = clamp(L.ru, 15); L.rm = clamp(L.rm, 15); L.su = clamp(L.su, 60); L.sm = clamp(L.sm, 60); L.dl = clamp(L.dl, 12); L.sr = (Number.isFinite(L.sr) && L.sr >= 1 && L.sr <= 40) ? L.sr : 10;
           const hideDownloadActivity = String(cfg.hide_download_activity ?? "").trim().toLowerCase() === "1";
 const __qdSettings = await fetchJSON("/settings/api");
-          if (qdGen !== qdLoadAllGeneration) return;
           qdApplySectionHelp(__qdSettings);
           const flags = qdApplyProviderVisibility(__qdSettings);
 
@@ -3748,7 +3792,6 @@ const [
             ? fetchJSON(`/api/seerr/my-requests?take=${L.sr}`).catch(() => ({ items: [] }))
             : Promise.resolve({ items: [] }),
         ]);
-        if (qdGen !== qdLoadAllGeneration) return;
 
         const cwItems = cw.items || cw.Items || [];
         const remItems = remaining.items || remaining.Items || [];
@@ -3852,7 +3895,6 @@ setCount("#chip-rem", nREM);
         setCount("#chip-radarr-missing", nRM);
         setCount("#chip-my-requests", nREQ);
 
-        if (qdGen !== qdLoadAllGeneration) return;
         setStatus(true, "All systems go");
       } catch (e){
         console.error(e);

@@ -8,6 +8,7 @@ from flask import Blueprint, jsonify, request, session, render_template
 from .db import get_db
 from .models_settings import get_user_setting_scoped
 from .utils.auth import current_user
+from .clients.jellyfin import clear_nextup_cache
 
 bp = Blueprint("actions", __name__)
 
@@ -650,6 +651,7 @@ def state_hide():
         return jsonify({"ok": False, "error": "missing_kind_or_item_id"}), 400
 
     _upsert_state(user_id, kind, item_id, hidden=True)
+    clear_nextup_cache()
     return jsonify({"ok": True})
 
 @bp.post("/api/state/unhide")
@@ -766,6 +768,7 @@ def jellyfin_mark_played():
     if r.status_code >= 400:
         return jsonify({"ok": False, "error": "jellyfin_error", "status": r.status_code, "body": r.text[:300]}), 502
 
+    clear_nextup_cache()
     return jsonify({"ok": True})
 
 @bp.post("/api/jellyfin/mark-unplayed")
@@ -796,6 +799,7 @@ def jellyfin_mark_unplayed():
     if r.status_code >= 400:
         return jsonify({"ok": False, "error": "jellyfin_error", "status": r.status_code, "body": r.text[:300]}), 502
 
+    clear_nextup_cache()
     return jsonify({"ok": True})
 
 @bp.get("/api/jellyfin/open-series")
