@@ -17,56 +17,93 @@ Built for homelab users who want something **faster, cleaner, and more customiza
 # ✨ Features
 
 * 🎯 **Unified Dashboard**
-
   * Continue Watching
   * Next Up (Sonarr)
   * Recently Added (Radarr)
   * Upcoming Episodes
   * Missing Content
+  * Download Activity (qBittorrent)
 
 * 🔍 **Discover Page**
-
   * Trending movies & TV
   * Anime integration
   * External metadata enrichment (TMDB)
+  * Direct request flow
+
+* 🔎 **Search & Request**
+  * Integrated Seerr search
+  * Request movies & shows without leaving QueueDeck
+  * Library-aware (shows “In Library”)
+
+* 📊 **Per-User Statistics**
+  * Watch history & streaks
+  * Completion rates
+  * Activity heatmaps
+  * Queue health metrics
 
 * 📡 **RSS Feeds (Unique Feature)**
-
   * Export your queues as RSS feeds
-  * Use with external tools, dashboards, or notifications
+  * Use with external dashboards (Homepage, Homarr, etc.)
   * Turn QueueDeck into a **data source**, not just a UI
 
 * 🧠 **Smart UI**
-
-  * Hover animations
-  * “New episode” indicators
-  * Clean card-based layout
+  * Fast, minimal, modern design
+  * Card-based layout
+  * Smooth hover + interaction states
 
 * 🔐 **Authentication System**
-
   * Secure login system
   * Admin panel
+  * Login audit tracking
   * Session protection
 
 * ⚙️ **Settings & Customization**
-
-  * Adjustable limits per section
-  * Jellyfin integration
-  * External API configuration
+  * Per-user limits
+  * Section visibility toggles
+  * Integration configuration
 
 * 🐳 **Docker-First**
-
   * Simple deployment
   * Lightweight image
   * Works great behind reverse proxies
 
 ---
 
-# 🤖 AI Usage
+# 📸 Screenshots
 
-QueueDeck was developed with the assistance of AI tools to accelerate development, improve code quality, and iterate quickly on features.
+## Dashboard
+![Dashboard](screenshots/dashboard.png)
 
-All logic, integrations, and architecture have been reviewed and tested in real-world homelab environments.
+## Dashboard
+![Dashboard](screenshots/dashboard2.png)
+
+## Discover
+![Discover](screenshots/discover.png)
+
+## Search & Request
+![Search](screenshots/search.png)
+
+## Statistics
+![Stats Overview](screenshots/statistics.png)
+
+## Statistics More
+![Stats Detail](screenshots/statistics2.png)
+
+---
+
+# ⚠️ Seerr Integration Notes
+
+> [!WARNING]
+> QueueDeck uses the Seerr API for search and request functionality.  
+> Due to Seerr API limitations, requests submitted via QueueDeck may bypass the normal Seerr approval workflow depending on your configuration.
+
+**What this means:**
+- Requests may be auto-approved
+- Behavior depends on your Seerr permissions + API key setup
+
+👉 Recommendation:
+- Use a trusted Seerr user/API key
+- Test behavior before exposing QueueDeck to other users
 
 ---
 
@@ -81,149 +118,23 @@ QueueDeck is designed to be safely exposed behind a reverse proxy.
 * ✅ SSRF protection (Letterboxd RSS)
 * ✅ No secrets stored in repo
 
-> ⚠️ Recommended: run behind a reverse proxy (Caddy / Nginx / Traefik)
+> ⚠️ Strongly recommended: run behind a reverse proxy (Caddy / Nginx / Traefik)
 
 ---
 
-# 🚀 Quick Start (Docker)
+# 🌐 Reverse Proxy Example (Caddy)
 
-## 1. Create a directory
+```caddy
+queuedeck.example.com {
+    reverse_proxy 192.168.1.52:7071
 
-```bash
-mkdir queuedeck && cd queuedeck
-```
+    encode gzip zstd
 
-## 2. Create `docker-compose.yml`
-
-```yaml
-services:
-  queuedeck:
-    image: reverberation99/queuedeck:latest
-    container_name: queuedeck
-
-    ports:
-      - "7071:7071"
-
-    volumes:
-      - ./data:/data
-
-    environment:
-      HOST: "0.0.0.0"
-      PORT: "7071"
-      APP_NAME: "QueueDeck"
-      SECRET_KEY: "change-me"
-      DB_PATH: "/data/queuedb.sqlite"
-
-    restart: unless-stopped
-```
-
-## 3. Start it
-
-```bash
-docker compose up -d
-```
-
-## 4. Open in browser
-
-```
-http://localhost:7071
-```
-
-First run will prompt you to create an admin account.
-
----
-
-# ⚙️ Environment Variables
-
-| Variable     | Description                         |
-| ------------ | ----------------------------------- |
-| `SECRET_KEY` | Required. Used for session security |
-| `DB_PATH`    | SQLite database location            |
-| `PORT`       | Internal app port (default: 7071)   |
-| `HOST`       | Bind address (default: 0.0.0.0)     |
-
----
-
-# 🔌 Integrations
-
-QueueDeck supports:
-
-* 📺 Sonarr
-* 🎬 Radarr
-* 🍿 Jellyfin
-* 🎥 TMDB
-* 📡 Letterboxd RSS
-
----
-
-# 📡 RSS Output
-
-QueueDeck can expose your media queues as RSS feeds, allowing you to:
-
-* Plug into external dashboards (Homepage, Homarr, etc.)
-* Trigger automations
-* Monitor activity outside the UI
-
-This makes QueueDeck not just a dashboard — but a **data hub for your media ecosystem**.
-
----
-
-# 📁 Data
-
-All persistent data is stored in:
-
-```
-/data/queuedb.sqlite
-```
-
-👉 Back this file up regularly.
-
----
-
-# 🛠 Development
-
-Clone the repo and run:
-
-```bash
-docker compose up --build
-```
-
----
-
-# 📸 Screenshots
-
-> (add your screenshots here — dashboard, discover page, etc.)
-
----
-
-# 🗺 Roadmap
-
-* [ ] Shared cache (Redis)
-* [ ] Multi-user roles
-* [ ] UI customization themes
-* [ ] Notifications / alerts
-* [ ] Performance improvements for Discover
-
----
-
-# 🤝 Contributing
-
-Contributions are welcome — feel free to open issues or PRs.
-
----
-
-# 📄 License
-
-MIT (or whatever you choose)
-
----
-
-# 🧡 Acknowledgements
-
-Built for the self-hosted / homelab community.
-
----
-
-# ⭐ If you like QueueDeck
-
-Give it a star — it helps a lot!
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Frame-Options "DENY"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' http: https:; frame-ancestors 'none';"
+    }
+}

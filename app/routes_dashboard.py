@@ -2,7 +2,7 @@ import os
 from datetime import datetime, timedelta, timezone
 
 import requests
-from flask import Blueprint, jsonify, request, render_template
+from flask import Blueprint, jsonify, request, render_template, redirect
 
 from .utils.auth import login_required, current_user
 from .db import get_db
@@ -114,6 +114,17 @@ def _hidden_series_matchers_for_nextup() -> tuple[set[str], set[str]]:
     return hidden_series_ids, hidden_title_keys
 
 
+def _dashboard_bootstrap_needed() -> bool:
+    try:
+        db = get_db()
+        row = db.execute(
+            "SELECT COUNT(*) AS c FROM app_settings WHERE TRIM(COALESCE(value, '')) <> ''"
+        ).fetchone()
+        return int(row["c"] or 0) <= 0
+    except Exception:
+        return True
+
+
 # --------------------------------------------------
 # Root (Dashboard)
 # --------------------------------------------------
@@ -121,8 +132,10 @@ def _hidden_series_matchers_for_nextup() -> tuple[set[str], set[str]]:
 @bp.get("/")
 @login_required
 def root():
-    return render_template("index.html", me=(current_user() or {}))
-
+    me = current_user() or {}
+    if bool(me.get("is_admin")) and _dashboard_bootstrap_needed():
+        return redirect("/admin/users")
+    return render_template("index.html", me=me)
 
 # --------------------------------------------------
 # Jellyfin helpers (for season progress enrichment)
@@ -1217,3 +1230,11 @@ def api_sonarr_missing():
 
     except Exception as e:
         return jsonify(error=str(e)), 500
+
+
+# --------------------------------------------------
+# Health Check (Docker)
+# --------------------------------------------------
+@bp.get("/healthz")
+def healthz():
+    return jsonify(ok=True)

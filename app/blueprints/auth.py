@@ -3,7 +3,7 @@ import time
 from collections import defaultdict, deque
 from datetime import datetime, timezone
 
-from flask import Blueprint, render_template, request, redirect, url_for, session
+from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from ..db import get_db
@@ -44,6 +44,56 @@ def _record_login_failure(username: str = "") -> None:
 def _clear_login_failures(username: str = "") -> None:
     key = _login_attempt_key(username)
     _LOGIN_ATTEMPTS.pop(key, None)
+
+
+def _ensure_login_audit_table() -> None:
+    db = get_db()
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS login_audit (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            attempted_username TEXT NOT NULL DEFAULT '',
+            ip_address TEXT NOT NULL DEFAULT '',
+            user_agent TEXT NOT NULL DEFAULT '',
+            success INTEGER NOT NULL DEFAULT 0,
+            created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+        )
+    """)
+    db.execute("CREATE INDEX IF NOT EXISTS idx_login_audit_created_at ON login_audit(created_at DESC)")
+    db.execute("CREATE INDEX IF NOT EXISTS idx_login_audit_success_created_at ON login_audit(success, created_at DESC)")
+    db.commit()
+
+
+def _login_audit_ip() -> str:
+    forwarded = (request.headers.get("X-Forwarded-For") or "").split(",")[0].strip()
+    real = (request.headers.get("X-Real-IP") or "").strip()
+    return forwarded or real or (request.remote_addr or "unknown")
+
+
+def _record_login_audit(username: str = "", success: bool = False) -> None:
+    try:
+        _ensure_login_audit_table()
+        db = get_db()
+        db.execute(
+            """
+            INSERT INTO login_audit (attempted_username, ip_address, user_agent, success)
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                (username or "").strip(),
+                _login_audit_ip(),
+                str(request.headers.get("User-Agent") or "")[:300],
+                1 if success else 0,
+            ),
+        )
+        db.commit()
+    except Exception:
+        pass
+
+
+def _admin_only():
+    if not session.get("logged_in") or not session.get("user_id") or int(session.get("is_admin") or 0) != 1:
+        return False
+    return True
 
 
 def _now_iso() -> str:
@@ -126,14 +176,17 @@ def login():
 
         if not user:
             _record_login_failure(username)
+            _record_login_audit(username, False)
             return render_template("login.html", error="Invalid credentials.")
 
         if int(user["is_active"] or 0) != 1:
             _record_login_failure(username)
+            _record_login_audit(username, False)
             return render_template("login.html", error="Invalid credentials.")
 
         if not check_password_hash(user["password_hash"], password):
             _record_login_failure(username)
+            _record_login_audit(username, False)
             return render_template("login.html", error="Invalid credentials.")
 
         db = get_db()
@@ -144,6 +197,7 @@ def login():
         db.commit()
 
         _clear_login_failures(username)
+        _record_login_audit(username, True)
         _login_user(user)
         return redirect(url_for("dashboard.root"))
 
@@ -191,6 +245,110 @@ def setup():
         return redirect(url_for("settings.settings_page", first_run=1))
 
     return render_template("setup.html")
+
+
+@bp.route("/admin/api/login-audit/summary", methods=["GET"])
+def login_audit_summary():
+    if not _admin_only():
+        return jsonify(ok=False, error="forbidden"), 403
+
+    try:
+        _ensure_login_audit_table()
+        db = get_db()
+
+        row = db.execute(
+            """
+            SELECT
+              SUM(CASE WHEN success = 0 AND created_at >= strftime('%s','now') - 86400 THEN 1 ELSE 0 END) AS failed_24h,
+              SUM(CASE WHEN success = 0 AND created_at >= strftime('%s','now') - 604800 THEN 1 ELSE 0 END) AS failed_7d,
+              SUM(CASE WHEN success = 1 AND created_at >= strftime('%s','now') - 86400 THEN 1 ELSE 0 END) AS success_24h
+            FROM login_audit
+            """
+        ).fetchone()
+
+        top_rows = db.execute(
+            """
+            SELECT ip_address, COUNT(*) AS n
+            FROM login_audit
+            WHERE success = 0
+              AND created_at >= strftime('%s','now') - 86400
+              AND TRIM(COALESCE(ip_address,'')) <> ''
+            GROUP BY ip_address
+            ORDER BY n DESC, ip_address ASC
+            LIMIT 10
+            """
+        ).fetchall()
+
+        return jsonify(
+            ok=True,
+            failed_24h=int((row["failed_24h"] or 0) if row else 0),
+            failed_7d=int((row["failed_7d"] or 0) if row else 0),
+            success_24h=int((row["success_24h"] or 0) if row else 0),
+            top_ips=[
+                {"ip_address": str(r["ip_address"] or ""), "count": int(r["n"] or 0)}
+                for r in (top_rows or [])
+            ],
+        )
+    except Exception as e:
+        return jsonify(ok=False, error=str(e)), 500
+
+
+@bp.route("/admin/api/login-audit/recent", methods=["GET"])
+def login_audit_recent():
+    if not _admin_only():
+        return jsonify(ok=False, error="forbidden"), 403
+
+    try:
+        _ensure_login_audit_table()
+        db = get_db()
+
+        try:
+            limit = max(1, min(int(request.args.get("limit") or 20), 100))
+        except Exception:
+            limit = 20
+
+        rows = db.execute(
+            """
+            SELECT attempted_username, ip_address, user_agent, success, created_at
+            FROM login_audit
+            ORDER BY created_at DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+
+        return jsonify(
+            ok=True,
+            items=[
+                {
+                    "attempted_username": str(r["attempted_username"] or ""),
+                    "ip_address": str(r["ip_address"] or ""),
+                    "user_agent": str(r["user_agent"] or ""),
+                    "success": bool(int(r["success"] or 0)),
+                    "created_at": int(r["created_at"] or 0),
+                }
+                for r in (rows or [])
+            ],
+        )
+    except Exception as e:
+        return jsonify(ok=False, error=str(e), items=[]), 500
+
+
+@bp.route("/admin/api/login-audit/clear", methods=["POST"])
+def login_audit_clear():
+    if not _admin_only():
+        return jsonify(ok=False, error="forbidden"), 403
+
+    try:
+        _ensure_login_audit_table()
+        db = get_db()
+        db.execute("DELETE FROM login_audit")
+        db.commit()
+        return jsonify(ok=True)
+    except Exception as e:
+        return jsonify(ok=False, error=str(e)), 500
+
+
 
 
 @bp.route("/logout", methods=["GET", "POST"])

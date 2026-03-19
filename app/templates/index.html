@@ -21,6 +21,9 @@
   <meta name="theme-color" content="#0b0f14" />
 
   <style>
+    .qdForceHideEmptyCW{
+      display:none !important;
+    }
     :root{
       --bg0:#07090c;
       --bg1:#0b0f14;
@@ -1535,6 +1538,108 @@ border-radius:10px;
 }
 
 
+
+/* =========================
+   MOBILE FOUNDATION (PHASE 1)
+   ========================= */
+@media (max-width: 768px){
+
+  .layout,
+  .appLayout,
+  .mainLayout,
+  .pageGrid {
+    display: block !important;
+  }
+
+  .sidebar,
+  .leftPane,
+  .navSidebar {
+    display: none !important;
+  }
+
+  .content,
+  .mainContent,
+  .pageContent {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 12px !important;
+  }
+
+  .hero,
+  .headerCard {
+    padding: 16px !important;
+  }
+
+  .hero h1 {
+    font-size: 22px !important;
+  }
+
+  .hero p {
+    font-size: 14px !important;
+  }
+
+  .heroActions {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px;
+  }
+
+  .heroActions .btn {
+    width: 100%;
+  }
+
+  .heroMeta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+  }
+
+  .cardRow,
+  .carousel {
+    overflow-x: auto;
+    display: flex;
+    gap: 10px;
+    padding-bottom: 6px;
+  }
+
+  .cardRow::-webkit-scrollbar {
+    display: none;
+  }
+
+  .card {
+    min-width: 160px;
+  }
+
+  .modal {
+    align-items: flex-start !important;
+    padding-top: 20px;
+  }
+
+  .modalContent {
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .contextMenu {
+    position: fixed !important;
+    bottom: 16px !important;
+    left: 12px !important;
+    right: 12px !important;
+    top: auto !important;
+    width: auto !important;
+    border-radius: 16px !important;
+  }
+
+  .field {
+    margin-bottom: 10px;
+  }
+
+  .field label {
+    font-size: 13px;
+  }
+
+}
+
 </style>
 </head>
 
@@ -1924,6 +2029,10 @@ border-radius:10px;
           countText:`<span id="chip-my-requests">–</span> item(s)`
         }),
       ].join("");
+
+      // Keep Continue Watching hidden until real data says otherwise.
+      const qdCW = document.getElementById("sec-cw");
+      if (qdCW) qdCW.style.display = "none";
 
       document.querySelectorAll(".section").forEach(sec => {
         const car = sec.querySelector(".carousel");
@@ -3251,7 +3360,60 @@ setCount("#chip-rem", nREM);
       }
     }
 
+    function qdDashboardLooksEmpty(){
+      try{
+        const ids = [
+          "chip-cw",
+          "chip-nextup-tv",
+          "chip-sonarr",
+          "chip-nextup-anime",
+          "chip-rem",
+          "chip-latest-tv",
+          "chip-latest-anime",
+          "chip-radarr-recent",
+          "chip-radarr-missing",
+          "chip-my-requests",
+        ];
+
+        let nonZero = 0;
+        for (const sel of ids){
+          const el = document.querySelector(sel.startsWith("#") ? sel : "#" + sel);
+          const txt = String(el?.textContent || "").trim();
+          const m = txt.match(/(\d+)/);
+          if (m && Number(m[1] || 0) > 0){
+            nonZero++;
+          }
+        }
+
+        const hasCards = document.querySelectorAll(".card").length > 0;
+        return !hasCards && nonZero === 0;
+      }catch(_){
+        return false;
+      }
+    }
+
+    async function qdBootstrapRetry(){
+      try{
+        const s = await fetchJSON("/settings/api");
+        const flags = qdGetProviderFlags(s || {});
+        const hasAnyProvider = !!(flags.hasJellyfin || flags.hasSonarr || flags.hasRadarr || flags.hasSeerr);
+
+        if (!hasAnyProvider) return;
+        if (!qdDashboardLooksEmpty()) return;
+
+        console.warn("[qd-bootstrap] dashboard looked empty after initial boot; retrying loadAll()");
+        await loadAll();
+      }catch(e){
+        console.warn("[qd-bootstrap] retry skipped/failed", e);
+      }
+    }
+
     loadAll();
+    setTimeout(qdBootstrapRetry, 1200);
+    window.addEventListener("pageshow", () => {
+      setTimeout(qdBootstrapRetry, 150);
+    });
+
     if (qdIsAdmin){
       refreshWatchingStrip();
       setInterval(refreshWatchingStrip, 5000);
@@ -3413,7 +3575,13 @@ function showMenuAtPoint(menuEl, x, y){
         show_sec_my_requests: isOn(settings.show_sec_my_requests),
       };
 
-      toggle("sec-cw", flags.hasJellyfin && prefs.show_sec_cw);
+      // Continue Watching is special:
+      // do not auto-show it here, because loadAll() decides based on real item count.
+      // We only force-hide it when Jellyfin/prefs disable it.
+      if (!(flags.hasJellyfin && prefs.show_sec_cw)){
+        toggle("sec-cw", false);
+      }
+
       toggle("sec-nextup-tv", flags.hasJellyfin && prefs.show_sec_nextup_tv);
       toggle("sec-rem", flags.hasJellyfin && prefs.show_sec_rem);
       toggle("sec-latest-tv", flags.hasJellyfin && prefs.show_sec_latest_tv);
@@ -4017,5 +4185,243 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     })();
   </script>
+
+  <script>
+    (function(){
+      function qdFindContinueWatchingSection(){
+        const nodes = [...document.querySelectorAll("h1,h2,h3,.section-title h2,.section-title,.title")];
+        const heading = nodes.find(el => /^\s*continue watching\s*$/i.test(String(el.textContent || "").trim()));
+        if (!heading) return null;
+
+        return (
+          heading.closest("section") ||
+          heading.closest(".section") ||
+          heading.closest(".panel") ||
+          heading.closest(".widget") ||
+          heading.closest(".block") ||
+          heading.closest(".card") ||
+          heading.parentElement
+        );
+      }
+
+      function qdSectionHasRenderableItems(section){
+        if (!section) return false;
+
+        const itemSelectors = [
+          ".card",
+          ".posterCard",
+          ".poster",
+          ".tile",
+          ".mediaCard",
+          ".railItem",
+          ".item",
+          "[data-tmdb-id]",
+          "img"
+        ];
+
+        for (const sel of itemSelectors){
+          const found = [...section.querySelectorAll(sel)].filter(el => {
+            if (!el) return false;
+            if (el.closest("script,style,template")) return false;
+            if (el.matches("img")){
+              const src = String(el.getAttribute("src") || "").trim();
+              if (!src) return false;
+              if (/blank|placeholder/i.test(src)) return false;
+              return true;
+            }
+            return true;
+          });
+
+          if (found.length > 0) return true;
+        }
+
+        return false;
+      }
+
+      function qdSyncContinueWatchingVisibility(){
+        const section = qdFindContinueWatchingSection();
+        if (!section) return;
+
+        const hasItems = qdSectionHasRenderableItems(section);
+        section.classList.toggle("qdForceHideEmptyCW", !hasItems);
+      }
+
+      function qdInitContinueWatchingGuard(){
+        qdSyncContinueWatchingVisibility();
+
+        const obs = new MutationObserver(() => {
+          qdSyncContinueWatchingVisibility();
+        });
+
+        obs.observe(document.body, {
+          subtree: true,
+          childList: true,
+          attributes: true,
+          attributeFilter: ["class", "style", "hidden", "src"]
+        });
+
+        window.addEventListener("load", qdSyncContinueWatchingVisibility);
+        setInterval(qdSyncContinueWatchingVisibility, 1500);
+      }
+
+      if (document.readyState === "loading"){
+        document.addEventListener("DOMContentLoaded", qdInitContinueWatchingGuard);
+      } else {
+        qdInitContinueWatchingGuard();
+      }
+    })();
+  </script>
+
+  <script>
+    (function(){
+      function qdText(el){
+        return String((el && el.textContent) || "").replace(/\s+/g, " ").trim().toLowerCase();
+      }
+
+      function qdIsContinueWatchingHeading(el){
+        if (!el) return false;
+        const txt = qdText(el);
+        return txt === "continue watching";
+      }
+
+      function qdFindContinueWatchingSectionFromNode(node){
+        if (!node || !(node instanceof Element)) return null;
+
+        if (qdIsContinueWatchingHeading(node)){
+          return (
+            node.closest("section") ||
+            node.closest(".section") ||
+            node.closest(".panel") ||
+            node.closest(".widget") ||
+            node.closest(".block") ||
+            node.closest(".shelf") ||
+            node.closest(".row") ||
+            node.parentElement
+          );
+        }
+
+        const headings = node.querySelectorAll
+          ? node.querySelectorAll("h1,h2,h3,.section-title h2,.section-title,.title,.section-head")
+          : [];
+
+        for (const h of headings){
+          if (qdIsContinueWatchingHeading(h)){
+            return (
+              h.closest("section") ||
+              h.closest(".section") ||
+              h.closest(".panel") ||
+              h.closest(".widget") ||
+              h.closest(".block") ||
+              h.closest(".shelf") ||
+              h.closest(".row") ||
+              h.parentElement
+            );
+          }
+        }
+
+        return null;
+      }
+
+      function qdSectionHasVisibleItems(section){
+        if (!section) return false;
+
+        const selectors = [
+          ".card",
+          ".posterCard",
+          ".poster",
+          ".tile",
+          ".mediaCard",
+          ".railItem",
+          ".item",
+          "[data-tmdb-id]",
+          "img"
+        ];
+
+        for (const sel of selectors){
+          const els = [...section.querySelectorAll(sel)];
+          for (const el of els){
+            if (!el) continue;
+            if (el.closest("script,style,template")) continue;
+
+            if (el.matches("img")){
+              const src = String(el.getAttribute("src") || "").trim();
+              if (!src) continue;
+              if (/blank|placeholder|data:image\/svg\+xml/i.test(src)) continue;
+              return true;
+            }
+
+            const rect = typeof el.getBoundingClientRect === "function" ? el.getBoundingClientRect() : null;
+            if (!rect || rect.width > 0 || rect.height > 0){
+              return true;
+            }
+          }
+        }
+
+        return false;
+      }
+
+      function qdApplyContinueWatchingVisibility(section){
+        if (!section) return;
+        const hasItems = qdSectionHasVisibleItems(section);
+        section.classList.toggle("qdForceHideEmptyCW", !hasItems);
+      }
+
+      function qdPrimeHideContinueWatching(node){
+        const section = qdFindContinueWatchingSectionFromNode(node);
+        if (section){
+          // Hide immediately on insertion/rebuild, before later refresh logic settles.
+          section.classList.add("qdForceHideEmptyCW");
+
+          // Then allow reveal only if real content exists.
+          requestAnimationFrame(() => qdApplyContinueWatchingVisibility(section));
+          setTimeout(() => qdApplyContinueWatchingVisibility(section), 0);
+          setTimeout(() => qdApplyContinueWatchingVisibility(section), 120);
+        }
+      }
+
+      function qdInitContinueWatchingGuard(){
+        // Initial scan
+        qdPrimeHideContinueWatching(document.body);
+
+        const obs = new MutationObserver((mutations) => {
+          for (const m of mutations){
+            for (const node of m.addedNodes || []){
+              qdPrimeHideContinueWatching(node);
+            }
+
+            if (m.target && m.target.nodeType === 1){
+              const sec = qdFindContinueWatchingSectionFromNode(m.target);
+              if (sec){
+                qdApplyContinueWatchingVisibility(sec);
+              }
+            }
+          }
+        });
+
+        obs.observe(document.body, {
+          subtree: true,
+          childList: true,
+          attributes: true,
+          attributeFilter: ["class", "style", "hidden", "src"]
+        });
+
+        // Safety passes for existing refresh cycle
+        setInterval(() => {
+          const sec = qdFindContinueWatchingSectionFromNode(document.body);
+          if (sec){
+            qdApplyContinueWatchingVisibility(sec);
+          }
+        }, 1000);
+      }
+
+      if (document.readyState === "loading"){
+        document.addEventListener("DOMContentLoaded", qdInitContinueWatchingGuard);
+      } else {
+        qdInitContinueWatchingGuard();
+      }
+    })();
+  </script>
 </body>
+
+
 </html>

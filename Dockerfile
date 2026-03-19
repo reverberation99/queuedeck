@@ -14,4 +14,7 @@ RUN mkdir -p /data
 
 EXPOSE 7071
 
-CMD ["gunicorn", "-w", "2", "--timeout", "120", "-b", "0.0.0.0:7071", "app.app:app"]
+CMD ["gunicorn", "-w", "1", "-k", "gthread", "--threads", "8", "--timeout", "300", "-b", "0.0.0.0:7071", "app.app:app"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7071/healthz', timeout=3)" || exit 1

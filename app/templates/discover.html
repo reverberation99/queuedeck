@@ -306,7 +306,76 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
       font-size:13px;
     }
 
-    .status.bad{
+    
+    .discoverNotice{
+      margin: 10px 0 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.88);
+      font-size: .95rem;
+      line-height: 1.45;
+    }
+    .discoverNotice a{
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+
+    .discoverPrimeOverlay{
+      display:none;
+      position: sticky;
+      top: 76px;
+      z-index: 30;
+      margin: 10px 0 14px;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(10,12,18,.92);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 60px rgba(0,0,0,.45);
+    }
+    .discoverPrimeOverlay.show{
+      display:block;
+    }
+    .discoverPrimeTitle{
+      font-weight: 900;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+    .discoverPrimeText{
+      font-size: 12.5px;
+      color: rgba(255,255,255,.74);
+      line-height: 1.4;
+      margin-bottom: 10px;
+    }
+    .discoverPrimeBarWrap{
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .discoverPrimeBar{
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(124,92,255,.95), rgba(78,161,255,.92));
+      transition: width .25s ease;
+    }
+    .discoverPrimeMeta{
+      font-size: 12px;
+      color: rgba(255,255,255,.68);
+    }
+    .discoverPrimeGate{
+      pointer-events: none;
+      opacity: .45;
+      filter: saturate(.85);
+    }
+
+.status.bad{
       border-color: rgba(255,80,80,.35);
       background: rgba(255,80,80,.12);
       color:#ffd7d7;
@@ -1544,6 +1613,15 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
       </div>
 
       <div class="status" id="discoverStatus">Loading discover data…</div>
+
+      <div id="discoverPrimeOverlay" class="discoverPrimeOverlay">
+        <div class="discoverPrimeTitle">Discover is being prepared</div>
+        <div id="discoverPrimeText" class="discoverPrimeText">Preparing Discover data...</div>
+        <div class="discoverPrimeBarWrap">
+          <div id="discoverPrimeBar" class="discoverPrimeBar"></div>
+        </div>
+        <div id="discoverPrimeMeta" class="discoverPrimeMeta">Please wait while QueueDeck finishes priming Discover.</div>
+      </div>
       <div class="discoverGrid" id="discoverGrid"></div>
       <div class="discoverMoreWrap">
         <button class="btn secondary" id="discoverLoadMoreBtn" type="button" style="display:none;">Load More</button>
@@ -1664,6 +1742,7 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
 
         if (discoverMedia){
           discoverMedia.value = "tv";
+          discoverMedia.disabled = true;
         }
 
         if (discoverProvider){
@@ -1672,6 +1751,10 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
         }
       } else {
         discoverGenre.innerHTML = qdDefaultGenreOptions;
+
+        if (discoverMedia){
+          discoverMedia.disabled = false;
+        }
 
         if (discoverProvider){
           discoverProvider.disabled = false;
@@ -1686,7 +1769,7 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
     let discoverPage = 1;
     let discoverLoadInFlightKey = "";
     const discoverPrefetchCache = new Map();
-    const discoverPrefetchInFlight = new Set();
+    const discoverPrefetchInFlight = new Map();
 
     function discoverBuildUrl(page=1){
       const source = discoverSource.value || "tmdb_trending";
@@ -1706,14 +1789,30 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
 
     async function fetchDiscoverPayload(page=1){
       const key = discoverPrefetchKey(page);
+
       if (discoverPrefetchCache.has(key)){
         const cached = discoverPrefetchCache.get(key);
         discoverPrefetchCache.delete(key);
+        console.debug("[discover-prefetch] cache-hit", key);
         return cached;
       }
 
+      if (discoverPrefetchInFlight.has(key)){
+        console.debug("[discover-prefetch] await-inflight", key);
+        const inflight = discoverPrefetchInFlight.get(key);
+        try{
+          const cached = await inflight;
+          if (cached){
+            discoverPrefetchCache.delete(key);
+            return cached;
+          }
+        }catch(_){}
+      }
+
+      console.debug("[discover-prefetch] direct-fetch", key);
       const r = await fetch(discoverBuildUrl(page), {
-        cache: "no-store"
+        cache: "no-store",
+        credentials: "same-origin"
       });
       const j = await r.json().catch(() => ({}));
       return { r, j };
@@ -1723,19 +1822,32 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
       const key = discoverPrefetchKey(page);
       if (discoverPrefetchCache.has(key) || discoverPrefetchInFlight.has(key)) return;
 
-      discoverPrefetchInFlight.add(key);
+      console.debug("[discover-prefetch] start", key);
 
-      fetch(discoverBuildUrl(page), { cache: "no-store" })
+      const promise = fetch(discoverBuildUrl(page), {
+        cache: "no-store",
+        credentials: "same-origin"
+      })
         .then(async (r) => {
           const j = await r.json().catch(() => ({}));
           if (r.ok && j && j.ok){
-            discoverPrefetchCache.set(key, { r: { ok: true, status: r.status }, j });
+            const payload = { r: { ok: true, status: r.status }, j };
+            discoverPrefetchCache.set(key, payload);
+            console.debug("[discover-prefetch] ready", key, Array.isArray(j.items) ? j.items.length : 0);
+            return payload;
           }
+          console.debug("[discover-prefetch] not-ok", key, r.status);
+          return null;
         })
-        .catch(() => {})
+        .catch((e) => {
+          console.debug("[discover-prefetch] error", key, String(e && e.message || e || ""));
+          return null;
+        })
         .finally(() => {
           discoverPrefetchInFlight.delete(key);
         });
+
+      discoverPrefetchInFlight.set(key, promise);
     }
     let discoverHasMore = true;
     let discoverLoadMoreTimeout = null;
@@ -1896,7 +2008,7 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
               <div class="title">Discover is not configured yet</div>
               <div class="overview">TMDb has not been configured. Add a TMDb token or API key in Admin Settings under Discover Providers.</div>
               <div class="actions">
-                <a class="btn secondary" href="/admin/admin/settings#discover-providers">Open Discover Settings</a>
+                <a class="btn secondary" href="/admin/settings#discover-providers">Open Discover Settings</a>
               </div>
             </div>
           </div>
@@ -2983,7 +3095,20 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
 
       const source = discoverSource.value || "tmdb_trending";
       await qdLoadForYouProfile();
-      const media = discoverMedia.value || "all";
+
+      const isAnimeSource =
+        source === "anime_aggregate" ||
+        source === "anilist_trending" ||
+        source === "anilist_popular" ||
+        source === "anilist_genre" ||
+        source === "jikan_anime_hot" ||
+        source === "jikan_anime_rising";
+
+      if (isAnimeSource && discoverMedia && String(discoverMedia.value || "") !== "tv"){
+        discoverMedia.value = "tv";
+      }
+
+      const media = isAnimeSource ? "tv" : (discoverMedia.value || "all");
       const genre = discoverGenre ? (discoverGenre.value || "all") : "all";
       const provider = discoverProvider ? (discoverProvider.value || "all") : "all";
       const minRating = discoverMinRating ? String(discoverMinRating.value || "").trim() : "";
@@ -3009,6 +3134,10 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
           discoverLoadMoreBtn.disabled = true;
           discoverLoadMoreBtn.innerHTML = '<span class="btnSpinner"></span>Loading…';
         }
+
+        // Let the browser paint the button state before the fetch work begins.
+        await new Promise(resolve => requestAnimationFrame(() => resolve()));
+        await new Promise(resolve => setTimeout(resolve, 0));
 
         if (discoverLoadMoreTimeout){
           clearTimeout(discoverLoadMoreTimeout);
@@ -3068,11 +3197,17 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
 
         discoverHasMore = Array.isArray(debugItems) && debugItems.length > 0;
         discoverPage = page;
-        renderItems(debugItems, append);
 
         if (discoverHasMore){
-          prefetchDiscoverPage(Number(page || 1) + 1);
+          const nextPage = Number(page || 1) + 1;
+          prefetchDiscoverPage(nextPage);
+
+          if (!append && nextPage === 2 && (source === "anime_aggregate" || source === "aggregate" || source.startsWith("letterboxd_"))){
+            setTimeout(() => prefetchDiscoverPage(nextPage), 250);
+          }
         }
+
+        renderItems(debugItems, append);
 
         if (discoverLoadMoreTimeout){
           clearTimeout(discoverLoadMoreTimeout);
@@ -3442,12 +3577,202 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
       }
     }
 
+
+    let discoverPrimePolling = null;
+    let discoverPrimeActive = false;
+
+    function setDiscoverPrimeOverlay(show, message="", percent=0, meta=""){
+      const overlay = document.getElementById("discoverPrimeOverlay");
+      const textEl = document.getElementById("discoverPrimeText");
+      const barEl = document.getElementById("discoverPrimeBar");
+      const metaEl = document.getElementById("discoverPrimeMeta");
+      const grid = document.getElementById("discoverGrid");
+
+      if (!overlay || !textEl || !barEl || !metaEl) return;
+
+      overlay.classList.toggle("show", !!show);
+
+      if (grid){
+        grid.classList.toggle("discoverPrimeGate", !!show);
+      }
+
+      if (!show){
+        textEl.textContent = "";
+        metaEl.textContent = "";
+        barEl.style.width = "0%";
+        return;
+      }
+
+      textEl.textContent = message || "Preparing Discover data...";
+      metaEl.textContent = meta || "Please wait while QueueDeck finishes priming Discover.";
+      barEl.style.width = `${Math.max(0, Math.min(100, Number(percent || 0)))}%`;
+    }
+
+    function getDiscoverPrimingStorage(){
+      try{
+        const raw = localStorage.getItem("qd_discover_priming");
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (!data || !data.active) return null;
+
+        const updated = Number(data.updated || 0);
+        if (updated > 0 && (Date.now() - updated) > (20 * 60 * 1000)){
+          localStorage.removeItem("qd_discover_priming");
+          return null;
+        }
+
+        return data;
+      }catch(e){
+        return null;
+      }
+    }
+
+    function clearDiscoverPrimingStorage(){
+      try{
+        localStorage.removeItem("qd_discover_priming");
+      }catch(e){}
+    }
+
+    async function fetchDiscoverWarmStatus(){
+      const r = await fetch("/api/discover/warm-status", {
+        cache: "no-store",
+        credentials: "same-origin"
+      });
+      return await r.json().catch(() => ({}));
+    }
+
+    async function waitForDiscoverPrimeIfNeeded(){
+      let data = {};
+      try{
+        data = await fetchDiscoverWarmStatus();
+      }catch(e){
+        return false;
+      }
+
+      const localPriming = getDiscoverPrimingStorage();
+
+      if (!data.running && !localPriming){
+        setDiscoverPrimeOverlay(false);
+        discoverPrimeActive = false;
+        return false;
+      }
+
+      if (!data.running && localPriming){
+        discoverPrimeActive = true;
+
+        const phase = String(localPriming.message || "Preparing Discover data...").trim();
+        const pct = Math.max(4, Math.min(100, Number(localPriming.percent || 10)));
+        const eta = String(localPriming.eta || "").trim();
+
+        setDiscoverPrimeOverlay(
+          true,
+          phase,
+          pct,
+          eta || "Please wait while QueueDeck finishes priming Discover."
+        );
+
+        if (discoverPrimePolling){
+          clearInterval(discoverPrimePolling);
+          discoverPrimePolling = null;
+        }
+
+        discoverPrimePolling = setInterval(async () => {
+          const localState = getDiscoverPrimingStorage();
+          if (localState){
+            const phase = String(localState.message || "Preparing Discover data...").trim();
+            const pct = Math.max(4, Math.min(100, Number(localState.percent || 10)));
+            const eta = String(localState.eta || "").trim();
+
+            setDiscoverPrimeOverlay(
+              true,
+              phase,
+              pct,
+              eta || "Please wait while QueueDeck finishes priming Discover."
+            );
+            return;
+          }
+
+          clearInterval(discoverPrimePolling);
+          discoverPrimePolling = null;
+          discoverPrimeActive = false;
+          clearDiscoverPrimingStorage();
+
+          setDiscoverPrimeOverlay(true, "Discover ready.", 100, "Loading results...");
+          setTimeout(() => setDiscoverPrimeOverlay(false), 900);
+
+          loadDiscover(1, false);
+        }, 900);
+
+        return true;
+      }
+
+      discoverPrimeActive = true;
+
+      const phase = String(data.message || "Preparing Discover data...").trim();
+      const eta = String(data.eta_bucket || "").trim();
+      const total = Math.max(1, Number(data.total || 1));
+      const progress = Math.max(0, Number(data.progress || 0));
+      const pct = Math.max(4, Math.min(100, Number(data.percent || Math.round((progress / total) * 100) || 0)));
+
+      setDiscoverPrimeOverlay(
+        true,
+        phase,
+        pct,
+        eta || "Please wait while QueueDeck finishes priming Discover."
+      );
+
+      if (discoverPrimePolling){
+        clearInterval(discoverPrimePolling);
+        discoverPrimePolling = null;
+      }
+
+      discoverPrimePolling = setInterval(async () => {
+        try{
+          const j = await fetchDiscoverWarmStatus();
+          const running = !!j.running;
+          const total = Math.max(1, Number(j.total || 1));
+          const progress = Math.max(0, Number(j.progress || 0));
+          const pct = Math.max(4, Math.min(100, Number(j.percent || Math.round((progress / total) * 100) || 0)));
+          const phase = String(j.message || "Preparing Discover data...").trim();
+          const eta = String(j.eta_bucket || "").trim();
+
+          if (running){
+            setDiscoverPrimeOverlay(
+              true,
+              phase,
+              pct,
+              eta || "Please wait while QueueDeck finishes priming Discover."
+            );
+            return;
+          }
+
+          clearInterval(discoverPrimePolling);
+          discoverPrimePolling = null;
+          discoverPrimeActive = false;
+
+          setDiscoverPrimeOverlay(true, "Discover ready.", 100, "Loading results...");
+          setTimeout(() => setDiscoverPrimeOverlay(false), 900);
+
+          loadDiscover(1, false);
+        }catch(e){
+          console.warn("discover prime poll failed", e);
+        }
+      }, 1200);
+
+      return true;
+    }
+
     discoverSource && discoverSource.addEventListener("change", () => {
       qdAdjustDiscoverMediaForSource();
       loadDiscover(1, false);
     });
 
-    discoverReloadBtn.addEventListener("click", () => loadDiscover(1, false));
+    discoverReloadBtn.addEventListener("click", async () => {
+      const gated = await waitForDiscoverPrimeIfNeeded();
+      if (!gated){
+        loadDiscover(1, false);
+      }
+    });
 
     if (discoverBackToTopBtn){
       discoverBackToTopBtn.addEventListener("click", () => {
@@ -3921,7 +4246,10 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
         });
       }
 
-      await loadDiscover(1, false);
+      const gated = await waitForDiscoverPrimeIfNeeded();
+      if (!gated){
+        await loadDiscover(1, false);
+      }
     })();
   </script>
   <script>

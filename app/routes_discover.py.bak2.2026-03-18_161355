@@ -2357,31 +2357,23 @@ def api_discover_items():
                     lambda: _enrich_anilist_items_with_tmdb(anilist_items)
                 )
 
-                try:
-                    jikan_hot_items = _timed(
-                        f"anime_aggregate jikan_anime_hot page={page}",
-                        lambda: _get_jikan_anime_hot_cached(page=page)
-                    )
-                    jikan_hot_items = _timed(
-                        f"anime_aggregate jikan_anime_hot tmdb_resolve page={page}",
-                        lambda: _enrich_anilist_items_with_tmdb(jikan_hot_items)
-                    )
-                except Exception as e:
-                    print(f"[discover-anime] jikan_anime_hot failed page={page} error={str(e)[:220]}", flush=True)
-                    jikan_hot_items = []
+                jikan_hot_items = _timed(
+                    f"anime_aggregate jikan_anime_hot page={page}",
+                    lambda: _get_jikan_anime_hot_cached(page=page)
+                )
+                jikan_hot_items = _timed(
+                    f"anime_aggregate jikan_anime_hot tmdb_resolve page={page}",
+                    lambda: _enrich_anilist_items_with_tmdb(jikan_hot_items)
+                )
 
-                try:
-                    jikan_rising_items = _timed(
-                        f"anime_aggregate jikan_anime_rising page={page}",
-                        lambda: _get_jikan_anime_rising_cached(page=page)
-                    )
-                    jikan_rising_items = _timed(
-                        f"anime_aggregate jikan_anime_rising tmdb_resolve page={page}",
-                        lambda: _enrich_anilist_items_with_tmdb(jikan_rising_items)
-                    )
-                except Exception as e:
-                    print(f"[discover-anime] jikan_anime_rising failed page={page} error={str(e)[:220]}", flush=True)
-                    jikan_rising_items = []
+                jikan_rising_items = _timed(
+                    f"anime_aggregate jikan_anime_rising page={page}",
+                    lambda: _get_jikan_anime_rising_cached(page=page)
+                )
+                jikan_rising_items = _timed(
+                    f"anime_aggregate jikan_anime_rising tmdb_resolve page={page}",
+                    lambda: _enrich_anilist_items_with_tmdb(jikan_rising_items)
+                )
 
                 items = (anilist_items or []) + (jikan_hot_items or []) + (jikan_rising_items or [])
 

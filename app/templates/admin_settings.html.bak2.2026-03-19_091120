@@ -428,71 +428,6 @@ object-fit: contain;
         .userMenuName{ display:none; }
         .userMenuBtn{ padding-right:10px; }
       }
-
-      #loginSecurityCard .loginAuditStat{
-        border: 1px solid rgba(255,255,255,.05);
-        background: rgba(255,255,255,.008);
-        border-radius: 14px;
-        padding: 14px 16px;
-      }
-
-      #loginSecurityCard .loginAuditStat .stat-label{
-        color: rgba(255,255,255,.72);
-        font-size: 12.5px;
-        margin-bottom: 6px;
-      }
-
-      #loginSecurityCard .loginAuditStat .stat-value{
-        font-size: 28px;
-        line-height: 1;
-        font-weight: 800;
-        color: rgba(255,255,255,.96);
-      }
-
-      #loginSecurityCard .loginAuditMuted{
-        color: rgba(255,255,255,.68);
-      }
-
-      #loginSecurityCard .loginAuditTableWrap{
-        overflow: auto;
-        max-height: 260px;
-        border: 1px solid rgba(255,255,255,.05);
-        border-radius: 14px;
-        background: rgba(255,255,255,.006);
-      }
-
-      #loginSecurityCard table{
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 12.5px;
-      }
-
-      #loginSecurityCard thead tr{
-        text-align: left;
-        background: rgba(255,255,255,.02);
-      }
-
-      #loginSecurityCard th,
-      #loginSecurityCard td{
-        padding: 10px;
-      }
-
-      #loginSecurityCard tbody td{
-        border-top: 1px solid rgba(255,255,255,.06);
-      }
-
-      #loginSecurityCard .btn{
-        transition: transform .08s ease, box-shadow .12s ease, background .12s ease, border-color .12s ease;
-      }
-
-      #loginSecurityCard .btn:hover{
-        box-shadow: 0 10px 24px rgba(0,0,0,.18);
-      }
-
-      #loginSecurityCard .btn:active{
-        transform: translateY(1px) scale(.985);
-      }
-
     </style>
   </head>
   <body>
@@ -540,7 +475,7 @@ object-fit: contain;
           <button class="btn secondary" id="reloadBtn" type="button">Reload</button>
           <div class="status" id="statusBox">Loading admin settings...</div>
 
-          <section class="miniCard" id="loginSecurityCard" style="margin-top:14px; width:100%; grid-column:1 / -1;">
+          <section class="card" id="loginSecurityCard" style="margin-top:14px;">
             <div class="card-head" style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
               <div>
                 <div class="card-title">Login Security</div>
@@ -552,41 +487,41 @@ object-fit: contain;
               </div>
             </div>
 
-            <div class="grid cols-3" style="margin-top:12px; gap:12px; width:100%;">
-              <div class="stat loginAuditStat">
+            <div class="grid cols-3" style="margin-top:12px; gap:12px;">
+              <div class="stat">
                 <div class="stat-label">Failed (24h)</div>
                 <div class="stat-value" id="loginAuditFailed24h">—</div>
               </div>
-              <div class="stat loginAuditStat">
+              <div class="stat">
                 <div class="stat-label">Failed (7d)</div>
                 <div class="stat-value" id="loginAuditFailed7d">—</div>
               </div>
-              <div class="stat loginAuditStat">
+              <div class="stat">
                 <div class="stat-label">Successful (24h)</div>
                 <div class="stat-value" id="loginAuditSuccess24h">—</div>
               </div>
             </div>
 
-            <div class="grid cols-2" style="margin-top:14px; gap:14px; width:100%;">
+            <div class="grid cols-2" style="margin-top:14px; gap:14px;">
               <div>
                 <div class="card-sub" style="margin-bottom:8px;">Top failed-login IPs (24h)</div>
-                <div id="loginAuditTopIps" class="loginAuditMuted">Loading…</div>
+                <div id="loginAuditTopIps" class="muted">Loading…</div>
               </div>
 
               <div>
                 <div class="card-sub" style="margin-bottom:8px;">Recent attempts</div>
-                <div class="loginAuditTableWrap">
-                  <table>
+                <div style="overflow:auto; max-height:260px; border:1px solid rgba(255,255,255,.08); border-radius:12px;">
+                  <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
                     <thead>
-                      <tr>
-                        <th>Time</th>
-                        <th>User</th>
-                        <th>IP</th>
-                        <th>Status</th>
+                      <tr style="text-align:left; background:rgba(255,255,255,.04);">
+                        <th style="padding:10px;">Time</th>
+                        <th style="padding:10px;">User</th>
+                        <th style="padding:10px;">IP</th>
+                        <th style="padding:10px;">Status</th>
                       </tr>
                     </thead>
                     <tbody id="loginAuditRecentBody">
-                      <tr><td colspan="4" class="loginAuditMuted" style="padding:12px;">Loading…</td></tr>
+                      <tr><td colspan="4" style="padding:12px; opacity:.7;">Loading…</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -1164,111 +1099,6 @@ object-fit: contain;
         }catch(e){}
       }
 
-      function loginAuditFmtTs(ts){
-        const n = Number(ts || 0);
-        if (!Number.isFinite(n) || n <= 0) return "—";
-        try{
-          return new Date(n * 1000).toLocaleString();
-        }catch(_){
-          return "—";
-        }
-      }
-
-      function renderLoginAuditSummary(summary){
-        const failed24 = document.getElementById("loginAuditFailed24h");
-        const failed7d = document.getElementById("loginAuditFailed7d");
-        const success24 = document.getElementById("loginAuditSuccess24h");
-        const topIps = document.getElementById("loginAuditTopIps");
-
-        if (failed24) failed24.textContent = String(summary?.failed_24h ?? 0);
-        if (failed7d) failed7d.textContent = String(summary?.failed_7d ?? 0);
-        if (success24) success24.textContent = String(summary?.success_24h ?? 0);
-
-        if (topIps){
-          const rows = Array.isArray(summary?.top_ips) ? summary.top_ips : [];
-          if (!rows.length){
-            topIps.innerHTML = '<div class="muted">No failed-login IPs in the last 24 hours.</div>';
-          } else {
-            topIps.innerHTML = rows.map(row => {
-              const ip = String(row.ip_address || "unknown");
-              const count = Number(row.count || 0);
-              return `<div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);"><span>${ip}</span><strong>${count}</strong></div>`;
-            }).join("");
-          }
-        }
-      }
-
-      function renderLoginAuditRecent(items){
-        const body = document.getElementById("loginAuditRecentBody");
-        if (!body) return;
-
-        const rows = Array.isArray(items) ? items : [];
-        if (!rows.length){
-          body.innerHTML = '<tr><td colspan="4" style="padding:12px; opacity:.7;">No login activity yet.</td></tr>';
-          return;
-        }
-
-        body.innerHTML = rows.map(row => {
-          const when = loginAuditFmtTs(row.created_at);
-          const user = String(row.attempted_username || "").trim() || "—";
-          const ip = String(row.ip_address || "").trim() || "—";
-          const ok = !!row.success;
-          const status = ok
-            ? '<span style="color:#86efac;font-weight:700;">Success</span>'
-            : '<span style="color:#fca5a5;font-weight:700;">Failed</span>';
-
-          return `<tr>
-            <td style="padding:10px;border-top:1px solid rgba(255,255,255,.06);">${when}</td>
-            <td style="padding:10px;border-top:1px solid rgba(255,255,255,.06);">${user}</td>
-            <td style="padding:10px;border-top:1px solid rgba(255,255,255,.06);">${ip}</td>
-            <td style="padding:10px;border-top:1px solid rgba(255,255,255,.06);">${status}</td>
-          </tr>`;
-        }).join("");
-      }
-
-      async function loadLoginAudit(){
-        const card = document.getElementById("loginSecurityCard");
-        if (!card) return;
-
-        try{
-          const [summary, recent] = await Promise.all([
-            fetch("/admin/api/login-audit/summary", { credentials:"same-origin" }).then(r => r.json()),
-            fetch("/admin/api/login-audit/recent?limit=20", { credentials:"same-origin" }).then(r => r.json()),
-          ]);
-
-          if (!summary?.ok){
-            throw new Error(summary?.error || "Failed to load login audit summary");
-          }
-          if (!recent?.ok){
-            throw new Error(recent?.error || "Failed to load recent login attempts");
-          }
-
-          renderLoginAuditSummary(summary);
-          renderLoginAuditRecent(recent.items || []);
-        }catch(e){
-          const topIps = document.getElementById("loginAuditTopIps");
-          const body = document.getElementById("loginAuditRecentBody");
-          if (topIps) topIps.innerHTML = `<div class="muted">Could not load login audit: ${String(e.message || e)}</div>`;
-          if (body) body.innerHTML = '<tr><td colspan="4" style="padding:12px; color:#fca5a5;">Could not load login audit.</td></tr>';
-        }
-      }
-
-      async function clearLoginAudit(){
-        try{
-          const r = await fetch("/admin/api/login-audit/clear", {
-            method:"POST",
-            credentials:"same-origin"
-          });
-          const j = await r.json().catch(() => ({}));
-          if (!r.ok || !j.ok){
-            throw new Error(j.error || ("HTTP " + r.status));
-          }
-          setStatus("Login audit cleared.", "ok");
-        }catch(e){
-          setStatus("Failed to clear login audit.", "bad");
-        }
-      }
-
       async function adminPrimeDiscoverRequest(label, url, percent){
         setStatus(label, "warn");
         setDiscoverWarmUi(label, percent, true);
@@ -1707,7 +1537,6 @@ object-fit: contain;
           renderLetterboxdFeedsEditor();
           bindSliderValues();
           setStatus("Admin settings loaded.", "ok");
-          await loadLoginAudit();
         }catch(e){
           console.error(e);
           setStatus("Failed to load admin settings.", "bad");
@@ -1745,31 +1574,6 @@ object-fit: contain;
 
       document.getElementById("saveBtn").addEventListener("click", save);
       document.getElementById("reloadBtn").addEventListener("click", load);
-
-      const refreshLoginAuditBtn = document.getElementById("refreshLoginAuditBtn");
-      const clearLoginAuditBtn = document.getElementById("clearLoginAuditBtn");
-
-      refreshLoginAuditBtn && refreshLoginAuditBtn.addEventListener("click", async () => {
-        setStatus("Refreshing login audit...", "ok");
-        refreshLoginAuditBtn.disabled = true;
-        try{
-          await loadLoginAudit();
-          setStatus("Login audit refreshed.", "ok");
-        }finally{
-          refreshLoginAuditBtn.disabled = false;
-        }
-      });
-
-      clearLoginAuditBtn && clearLoginAuditBtn.addEventListener("click", async () => {
-        const ok = window.confirm("Clear the login audit log?");
-        if (!ok) return;
-        clearLoginAuditBtn.disabled = true;
-        try{
-          await clearLoginAudit();
-        }finally{
-          clearLoginAuditBtn.disabled = false;
-        }
-      });
 
       document.querySelectorAll(".revealBtn").forEach(btn => {
         btn.addEventListener("click", () => {

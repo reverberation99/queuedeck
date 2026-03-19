@@ -1,6 +1,6 @@
 import requests
 import secrets
-from flask import Blueprint, jsonify, request, render_template
+from flask import Blueprint, jsonify, request, render_template, redirect
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .db import get_db
@@ -391,6 +391,17 @@ def _jellyfin_list_views(jellyfin_url: str, api_key: str, username: str) -> dict
         return {"ok": False, "error": str(e)[:300]}
 
 
+def _admin_bootstrap_needed() -> bool:
+    try:
+        db = get_db()
+        row = db.execute(
+            "SELECT COUNT(*) AS c FROM app_settings WHERE TRIM(COALESCE(value, '')) <> ''"
+        ).fetchone()
+        return int(row["c"] or 0) <= 0
+    except Exception:
+        return True
+
+
 # ----------------------------
 # routes
 # ----------------------------
@@ -398,6 +409,8 @@ def _jellyfin_list_views(jellyfin_url: str, api_key: str, username: str) -> dict
 @login_required
 def settings_page():
     me = current_user() or {}
+    if bool(me.get("is_admin")) and _admin_bootstrap_needed():
+        return redirect("/admin/settings")
     return render_template("settings.html", me=me)
 
 
