@@ -147,6 +147,7 @@ queuedeck.example.com {
     }
 }
 
+---
 
 ## ⚠️ Known Issues / Limitations
 
