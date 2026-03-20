@@ -7,3 +7,6 @@ data/
 *.bak.*
 docker-compose.image-test.yml
 *.bak
+# Shell scripts (local/dev only)
+*.sh
+
