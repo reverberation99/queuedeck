@@ -474,6 +474,7 @@ def admin_user_connections_save(user_id: int):
 
     keys = [
         "jellyfin_url",
+        "jellyfin_play_base_url",
         "jellyfin_api_key",
         "jellyfin_user",
         "mytv_view_id",

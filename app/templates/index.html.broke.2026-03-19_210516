@@ -3669,31 +3669,6 @@ window.addEventListener("scroll", () => {
 
     let qdLoadAllGeneration = 0;
 
-    async function qdTimedFetch(label, fn){
-      const t0 = performance.now();
-      try{
-        const out = await fn();
-        const ms = Math.round(performance.now() - t0);
-        console.log(`[qd-load] ${label}: ${ms}ms`);
-        return out;
-      }catch(e){
-        const ms = Math.round(performance.now() - t0);
-        console.warn(`[qd-load] ${label} FAILED after ${ms}ms`, e);
-        throw e;
-      }
-    }
-
-    function getJellyfinPlayBase(){
-      try{
-        const s = window.__qdSettings || {};
-        let base = String(s.jellyfin_play_base_url || "").trim();
-        if (!base) base = String(s.jellyfin_url || "").trim();
-        return base.replace(/\/+$/, "");
-      }catch(_){
-        return "";
-      }
-    }
-
     async function loadAll(){
       const qdGen = ++qdLoadAllGeneration;
       try{
@@ -3704,7 +3679,7 @@ window.addEventListener("scroll", () => {
           
           // ---- QD_LIMITS: pull carousel limits from settings ----
           let cfg = {};
-          try { cfg = await qdTimedFetch("settings/api (limits)", () => fetchJSON("/settings/api")); }
+          try { cfg = await fetchJSON("/settings/api"); }
           catch(e){ cfg = {}; }
 const L = {
             cw: Number(cfg.limit_continue_watching ?? 12),
@@ -3725,7 +3700,7 @@ const L = {
           L.cw = clamp(L.cw, 12); L.tv = clamp(L.tv, 60); L.an = clamp(L.an, 60); L.rem = clamp(L.rem, 30); L.ltv = clamp(L.ltv, 10); L.lta = clamp(L.lta, 10);
           L.rr = clamp(L.rr, 10); L.ru = clamp(L.ru, 15); L.rm = clamp(L.rm, 15); L.su = clamp(L.su, 60); L.sm = clamp(L.sm, 60); L.dl = clamp(L.dl, 12); L.sr = (Number.isFinite(L.sr) && L.sr >= 1 && L.sr <= 40) ? L.sr : 10;
           const hideDownloadActivity = String(cfg.hide_download_activity ?? "").trim().toLowerCase() === "1";
-const __qdSettings = await qdTimedFetch("settings/api (provider flags)", () => fetchJSON("/settings/api"));
+const __qdSettings = await fetchJSON("/settings/api");
           if (qdGen !== qdLoadAllGeneration) return;
           qdApplySectionHelp(__qdSettings);
           const flags = qdApplyProviderVisibility(__qdSettings);
@@ -3750,47 +3725,47 @@ const [
           myRequests
         ] = await Promise.all([
           flags.hasJellyfin
-            ? qdTimedFetch("jellyfin/continue-watching", () => fetchJSON(`/api/jellyfin/continue-watching?limit=${L.cw}`))
+            ? fetchJSON(`/api/jellyfin/continue-watching?limit=${L.cw}`)
             : Promise.resolve({ items: [] }),
 
           flags.hasJellyfin
-            ? qdTimedFetch("jellyfin/nextup/split", () => fetchJSON(`/api/jellyfin/nextup/split?limit=${Math.max(L.tv, L.an)}`))
+            ? fetchJSON(`/api/jellyfin/nextup/split?limit=${Math.max(L.tv, L.an)}`)
             : Promise.resolve({ tv_items: [], anime_items: [] }),
 
           flags.hasJellyfin
-            ? qdTimedFetch("jellyfin/series-remaining", () => fetchJSON(`/api/jellyfin/series-remaining?limit=${L.rem}`)).catch(e => { console.warn("series-remaining failed", e); return { items: [] }; })
+            ? fetchJSON(`/api/jellyfin/series-remaining?limit=${L.rem}`).catch(e => { console.warn("series-remaining failed", e); return { items: [] }; }).catch(e => { console.warn("series-remaining failed", e); return { items: [] }; })
             : Promise.resolve({ items: [] }),
 
           flags.hasJellyfin
-            ? qdTimedFetch("jellyfin/latest-unwatched-split", () => fetchJSON(`/api/jellyfin/latest-unwatched-split?tv_limit=${L.ltv}&anime_limit=${L.lta}`)).catch(e => { console.warn("latest-unwatched failed", e); return { tv_items: [], anime_items: [] }; })
+            ? fetchJSON(`/api/jellyfin/latest-unwatched-split?tv_limit=${L.ltv}&anime_limit=${L.lta}`).catch(e => { console.warn("latest-unwatched failed", e); return { tv_items: [], anime_items: [] }; }).catch(e => { console.warn("latest-unwatched failed", e); return { tv_items: [], anime_items: [] }; })
             : Promise.resolve({ tv_items: [], anime_items: [] }),
 
           flags.hasRadarr
-            ? qdTimedFetch("radarr/recent-unwatched", () => fetchJSON(`/api/radarr/recent-unwatched?limit=${L.rr}`))
+            ? fetchJSON(`/api/radarr/recent-unwatched?limit=${L.rr}`)
             : Promise.resolve({ items: [] }),
 
           flags.hasRadarr
-            ? qdTimedFetch("radarr/upcoming-missing", () => fetchJSON(`/api/radarr/upcoming-missing?days=365&limit=120`))
+            ? fetchJSON(`/api/radarr/upcoming-missing?days=365&limit=120`)
             : Promise.resolve({ items: [] }),
 
           flags.hasSonarr
-            ? qdTimedFetch("sonarr/upcoming", () => fetchJSON(`/api/sonarr/upcoming?days=14&limit=${L.su}`))
+            ? fetchJSON(`/api/sonarr/upcoming?days=14&limit=${L.su}`)
             : Promise.resolve({ items: [] }),
 
           flags.hasSonarr
-            ? qdTimedFetch("sonarr/missing", () => fetchJSON(`/api/sonarr/missing?days=14&limit=${L.sm}`))
+            ? fetchJSON(`/api/sonarr/missing?days=14&limit=${L.sm}`)
             : Promise.resolve({ items: [] }),
 
           (!hideDownloadActivity && flags.hasSonarr)
-            ? qdTimedFetch("sonarr/queue-summary", () => fetchJSON(`/api/sonarr/queue-summary?page_size=${L.dl}`)).catch(() => ({ items: [] }))
+            ? fetchJSON(`/api/sonarr/queue-summary?page_size=${L.dl}`).catch(() => ({ items: [] }))
             : Promise.resolve({ items: [] }),
 
           (!hideDownloadActivity && flags.hasRadarr)
-            ? qdTimedFetch("radarr/queue-summary", () => fetchJSON(`/api/radarr/queue-summary?page_size=${L.dl}`)).catch(() => ({ items: [] }))
+            ? fetchJSON(`/api/radarr/queue-summary?page_size=${L.dl}`).catch(() => ({ items: [] }))
             : Promise.resolve({ items: [] }),
 
           flags.hasSeerr
-            ? qdTimedFetch("seerr/my-requests", () => fetchJSON(`/api/seerr/my-requests?take=${L.sr}`)).catch(() => ({ items: [] }))
+            ? fetchJSON(`/api/seerr/my-requests?take=${L.sr}`).catch(() => ({ items: [] }))
             : Promise.resolve({ items: [] }),
         ]);
         if (qdGen !== qdLoadAllGeneration) return;
@@ -3898,10 +3873,8 @@ setCount("#chip-rem", nREM);
         setCount("#chip-my-requests", nREQ);
 
         if (qdGen !== qdLoadAllGeneration) return;
-        console.timeEnd("[qd-load] TOTAL loadAll");
         setStatus(true, "All systems go");
       } catch (e){
-        try { console.timeEnd("[qd-load] TOTAL loadAll"); } catch(_) {}
         console.error(e);
         setStatus(false, "Session expired / API error");
         showError("sec-cw", `${escapeHTML(e.message)} <br><br>If you were logged out, refresh and log back in.`);
@@ -3914,23 +3887,8 @@ setCount("#chip-rem", nREM);
     let discoverWarmStarted = false;
 
     async function warmDiscoverInBackground(){
-      if (discoverWarmStarted) return;
-
-      try{
-        const warmKey = "qd_discover_warm_started_v1";
-        if (sessionStorage.getItem(warmKey) === "1") return;
-
-        const runWarm = async () => {
-          if (discoverWarmStarted) return;
-          discoverWarmStarted = true;
-          sessionStorage.setItem(warmKey, "1");
-
-          try{
-            await fetch("/api/discover/warm", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              cache: "no-store"
-            });
+      return;
+    });
           }catch(e){
             console.warn("discover warm failed", e);
           }
@@ -3986,27 +3944,13 @@ setCount("#chip-rem", nREM);
     }
 
     async function qdBootstrapRetry(){
-      try{
-        const s = await fetchJSON("/settings/api");
-        const flags = qdGetProviderFlags(s || {});
-        const hasAnyProvider = !!(flags.hasJellyfin || flags.hasSonarr || flags.hasRadarr || flags.hasSeerr);
-
-        if (!hasAnyProvider) return;
-        if (!qdDashboardLooksEmpty()) return;
-
-        console.warn("[qd-bootstrap] dashboard looked empty after initial boot; retrying loadAll()");
-        await loadAll();
-      }catch(e){
+      return;
+    }catch(e){
         console.warn("[qd-bootstrap] retry skipped/failed", e);
       }
     }
 
     loadAll();
-    // qdBootstrapRetry temporarily disabled for dashboard performance testing
-    // setTimeout(qdBootstrapRetry, 1200);
-    // window.addEventListener("pageshow", () => {
-    //   setTimeout(qdBootstrapRetry, 150);
-    // });
 
     if (qdIsAdmin){
       refreshWatchingStrip();

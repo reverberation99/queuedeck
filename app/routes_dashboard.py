@@ -2,7 +2,8 @@ import os
 from datetime import datetime, timedelta, timezone
 
 import requests
-from flask import Blueprint, jsonify, request, render_template, redirect
+import time
+from flask import current_app,  Blueprint, jsonify, request, render_template, redirect
 
 from .utils.auth import login_required, current_user
 from .db import get_db
@@ -42,6 +43,14 @@ def _user_setting(key: str) -> str:
 def _cfg(key: str, env: str, default: str = "") -> str:
     """Per-user setting only. No env fallback in multi-user mode."""
     return _user_setting(key)
+
+def _jellyfin_play_base() -> str:
+    user_id = _current_user_id()
+    play = get_user_setting_scoped(user_id, "jellyfin_play_base_url", default="").rstrip("/")
+    if play:
+        return play
+    return get_user_setting_scoped(user_id, "jellyfin_url", default="").rstrip("/")
+
 
 
 def _hide_future_nextup_for_hidden_series_enabled() -> bool:
@@ -398,7 +407,7 @@ def api_jellyfin_continue_watching():
                     if series_id and series_tag else
                     f"/img/jellyfin/primary/{it.get('Id')}?tag={primary_tag}"
                 ),
-                "jellyfin_web_url": f"{base}/web/index.html#!/details?id={it.get('Id')}",
+                "jellyfin_web_url": f"{_jellyfin_play_base()}/web/index.html#!/details?id={it.get('Id')}",
             })
 
         return jsonify(
@@ -482,7 +491,7 @@ def api_jellyfin_nextup_split():
                     if series_id and series_tag else
                     f"/img/jellyfin/primary/{it.get('Id')}?tag={primary_tag}"
                 ),
-                "jellyfin_web_url": f"{base}/web/index.html#!/details?id={it.get('Id')}" if base else "",
+                "jellyfin_web_url": f"{_jellyfin_play_base()}/web/index.html#!/details?id={it.get('Id')}" if base else "",
             }
 
             (anime if is_anime else tv).append(cleaned)
@@ -510,6 +519,7 @@ def api_jellyfin_nextup_split():
 @bp.get("/api/jellyfin/series-remaining")
 @login_required
 def api_jellyfin_series_remaining():
+    start = time.time()
     try:
         limit = int(request.args.get("limit", "30"))
         limit = max(1, min(limit, 80))
@@ -661,7 +671,7 @@ def _latest_unwatched_series_split(tv_limit: int = 10, anime_limit: int = 10):
                     if series_tag else
                     f"/img/jellyfin/primary/{it.get('Id')}?tag={primary_tag}"
                 ),
-                "jellyfin_web_url": f"{base}/web/index.html#!/details?id={series_id}",
+                "jellyfin_web_url": f"{_jellyfin_play_base()}/web/index.html#!/details?id={series_id}",
             }
         else:
             row["unwatched_count"] = int(row.get("unwatched_count") or 0) + 1
@@ -787,6 +797,7 @@ def api_jellyfin_latest_unwatched_tv():
 @bp.get("/api/jellyfin/latest-unwatched-split")
 @login_required
 def api_jellyfin_latest_unwatched_split():
+    start = time.time()
     try:
         tv_limit = int(request.args.get("tv_limit", "10"))
         anime_limit = int(request.args.get("anime_limit", "10"))

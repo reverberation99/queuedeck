@@ -34,6 +34,10 @@ def _cfg(db_key: str, env_key: str, fallback: str = "") -> str:
 def _base() -> str:
     return _cfg("jellyfin_url", "JELLYFIN_URL", "").rstrip("/")
 
+def _play_base() -> str:
+    play = _cfg("jellyfin_play_base_url", "", "").rstrip("/")
+    return play or _base()
+
 
 def _api_key() -> str:
     return _cfg("jellyfin_api_key", "JELLYFIN_API_KEY", "").strip()
@@ -292,7 +296,7 @@ def get_recent_unwatched_movies(limit: int = 10) -> List[Dict[str, Any]]:
                 "year": year,
                 "date_added": date_added,
                 "poster_url": poster_url,
-                "jellyfin_web_url": f"{base}/web/index.html#!/details?id={item_id}",
+                "jellyfin_web_url": f"{_play_base()}/web/index.html#!/details?id={item_id}",
             }
         )
 
@@ -408,7 +412,7 @@ def get_series_remaining_from_nextup(limit_series: int = 30, nextup_limit: int =
                 **row,
                 "remaining_episodes": remaining,
                 "primary_image_url": primary_image_url,
-                "jellyfin_web_url": f"{base}/web/index.html#!/details?id={next_item_id}",
+                "jellyfin_web_url": f"{_play_base()}/web/index.html#!/details?id={next_item_id}",
             }
         )
 

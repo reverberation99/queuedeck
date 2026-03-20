@@ -416,6 +416,10 @@
           <div class="field full">
             <label for="jellyfin_url">Jellyfin URL</label>
             <input id="jellyfin_url" name="jellyfin_url" value="{{ settings.get('jellyfin_url','') }}" />
+
+            <label for="jellyfin_play_base_url">Jellyfin Play Base URL (optional)</label>
+            <input id="jellyfin_play_base_url" name="jellyfin_play_base_url" value="{{ settings.get('jellyfin_play_base_url','') }}" placeholder="https://jellyfin.example.com" />
+            <div class="hint">Optional override for dashboard play/open buttons. Leave blank to use Jellyfin URL.</div>
           </div>
           <div class="field full">
             <label for="jellyfin_api_key">Jellyfin API Key</label>
@@ -556,6 +560,7 @@
       if (!sel) return;
 
       const jellyfinUrl = String(document.getElementById("jellyfin_url")?.value || "").trim();
+      const jellyfinPlayBaseUrl = String(document.getElementById("jellyfin_play_base_url")?.value || "").trim();
       const jellyfinApiKey = String(document.getElementById("jellyfin_api_key")?.value || "").trim();
       const jellyfinUser = String(document.getElementById("jellyfin_user")?.value || "").trim();
       const current = String(selectedValue || sel.value || "").trim();
@@ -579,6 +584,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             jellyfin_url: jellyfinUrl,
+            jellyfin_play_base_url: jellyfinPlayBaseUrl,
             jellyfin_api_key: jellyfinApiKey,
             jellyfin_user: jellyfinUser
           }),

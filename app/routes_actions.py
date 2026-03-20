@@ -257,6 +257,12 @@ def _jellyfin_base_and_key() -> Tuple[str, str]:
     api_key = _cfg("jellyfin_api_key", "JELLYFIN_API_KEY", "").strip()
     return base, api_key
 
+def _jellyfin_play_base() -> str:
+    play_base = _cfg("jellyfin_play_base_url", "", "").rstrip("/")
+    if play_base:
+        return play_base
+    return _cfg("jellyfin_url", "JELLYFIN_URL", "").rstrip("/")
+
 def _jellyfin_headers(api_key: str) -> Dict[str, str]:
     return {"X-Emby-Token": api_key}
 
@@ -309,10 +315,11 @@ def _jellyfin_get_item(base: str, api_key: str, item_id: str) -> Dict[str, Any]:
 def _jellyfin_open_series_url(base: str, api_key: str, item_id: str) -> Optional[str]:
     try:
         item = _jellyfin_get_item(base, api_key, item_id)
+        play_base = _jellyfin_play_base() or base
         series_id = (item.get("SeriesId") or item.get("ParentId") or "").strip()
         if not series_id:
-            return f"{base}/web/index.html#!/details?id={item_id}"
-        return f"{base}/web/index.html#!/details?id={series_id}"
+            return f"{play_base}/web/index.html#!/details?id={item_id}"
+        return f"{play_base}/web/index.html#!/details?id={series_id}"
     except Exception:
         return None
 
@@ -359,11 +366,13 @@ def _enrich_row(kind: str, item_id: str) -> Dict[str, str]:
                         title = series or name or f"Jellyfin Episode ({item_id})"
 
                     series_id = (it.get("SeriesId") or it.get("ParentId") or "").strip()
-                    link = f"{base}/web/index.html#!/details?id={series_id or item_id}"
+                    play_base = _jellyfin_play_base() or base
+                    link = f"{play_base}/web/index.html#!/details?id={series_id or item_id}"
 
                 else:
                     title = name or f"Jellyfin Item ({item_id})"
-                    link = f"{base}/web/index.html#!/details?id={item_id}"
+                    play_base = _jellyfin_play_base() or base
+                    link = f"{play_base}/web/index.html#!/details?id={item_id}"
 
                     year = it.get("ProductionYear")
                     if isinstance(year, int):
@@ -514,7 +523,8 @@ def _enrich_row(kind: str, item_id: str) -> Dict[str, str]:
                     else:
                         title = name or f"Movie ({item_id})"
 
-                    link = f"{base}/web/index.html#!/details?id={item_id}"
+                    play_base = _jellyfin_play_base() or base
+                    link = f"{play_base}/web/index.html#!/details?id={item_id}"
 
                     if isinstance(year, int):
                         subtitle = str(year)
