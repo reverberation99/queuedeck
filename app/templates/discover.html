@@ -2183,7 +2183,7 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
         }
       }, {
         root: null,
-        rootMargin: "1200px 0px",
+        rootMargin: "2400px 0px",
         threshold: 0.01
       });
 
@@ -2719,7 +2719,7 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
           : "";
         const source = esc(item.source || "");
         const poster = item.poster_url
-          ? `<img data-discover-poster="1" data-src="${esc(item.poster_url)}" alt="${title}" loading="lazy" decoding="async">`
+          ? `<img data-discover-poster="1" data-src="${esc(item.poster_url)}" alt="${title}" decoding="async">`
           : `<div class="posterPlaceholder">No poster</div>`;
         const letterboxdLabels = Array.isArray(item.letterboxd_labels) ? item.letterboxd_labels.filter(Boolean) : [];
         const letterboxdFeedsText = letterboxdLabels.join(" + ");
@@ -3196,11 +3196,7 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
           clearTimeout(discoverLoadMoreTimeout);
         }
         discoverLoadMoreTimeout = setTimeout(() => {
-          if (discoverLoadMoreBtn){
-            discoverLoadMoreBtn.disabled = false;
-            discoverLoadMoreBtn.textContent = "Load More";
-          }
-          setStatus("Load more is taking unusually long. You can try again.", "bad");
+          setStatus("Load more is taking unusually long, but is still loading…", "bad");
         }, 30000);
       }
 
