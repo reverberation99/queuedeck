@@ -146,7 +146,7 @@ queuedeck.example.com {
         Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' http: https:; frame-ancestors 'none';"
     }
 }
-
+```
 ---
 
 # ⚠️ Known Issues / Limitations
