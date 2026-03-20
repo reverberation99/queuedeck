@@ -181,7 +181,7 @@ Dashboard Initial Load
 
 ---
 
-#🧠 Notes
+🧠 Notes
 - Most performance-related issues resolve naturally after initial usage.
 - Future improvements may include:
   - Smarter caching
