@@ -149,39 +149,39 @@ queuedeck.example.com {
 
 ---
 
-## ⚠️ Known Issues / Limitations
+# ⚠️ Known Issues / Limitations
 
-### Discover Performance
+Discover Performance
 - The **Discover** page can be slow, especially immediately after a Docker container restart.
 - Initial loads may take longer due to:
   - Cold API calls (TMDB, Jellyfin, Sonarr, Radarr, etc.)
   - Cache warming / prefetch behavior
 - Performance typically improves after the first load as data becomes cached.
 
-### Discover Prefetch Behavior
+Discover Prefetch Behavior
 - Background prefetching may continue briefly after initial load.
 - This can result in:
   - Additional network activity
   - Slight delays when switching filters rapidly
 
-### Letterboxd Integration
+Letterboxd Integration
 - Letterboxd sources are dynamically loaded.
 - In rare cases, they may not appear immediately after a restart until the first successful fetch.
 
-### Anime Aggregate Filtering
+Anime Aggregate Filtering
 - Filtering in `anime_aggregate` mode may occasionally include:
   - Already requested items
   - Items already present in the library
 - This is due to edge cases in external API data and matching logic.
 
-### Dashboard Initial Load
+Dashboard Initial Load
 - After a fresh container restart:
   - Some sections may briefly appear empty or delayed
   - Auto-retry logic is limited to avoid excessive API calls
 
 ---
 
-## 🧠 Notes
+#🧠 Notes
 - Most performance-related issues resolve naturally after initial usage.
 - Future improvements may include:
   - Smarter caching
