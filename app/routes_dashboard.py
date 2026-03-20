@@ -1,4 +1,5 @@
 import os
+import ipaddress
 from datetime import datetime, timedelta, timezone
 
 import requests
@@ -44,12 +45,41 @@ def _cfg(key: str, env: str, default: str = "") -> str:
     """Per-user setting only. No env fallback in multi-user mode."""
     return _user_setting(key)
 
+
+def _host_looks_internal(host: str) -> bool:
+    h = (host or "").strip().lower()
+    if not h:
+        return True
+    h = h.split(",")[0].strip()
+    if ":" in h and h.count(":") == 1:
+        h = h.split(":", 1)[0]
+    if h in {"localhost", "127.0.0.1", "::1"}:
+        return True
+    if "." not in h:
+        return True
+    try:
+        ip = ipaddress.ip_address(h)
+        return bool(ip.is_private or ip.is_loopback or ip.is_link_local)
+    except Exception:
+        return False
+
+def _jellyfin_link_base() -> str:
+    mode = (_user_setting("jellyfin_play_mode") or "auto").strip().lower()
+    internal = _user_setting("jellyfin_url").rstrip("/")
+    external = _user_setting("jellyfin_play_base_url").rstrip("/")
+
+    if mode == "internal":
+        return internal
+    if mode == "external":
+        return external or internal
+
+    host = (request.headers.get("X-Forwarded-Host") or request.host or "").strip()
+    if external and not _host_looks_internal(host):
+        return external
+    return internal
+
 def _jellyfin_play_base() -> str:
-    user_id = _current_user_id()
-    play = get_user_setting_scoped(user_id, "jellyfin_play_base_url", default="").rstrip("/")
-    if play:
-        return play
-    return get_user_setting_scoped(user_id, "jellyfin_url", default="").rstrip("/")
+    return _jellyfin_link_base()
 
 
 
@@ -491,7 +521,7 @@ def api_jellyfin_nextup_split():
                     if series_id and series_tag else
                     f"/img/jellyfin/primary/{it.get('Id')}?tag={primary_tag}"
                 ),
-                "jellyfin_web_url": f"{_jellyfin_play_base()}/web/index.html#!/details?id={it.get('Id')}" if base else "",
+                "jellyfin_web_url": f"{_jellyfin_play_base()}/web/index.html#!/details?id={it.get('Id')}" if _jellyfin_play_base() else "",
             }
 
             (anime if is_anime else tv).append(cleaned)

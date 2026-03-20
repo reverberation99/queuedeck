@@ -417,9 +417,17 @@
             <label for="jellyfin_url">Jellyfin URL</label>
             <input id="jellyfin_url" name="jellyfin_url" value="{{ settings.get('jellyfin_url','') }}" />
 
-            <label for="jellyfin_play_base_url">Jellyfin Play Base URL (optional)</label>
+            <label for="jellyfin_play_base_url">Jellyfin External Play URL (optional)</label>
             <input id="jellyfin_play_base_url" name="jellyfin_play_base_url" value="{{ settings.get('jellyfin_play_base_url','') }}" placeholder="https://jellyfin.example.com" />
-            <div class="hint">Optional override for dashboard play/open buttons. Leave blank to use Jellyfin URL.</div>
+            <div class="hint">Optional reverse-proxy/public Jellyfin URL for dashboard play/open buttons. Leave blank to use Jellyfin URL.</div>
+
+            <label for="jellyfin_play_mode">Jellyfin Play URL Mode</label>
+            <select id="jellyfin_play_mode" name="jellyfin_play_mode">
+              <option value="auto" {{ "selected" if settings.get("jellyfin_play_mode","auto") == "auto" else "" }}>Auto</option>
+              <option value="internal" {{ "selected" if settings.get("jellyfin_play_mode","auto") == "internal" else "" }}>Always Internal</option>
+              <option value="external" {{ "selected" if settings.get("jellyfin_play_mode","auto") == "external" else "" }}>Always External</option>
+            </select>
+            <div class="hint">Auto uses the external URL when QueueDeck is accessed by domain/reverse proxy, and the internal Jellyfin URL when accessed by local IP/host.</div>
           </div>
           <div class="field full">
             <label for="jellyfin_api_key">Jellyfin API Key</label>
@@ -561,6 +569,7 @@
 
       const jellyfinUrl = String(document.getElementById("jellyfin_url")?.value || "").trim();
       const jellyfinPlayBaseUrl = String(document.getElementById("jellyfin_play_base_url")?.value || "").trim();
+      const jellyfinPlayMode = String(document.getElementById("jellyfin_play_mode")?.value || "auto").trim().toLowerCase();
       const jellyfinApiKey = String(document.getElementById("jellyfin_api_key")?.value || "").trim();
       const jellyfinUser = String(document.getElementById("jellyfin_user")?.value || "").trim();
       const current = String(selectedValue || sel.value || "").trim();
@@ -585,6 +594,7 @@
           body: JSON.stringify({
             jellyfin_url: jellyfinUrl,
             jellyfin_play_base_url: jellyfinPlayBaseUrl,
+            jellyfin_play_mode: jellyfinPlayMode,
             jellyfin_api_key: jellyfinApiKey,
             jellyfin_user: jellyfinUser
           }),

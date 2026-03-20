@@ -1,4 +1,5 @@
 import time
+import ipaddress
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Tuple
 
@@ -257,11 +258,37 @@ def _jellyfin_base_and_key() -> Tuple[str, str]:
     api_key = _cfg("jellyfin_api_key", "JELLYFIN_API_KEY", "").strip()
     return base, api_key
 
+def _host_looks_internal(host: str) -> bool:
+    h = (host or "").strip().lower()
+    if not h:
+        return True
+    h = h.split(",")[0].strip()
+    if ":" in h and h.count(":") == 1:
+        h = h.split(":", 1)[0]
+    if h in {"localhost", "127.0.0.1", "::1"}:
+        return True
+    if "." not in h:
+        return True
+    try:
+        ip = ipaddress.ip_address(h)
+        return bool(ip.is_private or ip.is_loopback or ip.is_link_local)
+    except Exception:
+        return False
+
 def _jellyfin_play_base() -> str:
-    play_base = _cfg("jellyfin_play_base_url", "", "").rstrip("/")
-    if play_base:
-        return play_base
-    return _cfg("jellyfin_url", "JELLYFIN_URL", "").rstrip("/")
+    mode = (_cfg("jellyfin_play_mode", "", "auto") or "auto").strip().lower()
+    internal = _cfg("jellyfin_url", "JELLYFIN_URL", "").rstrip("/")
+    external = _cfg("jellyfin_play_base_url", "", "").rstrip("/")
+
+    if mode == "internal":
+        return internal
+    if mode == "external":
+        return external or internal
+
+    host = (request.headers.get("X-Forwarded-Host") or request.host or "").strip()
+    if external and not _host_looks_internal(host):
+        return external
+    return internal
 
 def _jellyfin_headers(api_key: str) -> Dict[str, str]:
     return {"X-Emby-Token": api_key}

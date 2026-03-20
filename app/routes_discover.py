@@ -2606,6 +2606,58 @@ def api_discover_items():
         if source == "aggregate":
             items = _prioritize_rich_aggregate_items(items)
 
+        # 🔥 EXCLUDE OWNED / REQUESTED FOR FOR_YOU
+        try:
+            sort_mode = str(request.args.get("sort") or "").strip().lower()
+
+            if source in ("aggregate", "anime_aggregate", "anilist_trending", "anilist_popular", "jikan_anime_hot", "jikan_anime_rising") and sort_mode == "for_you" and items:
+                batch = []
+                for idx, it in enumerate(items):
+                    batch.append({
+                        "key": f"row-{idx}",
+                        "title": str(it.get("title") or "").strip(),
+                        "year": str(it.get("year") or "").strip(),
+                        "media_type": str(it.get("media_type") or "").strip().lower(),
+                        "tmdb_id": str(it.get("tmdb_id") or "").strip(),
+                        "imdb_id": str(it.get("imdb_id") or "").strip(),
+                        "tvdb_id": str(it.get("tvdb_id") or "").strip(),
+                    })
+
+                library_result = find_in_library_batch(batch)
+
+                try:
+                    sonarr_result = find_requested_series_batch(batch)
+                except Exception:
+                    sonarr_result = {}
+
+                try:
+                    radarr_result = find_requested_movies_batch(batch)
+                except Exception:
+                    radarr_result = {}
+
+                filtered = []
+                for row in batch:
+                    key = row["key"]
+
+                    lib = library_result.get(key) or {}
+                    son = sonarr_result.get(key) or {}
+                    rad = radarr_result.get(key) or {}
+
+                    owned = bool(lib.get("in_library"))
+                    requested = bool(son.get("in_sonarr")) or bool(rad.get("in_radarr"))
+
+                    if not (owned or requested):
+                        idx = int(key.split("-")[1])
+                        if idx < len(items):
+                            filtered.append(items[idx])
+
+                if filtered:
+                    print(f"[discover-filter] for_you filtered {len(items)} -> {len(filtered)}", flush=True)
+                    items = filtered
+
+        except Exception as e:
+            print(f"[discover-filter] failed: {e}", flush=True)
+
         payload = {
             "ok": True,
             "configured": True,

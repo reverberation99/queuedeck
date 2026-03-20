@@ -1780,7 +1780,7 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
       const yearFrom = discoverYearFrom ? String(discoverYearFrom.value || "").trim() : "";
       const yearTo = discoverYearTo ? String(discoverYearTo.value || "").trim() : "";
 
-      return `/api/discover/items?source=${encodeURIComponent(source)}&media=${encodeURIComponent(media)}&genre=${encodeURIComponent(genre)}&provider=${encodeURIComponent(provider)}&min_rating=${encodeURIComponent(minRating)}&year_from=${encodeURIComponent(yearFrom)}&year_to=${encodeURIComponent(yearTo)}&page=${encodeURIComponent(page)}&sort=${encodeURIComponent(discoverSort?.value || "")}`;
+      return `/api/discover/items?source=${encodeURIComponent(source)}&media=${encodeURIComponent(media)}&genre=${encodeURIComponent(genre)}&provider=${encodeURIComponent(provider)}&min_rating=${encodeURIComponent(minRating)}&year_from=${encodeURIComponent(yearFrom)}&year_to=${encodeURIComponent(yearTo)}&page=${encodeURIComponent(page)}`;
     }
 
     function discoverPrefetchKey(page=1){
@@ -2541,6 +2541,10 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
         }
       } else {
         if (sortMode === "for_you"){
+          if (source === "aggregate"){
+            items = await qdFilterForYouOwnedRequested(items);
+          }
+
           items = [...(items || [])]
             .map(i => ({
               ...i,
@@ -3100,28 +3104,40 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
         });
 
         const j = await r.json().catch(() => ({}));
-        const stateMap = (j && j.items && typeof j.items === "object") ? j.items : {};
+        const stateMap = (j && j.items && typeof j.items === "object" && !Array.isArray(j.items)) ? j.items : {};
 
-        const filtered = rows.filter((item, idx) => {
-          const state = stateMap[`row-${idx}`] || {};
+        const filtered = rows.filter(item => {
+          const stateKey = qdDiscoverStateKey(item);
+          const state = stateMap[stateKey] || {};
+
+          const requested =
+            !!state.requested ||
+            !!state.already_requested ||
+            !!state.is_requested ||
+            !!(state.request && state.request.id) ||
+            !!item.requested ||
+            !!item.already_requested ||
+            !!item.is_requested ||
+            !!(item.request && item.request.id);
 
           const owned =
             !!state.in_library ||
             !!state.in_sonarr ||
             !!state.in_radarr;
 
-          return !owned;
+          return !(owned || requested);
         });
 
-        console.log("For You filter:", {
-          original: rows.length,
-          filtered: filtered.length,
-          sample0: stateMap["row-0"] || {}
-        });
+        console.log("Discover For You state keys sample:", Object.keys(stateMap).slice(0, 10));
 
-        return filtered.length ? filtered : rows;
+        // Fallback: don't over-filter into an empty/near-empty discover page
+        if (filtered.length >= Math.min(5, rows.length)){
+          return filtered;
+        }
+
+        return rows;
       }catch(e){
-        console.warn("For You filter failed", e);
+        console.warn("For You owned/requested filter failed", e);
         return rows;
       }
     }
@@ -3229,11 +3245,10 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
         let debugItems = j.items || [];
         console.log("Discover items count:", debugItems.length);
 
-        if ((source === "aggregate" || source === "anime_aggregate") && String(discoverSort?.value || "") === "for_you"){
+        if (source === "aggregate" && String(discoverSort?.value || "") === "for_you"){
           debugItems = await qdFilterForYouOwnedRequested(debugItems);
           console.log("Discover For You filtered count:", debugItems.length);
         }
-          j.items = debugItems;
 
         const genreCounts = {};
         for (const i of debugItems){

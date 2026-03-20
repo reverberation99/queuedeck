@@ -1,10 +1,11 @@
 import os
+import ipaddress
 import time
 from collections import OrderedDict
 from typing import Any, Dict, List, Optional, Union
 
 import requests
-from flask import has_request_context
+from flask import has_request_context, request
 
 
 def _get_setting_safe(key: str, default: str = "") -> str:
@@ -34,9 +35,39 @@ def _cfg(db_key: str, env_key: str, fallback: str = "") -> str:
 def _base() -> str:
     return _cfg("jellyfin_url", "JELLYFIN_URL", "").rstrip("/")
 
+def _host_looks_internal(host: str) -> bool:
+    h = (host or "").strip().lower()
+    if not h:
+        return True
+    h = h.split(",")[0].strip()
+    if ":" in h and h.count(":") == 1:
+        h = h.split(":", 1)[0]
+    if h in {"localhost", "127.0.0.1", "::1"}:
+        return True
+    if "." not in h:
+        return True
+    try:
+        ip = ipaddress.ip_address(h)
+        return bool(ip.is_private or ip.is_loopback or ip.is_link_local)
+    except Exception:
+        return False
+
 def _play_base() -> str:
-    play = _cfg("jellyfin_play_base_url", "", "").rstrip("/")
-    return play or _base()
+    mode = (_get_setting_safe("jellyfin_play_mode", default="auto") or "auto").strip().lower()
+    internal = _base()
+    external = _cfg("jellyfin_play_base_url", "", "").rstrip("/")
+
+    if mode == "internal":
+        return internal
+    if mode == "external":
+        return external or internal
+
+    if has_request_context():
+        host = (request.headers.get("X-Forwarded-Host") or request.host or "").strip()
+        if external and not _host_looks_internal(host):
+            return external
+
+    return internal
 
 
 def _api_key() -> str:
