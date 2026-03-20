@@ -1,0 +1,4297 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/favicon-16.png" />
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png" />
+
+  <title>QueueDeck Discover</title>
+<style>
+    :root{
+      --bg0:#07090c;
+      --bg1:#0b0f14;
+      --card: rgba(255,255,255,.055);
+      --border: rgba(255,255,255,.10);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.64);
+      --accent:#7c5cff;
+      --accent2:#4ea1ff;
+      --shadow: 0 20px 60px rgba(0,0,0,.55);
+      --r: 20px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ margin:0; min-height:100%; }
+    body{
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(900px 600px at 15% 0%, rgba(124,92,255,.14), transparent 60%),
+        radial-gradient(900px 700px at 100% 0%, rgba(78,161,255,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      padding: 28px;
+    }
+
+    .wrap{ max-width: 1400px; margin: 0 auto; }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      margin-bottom:18px;
+      flex-wrap:wrap;
+    }
+
+    .brand{
+      display:flex;
+      align-items:flex-start;
+      gap:16px;
+    }
+
+    .logo{
+      width:54px;
+        height:54px;
+      border-radius:14px;
+      display:grid;
+      place-items:center;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08),
+        0 10px 28px rgba(0,0,0,.40);
+      overflow:hidden;
+    }
+
+    .logo img{
+      width:50px;
+        height:50px;
+      display:block;
+                              object-fit: contain;
+object-fit: contain;
+object-fit: contain;
+filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
+    }
+
+    h1{
+      margin:0;
+      font-size:22px;
+      line-height:1.1;
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+
+    .sub{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.35;
+      max-width:760px;
+    }
+
+    .top-links{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .userMenu{
+      position:relative;
+      display:flex;
+      align-items:center;
+      flex:0 0 auto;
+    }
+
+    .userMenuBtn{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      min-height:44px;
+      padding:8px 12px 8px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      color:#fff;
+      cursor:pointer;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.04),
+        0 8px 22px rgba(0,0,0,.18);
+    }
+
+    .userMenuBtn:hover{
+      background: rgba(255,255,255,.09);
+      border-color: rgba(255,255,255,.16);
+      transform: translateY(-1px);
+    }
+
+    .userAvatar{
+      width:30px;
+      height:30px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+      font-weight:900;
+      color:#fff;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+    }
+
+    .userMenuName{
+      font-size:13px;
+      font-weight:800;
+      color: rgba(255,255,255,.92);
+      white-space:nowrap;
+    }
+
+    .userMenuChevron{
+      font-size:11px;
+      color: rgba(255,255,255,.72);
+      transition: transform .18s ease;
+    }
+
+    .userMenu.open .userMenuChevron{ transform: rotate(180deg); }
+
+    .userDropdown{
+      position:absolute;
+      right:0;
+      top:calc(100% + 10px);
+      min-width:220px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(10,12,18,.94);
+      backdrop-filter: blur(10px);
+      border-radius:16px;
+      box-shadow: 0 24px 70px rgba(0,0,0,.55);
+      padding:8px;
+      display:none;
+      z-index:30;
+    }
+
+    .userMenu.open .userDropdown{ display:block; }
+
+    .userDropdownHead{
+      padding:10px 12px 8px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      margin-bottom:6px;
+    }
+
+    .userDropdownTitle{
+      font-size:13px;
+      font-weight:900;
+      color: rgba(255,255,255,.94);
+    }
+
+    .userDropdownSub{
+      margin-top:3px;
+      font-size:12px;
+      color: rgba(255,255,255,.62);
+    }
+
+    .userDropdown a{
+      display:flex;
+      align-items:center;
+      padding:10px 12px;
+      border-radius:12px;
+      font-size:13px;
+      font-weight:700;
+      color: rgba(255,255,255,.88);
+      text-decoration:none;
+    }
+
+    .userDropdown a:hover{
+      background: rgba(255,255,255,.06);
+      color:#fff;
+    }
+
+    .userDropdown a.danger{
+      color: rgba(255,130,130,.95);
+    }
+
+    @media (max-width:760px){
+      .userMenuName{ display:none; }
+      .userMenuBtn{ padding-right:10px; }
+    }
+
+    .btn, button{
+      border:none;
+      border-radius:16px;
+      padding:12px 18px;
+      min-height:46px;
+      font-weight:800;
+      color:#fff;
+      cursor:pointer;
+      text-decoration:none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      font-size:14px;
+      line-height:1;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08),
+        0 10px 26px rgba(0,0,0,.22);
+    }
+
+    .btn.secondary, button.secondary{
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.04),
+        0 8px 22px rgba(0,0,0,.18);
+    }
+
+    .btn.secondary:hover, button.secondary:hover{
+      background: rgba(255,255,255,.09);
+      border-color: rgba(255,255,255,.16);
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled, button:disabled{
+      opacity:.65;
+      cursor:not-allowed;
+    }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+
+    .filters{
+      display:grid;
+      grid-template-columns: 1.2fr 1.2fr 1.2fr 1.2fr;
+      gap:14px;
+      align-items:end;
+    }
+
+    @media (max-width: 980px){
+      .filters{ grid-template-columns: 1fr; }
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    label{
+      font-size:12px;
+      font-weight:800;
+      color:rgba(255,255,255,.85);
+      letter-spacing:.2px;
+    }
+
+    select{
+      width:100%;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.28);
+      color:#fff;
+      border-radius:14px;
+      padding:12px 14px;
+      outline:none;
+    }
+
+    .status{
+      margin-top:14px;
+      padding:11px 14px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.84);
+      font-size:13px;
+    }
+
+    
+    .discoverNotice{
+      margin: 10px 0 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.88);
+      font-size: .95rem;
+      line-height: 1.45;
+    }
+    .discoverNotice a{
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .discoverPrimeOverlay{
+      display:none;
+      position: sticky;
+      top: 76px;
+      z-index: 30;
+      margin: 10px 0 14px;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(10,12,18,.92);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 60px rgba(0,0,0,.45);
+    }
+    .discoverPrimeOverlay.show{
+      display:block;
+    }
+    .discoverPrimeTitle{
+      font-weight: 900;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+    .discoverPrimeText{
+      font-size: 12.5px;
+      color: rgba(255,255,255,.74);
+      line-height: 1.4;
+      margin-bottom: 10px;
+    }
+    .discoverPrimeBarWrap{
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .discoverPrimeBar{
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(124,92,255,.95), rgba(78,161,255,.92));
+      transition: width .25s ease;
+    }
+    .discoverPrimeMeta{
+      font-size: 12px;
+      color: rgba(255,255,255,.68);
+    }
+    .discoverPrimeGate{
+      pointer-events: none;
+      opacity: .45;
+      filter: saturate(.85);
+    }
+
+.status.bad{
+      border-color: rgba(255,80,80,.35);
+      background: rgba(255,80,80,.12);
+      color:#ffd7d7;
+    }
+
+    .status.ok{
+      border-color: rgba(80,200,120,.35);
+      background: rgba(80,200,120,.12);
+      color:#d8ffe5;
+    }
+
+    .discoverGrid{
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap:16px;
+      margin-top:18px;
+    }
+
+    .discoverItem{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      border-radius:18px;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      min-height:100%;
+      position:relative;
+      transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        border-color .18s ease;
+      isolation:isolate;
+    }
+
+    .discoverItem:hover{
+      transform: translateY(-3px);
+      box-shadow: 0 18px 40px rgba(0,0,0,.35);
+    }
+
+    .discoverItem.specialHot{
+      border-color: rgba(255,140,60,.70);
+      box-shadow:
+        0 0 0 1px rgba(255,110,40,.18),
+        0 0 22px rgba(255,100,20,.22),
+        0 0 44px rgba(255,70,0,.14);
+    }
+
+    .discoverItem.specialHot::after{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      border-radius:18px;
+      pointer-events:none;
+      box-shadow:
+        inset 0 0 0 1px rgba(255,180,80,.18),
+        0 0 18px rgba(255,120,40,.16);
+    }
+
+    .hotBadge{
+      position:absolute;
+      top:10px;
+      right:10px;
+      z-index:2;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.3px;
+      color:#fff;
+      border-radius:999px;
+      padding:6px 10px;
+      background: linear-gradient(135deg, rgba(255,120,40,.98), rgba(255,60,0,.95));
+      box-shadow:
+        0 8px 22px rgba(255,70,0,.28),
+        inset 0 1px 0 rgba(255,255,255,.18);
+    }
+
+    .poster{
+      aspect-ratio: 2 / 3;
+      background: rgba(255,255,255,.04);
+      overflow:hidden;
+    }
+
+    .poster img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .posterPlaceholder{
+      width:100%;
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:rgba(255,255,255,.45);
+      font-size:13px;
+      padding:16px;
+      text-align:center;
+    }
+
+    .body{
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      flex:1 1 auto;
+    }
+
+    .rowTop{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+    }
+
+    .title{
+      font-size:15px;
+      font-weight:900;
+      line-height:1.25;
+    }
+
+    .pill{
+      flex:0 0 auto;
+      font-size:11px;
+      font-weight:900;
+      color:#fff;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      border-radius:999px;
+      padding:5px 9px;
+    }
+
+    .meta{
+      color:rgba(255,255,255,.72);
+      font-size:12px;
+      line-height:1.35;
+    }
+
+    .qdScore{
+      display:inline-block;
+      font-weight:900;
+      color:#ff9a57;
+    }
+
+    .tmdbScore{
+      display:inline-block;
+      font-weight:800;
+      color:#d7e7ff;
+    }
+
+    .gemScore{
+      display:inline-block;
+      font-weight:900;
+      color:#8ee7c1;
+    }
+
+    .overview{
+      color:rgba(255,255,255,.84);
+      font-size:13px;
+      line-height:1.45;
+      display:-webkit-box;
+      -webkit-line-clamp:4;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+      min-height:72px;
+    }
+
+    .actions{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:auto;
+      padding-top:4px;
+      align-items:stretch;
+    }
+
+    .actions .btn{
+      width:100%;
+      justify-content:center;
+      text-align:center;
+    }
+
+    .actions .btn.full{
+      grid-column: 1 / -1;
+    }
+
+    .foot{
+      margin-top:16px;
+      color:rgba(255,255,255,.62);
+      font-size:12px;
+      line-height:1.45;
+    }
+  
+    .tvDestMenu{
+      display:none;
+      margin-top:10px;
+      padding:10px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .tvDestMenu.open{
+      display:flex;
+    }
+
+    .tvDestTitle{
+      width:100%;
+      font-size:12px;
+      font-weight:800;
+      color: rgba(255,255,255,.78);
+      margin-bottom:2px;
+    }
+
+    .tvDestBtn{
+      border:none;
+      border-radius:12px;
+      padding:10px 12px;
+      min-height:40px;
+      font-weight:800;
+      color:#fff;
+      cursor:pointer;
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.10);
+    }
+
+    .tvDestBtn:hover{
+      background: rgba(255,255,255,.12);
+      border-color: rgba(255,255,255,.18);
+    }
+
+    .whyBtn{
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .whyBtn:hover{
+      background: rgba(255,255,255,.10);
+      border-color: rgba(255,255,255,.16);
+    }
+
+    
+    .body{
+      position:static;
+    }
+
+    
+    
+.whyBox{
+  display:none;
+  position:absolute;
+  inset:0;
+  z-index:40;
+
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.12);
+
+  background:
+    radial-gradient(800px 400px at 20% -20%, rgba(120,160,255,.10), transparent 60%),
+    radial-gradient(600px 300px at 120% 120%, rgba(255,120,40,.10), transparent 60%),
+    rgba(10,14,20,.96);
+
+  backdrop-filter: blur(12px);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.06),
+    0 22px 55px rgba(0,0,0,.45);
+
+  overflow:hidden;
+}
+
+    .whyBox.open{
+      display:block;
+    }
+
+    
+    .whyClose{
+      position:absolute;
+      top:12px;
+      right:12px;
+      width:42px;
+      height:42px;
+      border-radius:50%;
+      border:1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.06);
+      backdrop-filter: blur(6px);
+      color:#fff;
+      font-size:20px;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      transition:
+        transform .15s ease,
+        background .15s ease,
+        border-color .15s ease;
+      z-index:3;
+    }
+
+    .whyClose:hover{
+      transform:scale(1.08);
+      background: rgba(255,255,255,.12);
+      border-color: rgba(255,255,255,.28);
+    }
+
+    .whyClose:hover{
+      background: rgba(255,255,255,.14);
+      border-color: rgba(255,255,255,.20);
+    }
+
+    .whyScroll{
+      position:absolute;
+      inset:0;
+      overflow:auto;
+      padding:16px 16px 16px 16px;
+      padding-top:52px;
+    }
+
+    
+.whyTitle{
+  font-size:15px;
+  font-weight:900;
+  color:#fff;
+  margin-bottom:12px;
+  letter-spacing:.3px;
+
+  background:linear-gradient(90deg,#fff,#9fb3ff);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+    .whyGrid{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:6px 10px;
+      align-items:center;
+      font-size:12px;
+    }
+
+    .whyKey{
+      color: rgba(255,255,255,.70);
+    }
+
+    
+.whyVal{
+  color:#fff;
+  font-weight:900;
+  text-align:right;
+  font-size:13px;
+  letter-spacing:.2px;
+}
+
+    .whyDivider{
+      height:1px;
+      grid-column:1 / -1;
+      background: linear-gradient(90deg, rgba(255,255,255,.10), transparent);
+      margin:4px 0;
+    }
+
+    .actions{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:auto;
+      padding-top:4px;
+      align-items:stretch;
+    }
+
+    .actions .btn{
+      width:100%;
+      justify-content:center;
+      text-align:center;
+    }
+
+    .actions .btn.full{
+      grid-column: 1 / -1;
+    }
+
+    .whyBtn{
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .whyBtn:hover{
+      background: rgba(255,255,255,.10);
+      border-color: rgba(255,255,255,.16);
+    }
+
+    .whyBox{
+      display:none;
+      margin-top:10px;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+    }
+
+    .whyBox.open{
+      display:block;
+    }
+
+    .whyTitle{
+      font-size:12px;
+      font-weight:900;
+      color: rgba(255,255,255,.84);
+      margin-bottom:8px;
+      letter-spacing:.2px;
+    }
+
+    .whyGrid{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:6px 10px;
+      align-items:center;
+      font-size:12px;
+    }
+
+    .whyKey{
+      color: rgba(255,255,255,.70);
+    }
+
+    .whyVal{
+      color: rgba(255,255,255,.92);
+      font-weight:800;
+      text-align:right;
+    }
+
+    .whyDivider{
+      height:1px;
+      grid-column:1 / -1;
+      background: linear-gradient(90deg, rgba(255,255,255,.10), transparent);
+      margin:4px 0;
+    }
+
+    .sourceBadges{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      margin-top:6px;
+      margin-bottom:2px;
+    }
+
+    .sourceBadge{
+      font-size:11px;
+      font-weight:900;
+      color:#fff;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.08);
+      border-radius:999px;
+      padding:5px 9px;
+      line-height:1;
+    }
+
+    .sourceBadge.tmdb{
+      background: rgba(78,161,255,.16);
+      border-color: rgba(78,161,255,.30);
+    }
+
+    .sourceBadge.trakt{
+      background: rgba(124,92,255,.16);
+      border-color: rgba(124,92,255,.30);
+    }
+
+    .sourceBadge.letterboxd{
+      background: rgba(56,189,248,.16);
+      border-color: rgba(56,189,248,.30);
+    }
+
+    .sourceBadge.aggregate{
+      background: rgba(255,120,40,.16);
+      border-color: rgba(255,140,60,.30);
+    }
+
+    @media (max-width: 1100px){
+      .filters{
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 720px){
+      .filters{
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .filters{
+      display:grid;
+      grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) minmax(220px, 1fr) minmax(220px, 1fr);
+      grid-template-areas:
+        "source-label media-label consensus-label ."
+        "source       media       consensus       reload";
+      gap:10px 14px;
+      align-items:end;
+    }
+
+    .filters > label[for="discoverSource"]{ grid-area: source-label; }
+    .filters > #discoverSource{ grid-area: source; }
+
+    .filters > label[for="discoverMedia"]{ grid-area: media-label; }
+    .filters > #discoverMedia{ grid-area: media; }
+
+    .filters > label[for="discoverConsensus"]{ grid-area: consensus-label; }
+    .filters > #discoverConsensus{ grid-area: consensus; }
+
+    .filters > #discoverReloadBtn{
+      grid-area: reload;
+      width:100%;
+      align-self:end;
+    }
+
+    @media (max-width: 1150px){
+      .filters{
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+          "source-label media-label"
+          "source media"
+          "consensus-label ."
+          "consensus reload";
+      }
+    }
+
+    @media (max-width: 720px){
+      .filters{
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "source-label"
+          "source"
+          "media-label"
+          "media"
+          "consensus-label"
+          "consensus"
+          "reload";
+      }
+    }
+
+    .filters{
+      display:grid !important;
+      grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
+      gap:14px !important;
+      align-items:end !important;
+    }
+
+    .filterField{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      min-width:0;
+    }
+
+    .filterField label{
+      margin:0;
+    }
+
+    .filterField select,
+    .filterField button{
+      width:100%;
+    }
+
+    .filterField.buttonField{
+      justify-content:flex-end;
+    }
+
+    .filterField.buttonField button{
+      min-height:44px;
+    }
+
+    @media (max-width: 1100px){
+      .filters{
+        grid-template-columns: 1fr 1fr !important;
+      }
+    }
+
+    @media (max-width: 720px){
+      .filters{
+        grid-template-columns: 1fr !important;
+      }
+    }
+
+    .filters input[type="number"]{
+      -moz-appearance:textfield;
+      appearance:textfield;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.12);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 14px;
+      line-height: 1.2;
+      outline: none;
+      box-shadow: none;
+      transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+      width: 100%;
+    }
+
+    .filters input[type="number"]::placeholder{
+      color: rgba(255,255,255,.45);
+    }
+
+    .filters input[type="number"]:focus{
+      border-color: rgba(120,140,255,.7);
+      box-shadow: 0 0 0 2px rgba(120,140,255,.15);
+      background: rgba(255,255,255,.07);
+    }
+
+    .filters input[type="number"]::-webkit-outer-spin-button,
+    .filters input[type="number"]::-webkit-inner-spin-button{
+      opacity: .45;
+      filter: invert(1);
+    }
+
+    .advancedPanel{
+      display:none;
+      grid-column: 1 / -1;
+      margin-top:4px;
+      padding:14px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:16px;
+      background: rgba(255,255,255,.03);
+    }
+
+    .advancedPanel.open{
+      display:block;
+    }
+
+    .advancedGrid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap:14px;
+    }
+
+    #discoverAdvancedToggle{
+      width:100%;
+      min-height:44px;
+    }
+
+    @media (max-width: 720px){
+      .advancedGrid{
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .discoverMoreWrap{
+      display:flex;
+      justify-content:center;
+      margin-top:18px;
+    }
+
+    #discoverLoadMoreBtn{
+      min-width:180px;
+    }
+
+    .btn.libraryOwned{
+      background: rgba(70,160,100,.16);
+      border-color: rgba(90,200,120,.32);
+      color: rgba(220,255,228,.96);
+      cursor: default;
+    }
+
+    .btn.libraryOwned:hover{
+      background: rgba(70,160,100,.16);
+      border-color: rgba(90,200,120,.32);
+    }
+
+    .sourceBadge.tvmaze{
+      background: rgba(255,180,80,.16);
+      border-color: rgba(255,180,80,.30);
+    }
+
+    .sourceBadge.anilist{
+      background: rgba(93,95,239,.16);
+      border-color: rgba(93,95,239,.30);
+    }
+
+    .sourceBadge.letterboxd{
+      background: rgba(80,220,160,.16);
+      border-color: rgba(80,220,160,.30);
+    }
+
+    .whyReasons{
+      margin-top:8px;
+      display:grid;
+      gap:6px;
+    }
+
+    .whyReason{
+      grid-column:1 / -1;
+      font-size:11px;
+      font-weight:600;
+      color: rgba(255,255,255,.60);
+      border-left:2px solid rgba(255,255,255,.15);
+      padding-left:10px;
+      margin-top:-2px;
+      margin-bottom:4px;
+      background:transparent;
+      border-radius:0;
+    }
+
+    .whyReason.subtle{
+      border-left-color: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.45);
+    }
+
+    .btn.libraryRequested{
+      background: rgba(200,150,70,.16);
+      border-color: rgba(235,180,90,.30);
+      color: rgba(255,241,214,.96);
+      cursor: default;
+    }
+
+    .btn.libraryRequested:hover{
+      background: rgba(200,150,70,.16);
+      border-color: rgba(235,180,90,.30);
+    }
+
+    .btnSpinner{
+      display:inline-block;
+      width:12px;
+      height:12px;
+      margin-right:8px;
+      border-radius:999px;
+      border:2px solid rgba(255,255,255,.22);
+      border-top-color: rgba(255,255,255,.92);
+      animation: qdSpin .8s linear infinite;
+      vertical-align:-2px;
+    }
+
+    @keyframes qdSpin{
+      from{ transform: rotate(0deg); }
+      to{ transform: rotate(360deg); }
+    }
+
+    /* discover filter bar reset */
+    .filters{
+      display:grid !important;
+      grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
+      gap:14px !important;
+      align-items:end !important;
+    }
+
+    .filters .field,
+    .filters .buttonField{
+      min-width:0 !important;
+      display:flex !important;
+      flex-direction:column !important;
+      gap:8px !important;
+    }
+
+    .filters .buttonField{
+      justify-content:flex-end !important;
+    }
+
+    .filters .field select,
+    .filters .field input,
+    .filters .buttonField button{
+      width:100% !important;
+      min-width:0 !important;
+    }
+
+    .advancedPanel{
+      display:none !important;
+      grid-column: 1 / -1 !important;
+      margin-top:14px !important;
+      padding:14px !important;
+      border:1px solid rgba(255,255,255,.10) !important;
+      border-radius:16px !important;
+      background: rgba(255,255,255,.03) !important;
+      width:100% !important;
+    }
+
+    .advancedPanel.open{
+      display:block !important;
+    }
+
+    .advancedGrid{
+      display:grid !important;
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      gap:14px !important;
+      align-items:end !important;
+      width:100% !important;
+    }
+
+    .advancedGrid .filterField{
+      min-width:0 !important;
+      display:flex !important;
+      flex-direction:column !important;
+      gap:8px !important;
+    }
+
+    .advancedGrid select,
+    .advancedGrid input{
+      width:100% !important;
+      min-width:0 !important;
+    }
+
+    @media (max-width: 1400px){
+      .filters{
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      }
+    }
+
+    @media (max-width: 1100px){
+      .filters{
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      }
+
+      .advancedGrid{
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      }
+    }
+
+    @media (max-width: 720px){
+      .filters{
+        grid-template-columns: 1fr !important;
+      }
+
+      .advancedGrid{
+        grid-template-columns: 1fr !important;
+      }
+    }
+
+    /* dropdown readability */
+    select,
+    .filters select,
+    .advancedGrid select,
+    #discoverSource,
+    #discoverMedia,
+    #discoverConsensus,
+    #discoverGenre,
+    #discoverSort,
+    #discoverMode,
+    #discoverProvider,
+    #discoverMinRating{
+      background: rgba(8,12,18,.96) !important;
+      color: rgba(255,255,255,.96) !important;
+      border: 1px solid rgba(255,255,255,.14) !important;
+    }
+
+    select option,
+    .filters select option,
+    .advancedGrid select option,
+    #discoverSource option,
+    #discoverMedia option,
+    #discoverConsensus option,
+    #discoverGenre option,
+    #discoverSort option,
+    #discoverMode option,
+    #discoverProvider option,
+    #discoverMinRating option{
+      background: #0b0f14 !important;
+      color: #f5f7fb !important;
+    }
+
+    select:focus,
+    .filters select:focus,
+    .advancedGrid select:focus{
+      border-color: rgba(120,140,255,.60) !important;
+      box-shadow: 0 0 0 3px rgba(120,140,255,.14) !important;
+      outline: none !important;
+    }
+
+    .whyChip{
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      margin-left:8px;
+      padding:2px 8px;
+      font-size:11px;
+      font-weight:800;
+      line-height:1.1;
+      border-radius:999px;
+      background:rgba(120,140,255,.12);
+      border:1px solid rgba(120,140,255,.25);
+      color:#dfe6ff;
+      cursor:pointer;
+      transition:all .15s ease;
+      vertical-align:middle;
+      white-space:nowrap;
+    }
+
+    .whyChip:hover{
+      background:rgba(120,140,255,.22);
+      border-color:rgba(120,140,255,.45);
+    }
+
+    .whyChip::before{
+      content:"ⓘ";
+      font-size:11px;
+      line-height:1;
+    }
+
+    /* final why overlay fix */
+    .discoverItem{
+      position:relative !important;
+      overflow:hidden !important;
+      isolation:isolate !important;
+    }
+
+    .body{
+      position:static !important;
+    }
+
+    .whyBox{
+      display:none !important;
+      position:absolute !important;
+      inset:0 !important;
+      z-index:40 !important;
+      border-radius:18px !important;
+      border:1px solid rgba(255,255,255,.10) !important;
+      background: rgba(10,14,20,.985) !important;
+      box-shadow: 0 18px 40px rgba(0,0,0,.38) !important;
+      overflow:hidden !important;
+      margin:0 !important;
+      width:auto !important;
+      max-height:none !important;
+    }
+
+    .whyBox.open{
+      display:block !important;
+    }
+
+    .whyClose{
+      position:absolute !important;
+      top:10px !important;
+      right:10px !important;
+      width:34px !important;
+      height:34px !important;
+      z-index:2 !important;
+    }
+
+    .whyScroll{
+      position:absolute !important;
+      inset:0 !important;
+      overflow:auto !important;
+      padding:16px !important;
+      padding-top:52px !important;
+    }
+
+    /* why overlay polish */
+    .discoverItem.whyOpen .poster img,
+    .discoverItem.whyOpen .posterPlaceholder,
+    .discoverItem.whyOpen .body > *:not(.whyBox){
+      filter: blur(3px);
+      opacity: .22;
+      transition: filter .18s ease, opacity .18s ease;
+    }
+
+    .discoverItem .poster img,
+    .discoverItem .posterPlaceholder,
+    .discoverItem .body > *:not(.whyBox){
+      transition: filter .18s ease, opacity .18s ease;
+    }
+
+    .whyBox.open{
+      display:block !important;
+      animation: whyFadeIn .18s ease;
+    }
+
+    @keyframes whyFadeIn{
+      from{
+        opacity:0;
+        transform: scale(.985);
+      }
+      to{
+        opacity:1;
+        transform: scale(1);
+      }
+    }
+
+    .whyBox::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.04), transparent 28%),
+        radial-gradient(900px 320px at 10% 0%, rgba(124,92,255,.10), transparent 55%),
+        radial-gradient(700px 260px at 100% 100%, rgba(78,161,255,.08), transparent 55%);
+      z-index:0;
+    }
+
+    .whyScroll,
+    .whyClose{
+      position:relative;
+      z-index:1;
+    }
+
+    .whyClose{
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08),
+        0 8px 22px rgba(0,0,0,.22);
+    }
+
+    .whyClose:active{
+      transform: scale(.96);
+    }
+
+      .backToTopBtn{
+        position: fixed;
+        right: 20px;
+        bottom: 24px;
+        z-index: 60;
+        border: 1px solid rgba(255,255,255,.14);
+        background: rgba(15,18,24,.88);
+        color: rgba(255,255,255,.96);
+        box-shadow: 0 16px 40px rgba(0,0,0,.35);
+        backdrop-filter: blur(10px);
+        border-radius: 999px;
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(10px);
+        transition: opacity .18s ease, transform .18s ease, background .18s ease, border-color .18s ease;
+      }
+
+      .backToTopBtn.show{
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+      }
+
+      .backToTopBtn:hover{
+        background: rgba(28,33,42,.96);
+        border-color: rgba(255,255,255,.22);
+      }
+
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo"><img src="/static/icons/favicon.svg" alt="QueueDeck"></div>
+        <div>
+          <h1>Discover</h1>
+          <div class="sub">Find trending movies and TV, then request them directly through your existing QueueDeck + Seerr flow.</div>
+        </div>
+      </div>
+
+      <div class="top-links">
+        <button id="qdOpenSeerrSearch" class="btn secondary" type="button">🔎 Search / Request</button>
+        {% set username = (me.username if me and me.username else 'User') %}
+        {% set initial = (username[:1] | upper) %}
+        <div class="userMenu" id="userMenu">
+          <button class="userMenuBtn" id="userMenuBtn" type="button" aria-haspopup="menu" aria-expanded="false">
+            <span class="userAvatar">{{ initial }}</span>
+            <span class="userMenuName">{{ username }}</span>
+            <span class="userMenuChevron">▾</span>
+          </button>
+
+          <div class="userDropdown" id="userDropdown" role="menu">
+            <div class="userDropdownHead">
+              <div class="userDropdownTitle">{{ username }}</div>
+              <div class="userDropdownSub">QueueDeck user</div>
+            </div>
+            <a href="/">Dashboard</a>
+              <a href="/settings">Preferences</a>
+            <a href="/stats">Statistics</a>
+            <a href="/hidden">Hidden Items</a>
+            {% if me and me.get("is_admin") %}<a href="/admin/settings">Admin Settings</a>{% endif %}
+            <a class="danger" href="/logout">Log out</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="filters">
+        <div class="field">
+          <label for="discoverSource">Source</label>
+          <select id="discoverSource">
+            <optgroup label="Movies & TV">
+              <option value="aggregate">Aggregate</option>
+              <option value="tmdb_trending">TMDb Trending</option>
+              <option value="tmdb_popular">TMDb Popular</option>
+              <option value="trakt_trending">Trakt Trending</option>
+              <option value="trakt_popular">Trakt Popular</option>
+              <option value="tvmaze_airing">TVMaze Airing</option>
+            </optgroup>
+            <optgroup label="Movies" id="discoverLetterboxdOptgroup">
+              <option value="letterboxd_aggregate">Letterboxd Aggregate</option>
+              <option value="letterboxd">Letterboxd Feed 1</option>
+            </optgroup>
+            <optgroup label="Anime">
+              <option value="anime_aggregate">Anime Aggregate</option>
+              <option value="anilist_trending">AniList Trending</option>
+              <option value="anilist_popular">AniList Popular</option>
+              <option value="anilist_genre">AniList By Genre</option>
+              <option value="jikan_anime_hot">Anime Hot (Jikan)</option>
+              <option value="jikan_anime_rising">Anime Rising (Jikan)</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="discoverMedia">Media Type</label>
+          <select id="discoverMedia">
+            <option value="all">All</option>
+            <option value="movie">Movies</option>
+            <option value="tv">TV</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="discoverConsensus">Consensus</label>
+          <select id="discoverConsensus">
+            <option value="all">All</option>
+            <option value="consensus">Consensus Only (2+ sources)</option>
+                  <option value="strong">Strong Consensus (3+ sources)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="discoverGenre">Genre</label>
+          <select id="discoverGenre">
+            <option value="all">All Genres</option>
+            <option value="28">Action</option>
+            <option value="12">Adventure</option>
+            <option value="16">Animation</option>
+            <option value="35">Comedy</option>
+            <option value="80">Crime</option>
+            <option value="99">Documentary</option>
+            <option value="18">Drama</option>
+            <option value="10751">Family</option>
+            <option value="14">Fantasy</option>
+            <option value="27">Horror</option>
+            <option value="9648">Mystery</option>
+            <option value="10749">Romance</option>
+            <option value="878">Sci-Fi</option>
+            <option value="53">Thriller</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="discoverSort">Sort By</label>
+          <select id="discoverSort">
+            <option value="recommended">Recommended</option>
+            <option value="hot_first">HOT first</option>
+            <option value="rising_first">Rising first</option>
+            <option value="sources_desc">Most sources</option>
+            <option value="rating_weighted">Highest rating</option>
+            <option value="newest">Newest</option>
+</select>
+        </div>
+
+        <div class="field">
+          <label for="discoverMode">Mode</label>
+          <select id="discoverMode">
+            <option value="standard">Standard</option>
+            <option value="hidden_gems">Hidden Gems</option>
+          </select>
+        </div>
+
+        <div class="buttonField">
+          <button id="discoverAdvancedToggle" type="button" class="btn secondary">Advanced Filters</button>
+        </div>
+
+        <div class="buttonField">
+          <button id="discoverReloadBtn" type="button">Load Discover</button>
+        </div>
+
+        <div id="discoverAdvancedPanel" class="advancedPanel">
+          <div class="advancedGrid">
+            <div class="filterField">
+              <label for="discoverYearFrom">Year From</label>
+              <input id="discoverYearFrom" type="number" min="1900" max="2100" step="1" placeholder="1990" />
+            </div>
+
+            <div class="filterField">
+              <label for="discoverYearTo">Year To</label>
+              <input id="discoverYearTo" type="number" min="1900" max="2100" step="1" placeholder="2026" />
+            </div>
+
+            <div class="filterField">
+              <label for="discoverProvider">Streaming</label>
+              <select id="discoverProvider">
+                <option value="all">All Providers</option>
+                <option value="8">Netflix</option>
+                <option value="337">Disney+</option>
+                <option value="1899">Max</option>
+                <option value="15">Hulu</option>
+                <option value="9">Prime Video</option>
+                <option value="350">Apple TV+</option>
+                <option value="531">Paramount+</option>
+                <option value="387">Peacock</option>
+              </select>
+            </div>
+
+            <div class="filterField">
+              <label for="discoverMinRating">Min Rating</label>
+              <select id="discoverMinRating">
+                <option value="">Any</option>
+                <option value="6">6.0+</option>
+                <option value="6.5">6.5+</option>
+                <option value="7">7.0+</option>
+                <option value="7.5">7.5+</option>
+                <option value="8">8.0+</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="status" id="discoverStatus">Loading discover data…</div>
+
+      <div id="discoverPrimeOverlay" class="discoverPrimeOverlay">
+        <div class="discoverPrimeTitle">Discover is being prepared</div>
+        <div id="discoverPrimeText" class="discoverPrimeText">Preparing Discover data...</div>
+        <div class="discoverPrimeBarWrap">
+          <div id="discoverPrimeBar" class="discoverPrimeBar"></div>
+        </div>
+        <div id="discoverPrimeMeta" class="discoverPrimeMeta">Please wait while QueueDeck finishes priming Discover.</div>
+      </div>
+      <div class="discoverGrid" id="discoverGrid"></div>
+      <div class="discoverMoreWrap">
+        <button class="btn secondary" id="discoverLoadMoreBtn" type="button" style="display:none;">Load More</button>
+        <button class="btn secondary" id="discoverBackToTopBtn" type="button">Back to Top</button>
+      </div>
+
+      <div class="foot">
+        This product uses the TMDB API but is not endorsed or certified by TMDB.
+      </div>
+    </div>
+  </div>
+
+  <div id="qdSeerrSearchModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.68); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+    <div style="width:min(1100px, 96vw); max-height:90vh; overflow:auto; background:#0f131a; border:1px solid rgba(255,255,255,.12); border-radius:18px; box-shadow:0 30px 80px rgba(0,0,0,.45); padding:18px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;">
+        <div>
+          <div style="font-size:18px; font-weight:800;">Search & Request</div>
+          <div style="font-size:13px; opacity:.72;">Search Seerr and request movies or shows without leaving Discover.</div>
+        </div>
+        <button id="qdCloseSeerrSearch" class="btn secondary" type="button">Close</button>
+      </div>
+
+      <input
+        id="qdSeerrQuery"
+        type="text"
+        placeholder="Search movies or TV..."
+        autocomplete="off"
+        spellcheck="false"
+        style="width:100%; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:#fff; outline:none;"
+      />
+
+      <div id="qdSeerrStatus" style="margin-top:10px; font-size:13px; opacity:.78;">Type 2+ characters to search.</div>
+      <div id="qdSeerrResults" style="margin-top:14px; display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:14px;"></div>
+    </div>
+  </div>
+
+  <div id="qdSeerrTvChoiceModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.68); z-index:10000; align-items:center; justify-content:center; padding:20px;">
+    <div style="width:min(720px, 96vw); background:#0f131a; border:1px solid rgba(255,255,255,.12); border-radius:18px; box-shadow:0 30px 80px rgba(0,0,0,.45); padding:18px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px;">
+        <div id="qdSeerrTvChoiceTitle" style="font-size:17px; font-weight:800;">Choose TV destination</div>
+        <button id="qdSeerrTvChoiceClose" class="btn secondary" type="button">Close</button>
+      </div>
+      <div id="qdSeerrTvChoiceList" style="display:grid; gap:10px;"></div>
+    </div>
+  </div>
+
+  <script>
+    const discoverGrid = document.getElementById("discoverGrid");
+    const discoverStatus = document.getElementById("discoverStatus");
+    const discoverIsAdmin = {{ "true" if current_user and current_user.get("is_admin") else "false" }};
+    const discoverSource = document.getElementById("discoverSource");
+    let QD_FOR_YOU_PROFILE = null;
+    const discoverMedia = document.getElementById("discoverMedia");
+    const discoverConsensus = document.getElementById("discoverConsensus");
+    const discoverGenre = document.getElementById("discoverGenre");
+    const discoverSort = document.getElementById("discoverSort");
+    const discoverMode = document.getElementById("discoverMode");
+    const discoverAdvancedToggle = document.getElementById("discoverAdvancedToggle");
+    const discoverAdvancedPanel = document.getElementById("discoverAdvancedPanel");
+    const discoverYearFrom = document.getElementById("discoverYearFrom");
+    const discoverYearTo = document.getElementById("discoverYearTo");
+    const discoverProvider = document.getElementById("discoverProvider");
+    const discoverMinRating = document.getElementById("discoverMinRating");
+    const discoverReloadBtn = document.getElementById("discoverReloadBtn");
+    const discoverLoadMoreBtn = document.getElementById("discoverLoadMoreBtn");
+    const discoverBackToTopBtn = document.getElementById("discoverBackToTopBtn");
+
+    const qdAniListGenres = [
+      "Action",
+      "Adventure",
+      "Comedy",
+      "Drama",
+      "Ecchi",
+      "Fantasy",
+      "Horror",
+      "Mahou Shoujo",
+      "Mecha",
+      "Music",
+      "Mystery",
+      "Psychological",
+      "Romance",
+      "Sci-Fi",
+      "Slice of Life",
+      "Sports",
+      "Supernatural",
+      "Thriller"
+    ];
+
+    let qdDefaultGenreOptions = "";
+
+    function qdSetGenreOptionsForSource(){
+      if (!discoverSource || !discoverGenre) return;
+
+      const src = String(discoverSource.value || "");
+      const isAniList =
+        src === "anime_aggregate" ||
+        src === "anilist_trending" ||
+        src === "anilist_popular" ||
+        src === "anilist_genre" ||
+        src === "jikan_anime_hot" ||
+        src === "jikan_anime_rising";
+
+      if (!qdDefaultGenreOptions){
+        qdDefaultGenreOptions = discoverGenre.innerHTML;
+      }
+
+      if (isAniList){
+        const current = String(discoverGenre.value || "all");
+        discoverGenre.innerHTML =
+          '<option value="all">All</option>' +
+          qdAniListGenres.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join("");
+
+        if (src === "anilist_genre" && qdAniListGenres.includes(current)){
+          discoverGenre.value = current;
+        } else {
+          discoverGenre.value = "all";
+        }
+
+        if (discoverMedia){
+          discoverMedia.value = "tv";
+          discoverMedia.disabled = true;
+        }
+
+        if (discoverProvider){
+          discoverProvider.value = "all";
+          discoverProvider.disabled = true;
+        }
+      } else {
+        discoverGenre.innerHTML = qdDefaultGenreOptions;
+
+        if (discoverMedia){
+          discoverMedia.disabled = false;
+        }
+
+        if (discoverProvider){
+          discoverProvider.disabled = false;
+        }
+
+        if (!discoverGenre.value){
+          discoverGenre.value = "all";
+        }
+      }
+    }
+
+    let discoverPage = 1;
+    let discoverLoadInFlightKey = "";
+    const discoverPrefetchCache = new Map();
+    const discoverPrefetchInFlight = new Map();
+
+    function discoverBuildUrl(page=1){
+      const source = discoverSource.value || "tmdb_trending";
+      const media = discoverMedia.value || "all";
+      const genre = discoverGenre ? (discoverGenre.value || "all") : "all";
+      const provider = discoverProvider ? (discoverProvider.value || "all") : "all";
+      const minRating = discoverMinRating ? String(discoverMinRating.value || "").trim() : "";
+      const yearFrom = discoverYearFrom ? String(discoverYearFrom.value || "").trim() : "";
+      const yearTo = discoverYearTo ? String(discoverYearTo.value || "").trim() : "";
+
+      return `/api/discover/items?source=${encodeURIComponent(source)}&media=${encodeURIComponent(media)}&genre=${encodeURIComponent(genre)}&provider=${encodeURIComponent(provider)}&min_rating=${encodeURIComponent(minRating)}&year_from=${encodeURIComponent(yearFrom)}&year_to=${encodeURIComponent(yearTo)}&page=${encodeURIComponent(page)}&sort=${encodeURIComponent(discoverSort?.value || "")}`;
+    }
+
+    function discoverPrefetchKey(page=1){
+      return discoverBuildUrl(page);
+    }
+
+    async function fetchDiscoverPayload(page=1){
+      const key = discoverPrefetchKey(page);
+
+      if (discoverPrefetchCache.has(key)){
+        const cached = discoverPrefetchCache.get(key);
+        discoverPrefetchCache.delete(key);
+        console.debug("[discover-prefetch] cache-hit", key);
+        return cached;
+      }
+
+      if (discoverPrefetchInFlight.has(key)){
+        console.debug("[discover-prefetch] await-inflight", key);
+        const inflight = discoverPrefetchInFlight.get(key);
+        try{
+          const cached = await inflight;
+          if (cached){
+            discoverPrefetchCache.delete(key);
+            return cached;
+          }
+        }catch(_){}
+      }
+
+      console.debug("[discover-prefetch] direct-fetch", key);
+      const r = await fetch(discoverBuildUrl(page), {
+        cache: "no-store",
+        credentials: "same-origin"
+      });
+      const j = await r.json().catch(() => ({}));
+      return { r, j };
+    }
+
+    function prefetchDiscoverPage(page=1){
+      const key = discoverPrefetchKey(page);
+      if (discoverPrefetchCache.has(key) || discoverPrefetchInFlight.has(key)) return;
+
+      console.debug("[discover-prefetch] start", key);
+
+      const promise = fetch(discoverBuildUrl(page), {
+        cache: "no-store",
+        credentials: "same-origin"
+      })
+        .then(async (r) => {
+          const j = await r.json().catch(() => ({}));
+          if (r.ok && j && j.ok){
+            const payload = { r: { ok: true, status: r.status }, j };
+            discoverPrefetchCache.set(key, payload);
+            console.debug("[discover-prefetch] ready", key, Array.isArray(j.items) ? j.items.length : 0);
+            return payload;
+          }
+          console.debug("[discover-prefetch] not-ok", key, r.status);
+          return null;
+        })
+        .catch((e) => {
+          console.debug("[discover-prefetch] error", key, String(e && e.message || e || ""));
+          return null;
+        })
+        .finally(() => {
+          discoverPrefetchInFlight.delete(key);
+        });
+
+      discoverPrefetchInFlight.set(key, promise);
+    }
+    let discoverHasMore = true;
+    let discoverLoadMoreTimeout = null;
+    let discoverRequestSeq = 0;
+    let discoverActiveRequestSeq = 0;
+
+    let seerrConfigured = false;
+    let seerrTvDestinations = [];
+
+    function setStatus(text, kind=""){
+      discoverStatus.className = "status" + (kind ? " " + kind : "");
+      discoverStatus.textContent = text;
+    }
+
+    function ratingDot(v){
+      const n = Number(v || 0);
+      if (n >= 8.0) return "🟢";
+      if (n >= 7.0) return "🔵";
+      if (n >= 6.0) return "🟠";
+      return "🔴";
+    }
+
+    function discoverWeightedRating(i){
+      const priorMean = 6.8;
+      const minVotes = 200;
+      const R = Number(i.vote_average || 0);
+      const v = Number(i.vote_count || 0);
+      if (R <= 0) return 0;
+      return ((v / (v + minVotes)) * R) + ((minVotes / (v + minVotes)) * priorMean);
+    }
+
+    function buildWhyReasons(item, opts={}){
+      const reasons = [];
+
+      const providerHits = Number(item.provider_hits || 0);
+      const pop = Number(item.popularity || 0);
+      const wr = discoverWeightedRating(item);
+      const rating = Number(item.vote_average || 0);
+      const votes = Number(item.vote_count || 0);
+      const mode = String(opts.mode || "standard");
+      const genreMode = String(opts.genreMode || "all");
+      const yearFromNum = opts.yearFromNum || null;
+      const yearToNum = opts.yearToNum || null;
+
+      const scores = item.provider_scores || {};
+
+      if (providerHits >= 3){
+        reasons.push({ text: `Consensus across ${providerHits} sources`, subtle: false });
+      } else if (providerHits === 2){
+        reasons.push({ text: "Seen across multiple sources", subtle: false });
+      }
+
+      if (scores.tmdb_trending !== undefined && Number(scores.tmdb_trending || 0) >= 0.65){
+        reasons.push({ text: "Trending strongly on TMDb", subtle: false });
+      }
+
+      if (scores.tmdb_popular !== undefined && Number(scores.tmdb_popular || 0) >= 0.65){
+        reasons.push({ text: "Popular on TMDb", subtle: true });
+      }
+
+      if (scores.trakt_trending !== undefined && Number(scores.trakt_trending || 0) >= 0.65){
+        reasons.push({ text: "Trending on Trakt", subtle: false });
+      }
+
+      if (scores.trakt_popular !== undefined && Number(scores.trakt_popular || 0) >= 0.65){
+        reasons.push({ text: "Popular with Trakt users", subtle: true });
+      }
+
+      if (scores.tvmaze_airing !== undefined){
+        reasons.push({ text: "Airing soon / currently active", subtle: false });
+      }
+
+      if (wr >= 7.8){
+        reasons.push({ text: `Strong weighted rating (${wr.toFixed(1)})`, subtle: false });
+      } else if (rating >= 7.5 && votes >= 100){
+        reasons.push({ text: `Well rated (${rating.toFixed(1)})`, subtle: true });
+      }
+
+      if (mode === "hidden_gems"){
+        if (pop > 0 && pop <= 35){
+          reasons.push({ text: "Lower mainstream popularity", subtle: false });
+        }
+        if (providerHits <= 2){
+          reasons.push({ text: "Less saturated / more niche", subtle: false });
+        }
+      }
+
+      if (genreMode !== "all"){
+        const names = Array.isArray(item.genres)
+          ? item.genres.map(g => (g && typeof g === "object" ? String(g.name || "") : String(g || ""))).filter(Boolean)
+          : [];
+        if (names.length){
+          reasons.push({ text: `Matches ${names.slice(0,2).join(" / ")}`, subtle: true });
+        } else {
+          reasons.push({ text: "Matches selected genre", subtle: true });
+        }
+      }
+
+      if (yearFromNum || yearToNum){
+        const y = Number(String(item.year || "").trim());
+        if (Number.isFinite(y) && y > 0){
+          reasons.push({ text: `In year range (${y})`, subtle: true });
+        }
+      }
+
+      return reasons.slice(0, 5);
+    }
+
+    function esc(s){
+      return String(s || "").replace(/[&<>"']/g, m => ({
+        "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+      }[m]));
+    }
+
+    function discoverItemKey(item){
+      const media = String(item.media_type || "").trim().toLowerCase();
+      const tmdb = String(item.tmdb_id || "").trim();
+      const imdb = String(item.imdb_id || "").trim();
+      const tvdb = String(item.tvdb_id || "").trim();
+      const tvmaze = String(item.tvmaze_id || "").trim();
+      const title = String(item.title || "").trim().toLowerCase();
+      const year = String(item.year || "").trim();
+
+      if (media && tmdb) return `${media}:tmdb:${tmdb}`;
+      if (media && imdb) return `${media}:imdb:${imdb}`;
+      if (media && tvdb) return `${media}:tvdb:${tvdb}`;
+      if (media && tvmaze) return `${media}:tvmaze:${tvmaze}`;
+      return `${media}:title:${title}:${year}`;
+    }
+
+    function dedupeDiscoverItems(items, append=false){
+      const existing = new Set();
+
+      if (append){
+        discoverGrid.querySelectorAll(".discoverItem[data-discover-key]").forEach(card => {
+          existing.add(String(card.getAttribute("data-discover-key") || ""));
+        });
+      }
+
+      const seen = new Set(existing);
+      const out = [];
+
+      for (const item of (items || [])){
+        const key = discoverItemKey(item);
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        out.push({ ...item, _discover_key: key });
+      }
+
+      return out;
+    }
+
+    function renderNotConfigured(){
+      if (discoverIsAdmin){
+        discoverGrid.innerHTML = `
+          <div class="discoverItem" style="grid-column:1 / -1;">
+            <div class="body">
+              <div class="title">Discover is not configured yet</div>
+              <div class="overview">TMDb has not been configured. Add a TMDb token or API key in Admin Settings under Discover Providers.</div>
+              <div class="actions">
+                <a class="btn secondary" href="/admin/settings#discover-providers">Open Discover Settings</a>
+              </div>
+            </div>
+          </div>
+        `;
+        setStatus("TMDb is not configured yet.", "bad");
+      } else {
+        discoverGrid.innerHTML = `
+          <div class="discoverItem" style="grid-column:1 / -1;">
+            <div class="body">
+              <div class="title">Discover is not available yet</div>
+              <div class="overview">An administrator needs to configure Discover providers before recommendations can be shown here.</div>
+            </div>
+          </div>
+        `;
+        setStatus("Discover has not been configured by an administrator yet.", "bad");
+      }
+    }
+
+    function normalizeDiscoverFilters(){
+      return;
+    }
+
+    function qdSetSortOptionsForMode(){
+      if (!discoverSort) return;
+
+      const mode = discoverMode ? discoverMode.value : "standard";
+      const current = String(discoverSort.value || "").trim();
+
+      const standardOptions = [
+        ["recommended", "Recommended"],
+        ["for_you", "For You"],
+        ["trending", "Trending"],
+        ["trending_weighted", "Weighted trending"],
+        ["hot_first", "HOT first"],
+        ["rising_first", "Rising first"],
+        ["sources_desc", "Most sources"],
+        ["rating_weighted", "Highest rating"],
+        ["newest", "Newest"],
+      ];
+
+      const hiddenGemOptions = [
+        ["hidden_gem_score", "Hidden gem score"],
+        ["for_you", "For You"],
+        ["trending", "Trending"],
+        ["trending_weighted", "Weighted trending"],
+        ["popularity_asc", "Lowest popularity"],
+        ["rating_weighted", "Highest rating"],
+        ["newest", "Newest"],
+      ];
+
+      const opts = mode === "hidden_gems" ? hiddenGemOptions : standardOptions;
+      const valid = new Set(opts.map(x => x[0]));
+
+      discoverSort.innerHTML = opts
+        .map(([value, label]) => `<option value="${value}">${label}</option>`)
+        .join("");
+
+      if (valid.has(current)){
+        discoverSort.value = current;
+      } else {
+        discoverSort.value = mode === "hidden_gems" ? "hidden_gem_score" : "recommended";
+      }
+    }
+
+    async function qdLoadForYouProfile(){
+      try{
+        const r = await fetch("/api/discover/for-you-profile", { cache: "no-store" });
+        const j = await r.json();
+        QD_FOR_YOU_PROFILE = j && typeof j === "object" ? j : null;
+      }catch(_){
+        QD_FOR_YOU_PROFILE = null;
+      }
+    }
+
+    function qdNormTitle(s){
+      return String(s || "")
+        .toLowerCase()
+        .replace(/\(\d{4}\)/g, "")
+        .replace(/[^a-z0-9]+/g, "");
+    }
+
+    function qdWatchKey(item){
+      return `${qdNormTitle(item.title || "")}::${String(item.year || "").trim()}`;
+    }
+
+    function qdIsWatchedByProfile(item, profile){
+      if (!profile || !profile.ok) return false;
+
+      const watchedTmdb = new Set((profile.watched_tmdb_ids || []).map(String));
+      const watchedKeys = new Set((profile.watched_keys || []).map(String));
+
+      const tmdbId = String(item.tmdb_id || "").trim();
+      if (tmdbId && watchedTmdb.has(tmdbId)) return true;
+
+      return watchedKeys.has(qdWatchKey(item));
+    }
+
+    function qdForYouScore(item, profile){
+      if (!profile || !profile.ok) return Number(item.composite_score || 0);
+
+      if (qdIsWatchedByProfile(item, profile)) return -9999;
+
+      let score = Number(item.composite_score || 0) * 0.55;
+
+      const genreWeights = profile.genre_weights || {};
+      const itemGenres = Array.isArray(item.genres) ? item.genres : [];
+      let genreBoost = 0;
+
+      for (const g of itemGenres){
+        if (g && typeof g === "object"){
+          const name = String(g.name || "").trim();
+          if (name && genreWeights[name] !== undefined){
+            genreBoost += Number(genreWeights[name] || 0);
+          }
+        } else {
+          const name = String(g || "").trim();
+          if (name && genreWeights[name] !== undefined){
+            genreBoost += Number(genreWeights[name] || 0);
+          }
+        }
+      }
+
+      score += Math.min(genreBoost, 0.35) * 0.20;
+
+      const mediaType = String(item.media_type || "").trim().toLowerCase();
+      if (profile.preferred_media === "movie" && mediaType === "movie") score += 0.08;
+      if (profile.preferred_media === "tv" && mediaType === "tv") score += 0.08;
+
+      const itemYear = Number(String(item.year || "").trim()) || 0;
+      const yearCenter = Number(profile.year_center || 0);
+      if (itemYear && yearCenter){
+        const diff = Math.abs(itemYear - yearCenter);
+        if (diff <= 2) score += 0.08;
+        else if (diff <= 5) score += 0.05;
+        else if (diff <= 10) score += 0.02;
+      }
+
+      const providerScores = item.provider_scores || {};
+      const looksAnime =
+        providerScores.anilist_anime !== undefined ||
+        providerScores.jikan_anime_hot !== undefined ||
+        providerScores.jikan_anime_rising !== undefined;
+
+      if (looksAnime && Number(profile.anime_affinity || 0) >= 0.35){
+        score += 0.08 * Number(profile.anime_affinity || 0);
+      }
+
+      if (Number(item.in_library_score || 0) > 0) score -= 0.15;
+      if (Number(item.requested_score || 0) > 0) score -= 0.10;
+
+      return Number(score.toFixed(4));
+    }
+
+    let qdDiscoverResultsLimit = 24;
+
+    let discoverPosterObserver = null;
+
+    function ensureDiscoverPosterObserver(){
+      if (discoverPosterObserver) return discoverPosterObserver;
+
+      discoverPosterObserver = new IntersectionObserver((entries) => {
+        for (const entry of entries){
+          if (!entry.isIntersecting) continue;
+
+          const img = entry.target;
+          const src = img.getAttribute("data-src") || "";
+          if (src && !img.getAttribute("src")){
+            img.setAttribute("src", src);
+          }
+          discoverPosterObserver.unobserve(img);
+        }
+      }, {
+        root: null,
+        rootMargin: "1200px 0px",
+        threshold: 0.01
+      });
+
+      return discoverPosterObserver;
+    }
+
+    function hydrateDiscoverPosters(){
+      const observer = ensureDiscoverPosterObserver();
+
+      discoverGrid.querySelectorAll("img[data-discover-poster='1']").forEach(img => {
+        if (img.dataset.posterBound === "1") return;
+        img.dataset.posterBound = "1";
+
+        img.addEventListener("error", () => {
+          const wrap = img.closest(".poster");
+          if (wrap){
+            wrap.innerHTML = '<div class="posterPlaceholder">No poster</div>';
+          }
+        }, { once: true });
+
+        observer.observe(img);
+      });
+    }
+
+    function renderItems(items, append=false){
+      const consensusMode = discoverConsensus ? discoverConsensus.value : "all";
+      const genreMode = discoverGenre ? discoverGenre.value : "all";
+      const sortMode = discoverSort ? discoverSort.value : "trending";
+      const mode = discoverMode ? discoverMode.value : "standard";
+      const providerMode = discoverProvider ? discoverProvider.value : "all";
+      const sourceMode = discoverSource ? String(discoverSource.value || "").trim() : "";
+      const discoverLimit = Math.max(6, Math.min(48, Number(qdDiscoverResultsLimit || 24) || 24));
+
+      const yearFromVal = discoverYearFrom ? String(discoverYearFrom.value || "").trim() : "";
+      const yearToVal = discoverYearTo ? String(discoverYearTo.value || "").trim() : "";
+      const yearFromNum = yearFromVal ? Number(yearFromVal) : null;
+      const yearToNum = yearToVal ? Number(yearToVal) : null;
+
+      if (consensusMode === "consensus"){
+        items = (items || []).filter(i => Number(i.provider_hits || 0) >= 2);
+      }
+
+      if (consensusMode === "strong"){
+        items = (items || []).filter(i => Number(i.provider_hits || 0) >= 3);
+      }
+
+      if (genreMode !== "all" && sourceMode !== "anilist_genre"){
+        const wanted = String(genreMode).trim();
+        const wantedLower = wanted.toLowerCase();
+
+        items = (items || []).filter(i => {
+          const ids1 = Array.isArray(i.genre_ids)
+            ? i.genre_ids.map(x => String(x)).filter(Boolean)
+            : [];
+
+          const fromGenres = Array.isArray(i.genres)
+            ? i.genres.flatMap(g => {
+                if (g && typeof g === "object"){
+                  const out = [];
+                  if (g.id != null) out.push(String(g.id));
+                  if (g.name != null) out.push(String(g.name).trim());
+                  return out;
+                }
+                if (g != null) return [String(g).trim()];
+                return [];
+              }).filter(Boolean)
+            : [];
+
+          const allGenres = [...new Set([...ids1, ...fromGenres])];
+
+          return allGenres.some(g => {
+            const gs = String(g).trim();
+            return gs === wanted || gs.toLowerCase() === wantedLower;
+          });
+        });
+      }
+
+      if (yearFromNum || yearToNum){
+        items = (items || []).filter(i => {
+          const y = Number(String(i.year || "").trim());
+          if (!Number.isFinite(y) || y <= 0) return false;
+          if (yearFromNum && y < yearFromNum) return false;
+          if (yearToNum && y > yearToNum) return false;
+          return true;
+        });
+      }
+
+      const weightedRating = (i) => {
+        const priorMean = 6.8;
+        const minVotes = 200;
+
+        const R = Number(i.vote_average || 0);
+        const v = Number(i.vote_count || 0);
+
+        if (R <= 0) return 0;
+
+        return ((v / (v + minVotes)) * R) + ((minVotes / (v + minVotes)) * priorMean);
+      };
+
+      if (mode === "hidden_gems"){
+        const hiddenGemScoreStrong = (i) => {
+          const priorMean = 6.9;
+          const minVotes = 120;
+
+          const scores = i.provider_scores || {};
+          const isAniListOnly =
+            scores.anilist_anime !== undefined &&
+            scores.tmdb_trending === undefined &&
+            scores.tmdb_popular === undefined &&
+            scores.trakt_trending === undefined &&
+            scores.trakt_popular === undefined &&
+            scores.letterboxd === undefined &&
+            scores.tvmaze_airing === undefined;
+
+          const anilistSignal = Number(scores.anilist_anime || 0);
+
+          const rawRating = Number(i.vote_average || 0);
+          const rawVotes = Number(i.vote_count || 0);
+          const rawPopularity = Number(i.popularity || 0);
+
+          const R = rawRating > 0
+            ? rawRating
+            : (isAniListOnly ? Math.max(5.8, Number((anilistSignal * 10).toFixed(2))) : 0);
+
+          const v = rawVotes > 0
+            ? rawVotes
+            : (isAniListOnly ? Math.max(12, Math.round(anilistSignal * 420)) : 0);
+
+          // Anime titles enriched from TMDb often carry huge popularity values that make
+          // hidden gems impossible. Compress them heavily for AniList-only scoring.
+          const pop = isAniListOnly
+            ? (
+                rawPopularity > 0
+                  ? Math.max(8, Number((Math.log10(rawPopularity + 1) * 11.5).toFixed(2)))
+                  : Math.max(6, Number((52 - (anilistSignal * 26)).toFixed(2)))
+              )
+            : rawPopularity;
+
+          const hits = Number(i.provider_hits || 0);
+
+          const wr = R > 0
+            ? (((v / (v + minVotes)) * R) + ((minVotes / (v + minVotes)) * priorMean))
+            : 0;
+
+          const wrNorm = Math.max(0, Math.min(wr / 10, 1));
+
+          let obscurity = 0;
+          if (pop <= 4) obscurity = 1.00;
+          else if (pop <= 8) obscurity = 0.95;
+          else if (pop <= 14) obscurity = 0.88;
+          else if (pop <= 22) obscurity = 0.72;
+          else if (pop <= 32) obscurity = 0.48;
+          else if (pop <= 45) obscurity = 0.18;
+          else obscurity = 0.00;
+
+          let confidence = 0;
+          if (v >= 40 && v <= 600) confidence = 1.00;
+          else if (v >= 20 && v < 40) confidence = 0.72;
+          else if (v > 600 && v <= 1200) confidence = 0.45;
+          else if (v > 1200) confidence = 0.10;
+          else confidence = 0.20;
+
+          let nicheBonus = 0.0;
+          if (hits <= 1) nicheBonus = 1.00;
+          else if (hits === 2) nicheBonus = 0.55;
+          else if (hits === 3) nicheBonus = 0.10;
+          else nicheBonus = 0.00;
+
+          let mainstreamSignals = 0;
+          if (scores.tmdb_popular !== undefined) mainstreamSignals += 1;
+          if (scores.trakt_popular !== undefined) mainstreamSignals += 1;
+          if (scores.tmdb_trending !== undefined) mainstreamSignals += 1;
+          if (scores.trakt_trending !== undefined) mainstreamSignals += 1;
+          if (!isAniListOnly && scores.anilist_anime !== undefined && pop >= 30) mainstreamSignals += 1;
+
+          let mainstreamPenalty = 0.0;
+          if (isAniListOnly){
+            if (pop >= 65) mainstreamPenalty += 0.12;
+            else if (pop >= 50) mainstreamPenalty += 0.08;
+            else if (pop >= 36) mainstreamPenalty += 0.04;
+          } else {
+            if (pop >= 70) mainstreamPenalty += 0.34;
+            else if (pop >= 50) mainstreamPenalty += 0.22;
+            else if (pop >= 35) mainstreamPenalty += 0.14;
+            else if (pop >= 25) mainstreamPenalty += 0.08;
+          }
+
+          mainstreamPenalty += (mainstreamSignals * (isAniListOnly ? 0.04 : 0.10));
+
+          const ratingContribution = (wrNorm * 0.40);
+          const obscurityContribution = (obscurity * 0.36);
+          const confidenceContribution = (confidence * 0.12);
+          const nicheContribution = (nicheBonus * 0.12);
+
+          const score =
+            ratingContribution +
+            obscurityContribution +
+            confidenceContribution +
+            nicheContribution -
+            mainstreamPenalty;
+
+          return {
+            score: Math.max(0, Math.min(Number(score.toFixed(4)), 1)),
+            breakdown: {
+              weighted_rating: Number(wr.toFixed(2)),
+              weighted_rating_norm: Number(wrNorm.toFixed(4)),
+              popularity: pop,
+              vote_count: v,
+              provider_hits: hits,
+              obscurity: Number(obscurity.toFixed(4)),
+              confidence: Number(confidence.toFixed(4)),
+              niche_bonus: Number(nicheBonus.toFixed(4)),
+              mainstream_signals: mainstreamSignals,
+              mainstream_penalty: Number(mainstreamPenalty.toFixed(4)),
+              rating_contribution: Number(ratingContribution.toFixed(4)),
+              obscurity_contribution: Number(obscurityContribution.toFixed(4)),
+              confidence_contribution: Number(confidenceContribution.toFixed(4)),
+              niche_contribution: Number(nicheContribution.toFixed(4)),
+              final_score: Math.max(0, Math.min(Number(score.toFixed(4)), 1)),
+            }
+          };
+        };
+
+        items = [...(items || [])]
+          .map(i => {
+            const hg = hiddenGemScoreStrong(i);
+            return {
+              ...i,
+              hidden_gem_score: hg.score,
+              hidden_gem_breakdown: hg.breakdown,
+            };
+          })
+          .filter(i => {
+            const hs = Number(i.hidden_gem_score || 0);
+            const hits = Number(i.provider_hits || 0);
+            const scores = i.provider_scores || {};
+
+            const isAniListOnly =
+              scores.anilist_anime !== undefined &&
+              scores.tmdb_trending === undefined &&
+              scores.tmdb_popular === undefined &&
+              scores.trakt_trending === undefined &&
+              scores.trakt_popular === undefined &&
+              scores.letterboxd === undefined &&
+              scores.tvmaze_airing === undefined;
+
+            const anilistSignal = Number(scores.anilist_anime || 0);
+            const rawRating = Number(i.vote_average || 0);
+            const rawPopularity = Number(i.popularity || 0);
+
+            const wr = rawRating > 0
+              ? rawRating
+              : (isAniListOnly ? Math.max(5.8, Number((anilistSignal * 10).toFixed(2))) : 0);
+
+            const pop = isAniListOnly
+              ? (
+                  rawPopularity > 0
+                    ? Math.max(8, Number((Math.log10(rawPopularity + 1) * 11.5).toFixed(2)))
+                    : Math.max(6, Number((52 - (anilistSignal * 26)).toFixed(2)))
+                )
+              : rawPopularity;
+
+            const mainstreamSource =
+              scores.tmdb_popular !== undefined ||
+              scores.trakt_popular !== undefined ||
+              (scores.tmdb_trending !== undefined && pop >= 32) ||
+              (scores.trakt_trending !== undefined && pop >= 32);
+
+            if (isAniListOnly){
+              return hs >= 0.28 && wr >= 5.2 && pop <= 72 && hits <= 5;
+            }
+
+            return hs >= 0.44 && wr >= 6.3 && pop <= 68 && hits <= 4 && !mainstreamSource;
+          })
+          .sort((a, b) => {
+            const hs = Number(b.hidden_gem_score || 0) - Number(a.hidden_gem_score || 0);
+            if (hs !== 0) return hs;
+
+            const ap = Number(a.popularity || 0);
+            const bp = Number(b.popularity || 0);
+            if (ap !== bp) return ap - bp;
+
+            return Number(b.vote_average || 0) - Number(a.vote_average || 0);
+          });
+      }
+
+      if (mode === "hidden_gems"){
+        if (sortMode === "trending"){
+          items = [...(items || [])].sort((a, b) => {
+            const ap = Number(a.popularity || 0);
+            const bp = Number(b.popularity || 0);
+            if (bp !== ap) return bp - ap;
+            return Number(b.hidden_gem_score || 0) - Number(a.hidden_gem_score || 0);
+          });
+        } else if (sortMode === "trending_weighted"){
+          items = [...(items || [])].sort((a, b) => {
+            const normPop = (x) => Math.min(Number(x || 0), 100) / 100;
+            const normRating = (x) => Math.min(Number(x || 0), 10) / 10;
+            const normHits = (x) => Math.min(Number(x || 0), 6) / 6;
+            const normGem = (x) => Math.min(Number(x || 0), 1);
+
+            const aTrend =
+              (normPop(a.popularity) * 0.40) +
+              (normRating(a.vote_average) * 0.25) +
+              (normHits(a.provider_hits) * 0.10) +
+              (normGem(a.hidden_gem_score) * 0.25);
+
+            const bTrend =
+              (normPop(b.popularity) * 0.40) +
+              (normRating(b.vote_average) * 0.25) +
+              (normHits(b.provider_hits) * 0.10) +
+              (normGem(b.hidden_gem_score) * 0.25);
+
+            if (bTrend !== aTrend) return bTrend - aTrend;
+            return Number(b.hidden_gem_score || 0) - Number(a.hidden_gem_score || 0);
+          });
+        } else if (sortMode === "popularity_asc"){
+          items = [...(items || [])].sort((a, b) => {
+            const ap = Number(a.popularity || 0);
+            const bp = Number(b.popularity || 0);
+            if (ap !== bp) return ap - bp;
+            return Number(b.hidden_gem_score || 0) - Number(a.hidden_gem_score || 0);
+          });
+        } else if (sortMode === "rating_weighted"){
+          items = [...(items || [])].sort((a, b) => {
+            const aw = weightedRating(a);
+            const bw = weightedRating(b);
+            if (bw !== aw) return bw - aw;
+
+            const av = Number(a.vote_count || 0);
+            const bv = Number(b.vote_count || 0);
+            if (bv !== av) return bv - av;
+
+            return Number(b.hidden_gem_score || 0) - Number(a.hidden_gem_score || 0);
+          });
+        } else if (sortMode === "newest"){
+          items = [...(items || [])].sort((a, b) => {
+            const ay = Number(String(a.year || "").trim()) || 0;
+            const by = Number(String(b.year || "").trim()) || 0;
+            if (by !== ay) return by - ay;
+            return Number(b.hidden_gem_score || 0) - Number(a.hidden_gem_score || 0);
+          });
+        } else {
+          items = [...(items || [])].sort((a, b) => {
+            const ah = Number(a.hidden_gem_score || 0);
+            const bh = Number(b.hidden_gem_score || 0);
+            if (bh !== ah) return bh - ah;
+
+            const ap = Number(a.popularity || 0);
+            const bp = Number(b.popularity || 0);
+            if (ap !== bp) return ap - bp;
+
+            return (Number(b.vote_average || 0) - Number(a.vote_average || 0));
+          });
+        }
+      } else {
+        if (sortMode === "for_you"){
+          items = [...(items || [])]
+            .map(i => ({
+              ...i,
+              for_you_score: qdForYouScore(i, QD_FOR_YOU_PROFILE)
+            }))
+            .filter(i => Number(i.for_you_score || 0) > -9999)
+            .sort((a, b) => {
+              const af = Number(a.for_you_score || 0);
+              const bf = Number(b.for_you_score || 0);
+              if (bf !== af) return bf - af;
+              return Number(b.composite_score || 0) - Number(a.composite_score || 0);
+            });
+        } else if (sortMode === "trending"){
+          items = [...(items || [])].sort((a, b) => {
+            const ap = Number(a.popularity || 0);
+            const bp = Number(b.popularity || 0);
+            if (bp !== ap) return bp - ap;
+            return Number(b.composite_score || 0) - Number(a.composite_score || 0);
+          });
+        } else if (sortMode === "trending_weighted"){
+          items = [...(items || [])].sort((a, b) => {
+            const normPop = (x) => Math.min(Number(x || 0), 100) / 100;
+            const normRating = (x) => Math.min(Number(x || 0), 10) / 10;
+            const normHits = (x) => Math.min(Number(x || 0), 6) / 6;
+
+            const aTrend =
+              (normPop(a.popularity) * 0.45) +
+              (normRating(a.vote_average) * 0.35) +
+              (normHits(a.provider_hits) * 0.20);
+
+            const bTrend =
+              (normPop(b.popularity) * 0.45) +
+              (normRating(b.vote_average) * 0.35) +
+              (normHits(b.provider_hits) * 0.20);
+
+            if (bTrend !== aTrend) return bTrend - aTrend;
+            return Number(b.composite_score || 0) - Number(a.composite_score || 0);
+          });
+        } else if (sortMode === "hot_first"){
+          items = [...(items || [])].sort((a, b) => {
+            const aLabels = Array.isArray(a.letterboxd_labels) ? a.letterboxd_labels.filter(Boolean).length : 0;
+            const bLabels = Array.isArray(b.letterboxd_labels) ? b.letterboxd_labels.filter(Boolean).length : 0;
+
+            const aHotThreshold = Number((a.score_breakdown || {}).hot_threshold || 0.82);
+            const bHotThreshold = Number((b.score_breakdown || {}).hot_threshold || 0.82);
+
+            const aScore = Number(a.composite_score || 0);
+            const bScore = Number(b.composite_score || 0);
+
+            const aHits = Math.max(Number(a.provider_hits || 0), aLabels);
+            const bHits = Math.max(Number(b.provider_hits || 0), bLabels);
+
+            const aHot = (aHits >= 2 && aScore >= aHotThreshold) ? 1 : 0;
+            const bHot = (bHits >= 2 && bScore >= bHotThreshold) ? 1 : 0;
+
+            if (bHot !== aHot) return bHot - aHot;
+            return bScore - aScore;
+          });
+        } else if (sortMode === "rising_first"){
+          items = [...(items || [])].sort((a, b) => {
+            const aLabels = Array.isArray(a.letterboxd_labels) ? a.letterboxd_labels.filter(Boolean).length : 0;
+            const bLabels = Array.isArray(b.letterboxd_labels) ? b.letterboxd_labels.filter(Boolean).length : 0;
+
+            const aHotThreshold = Number((a.score_breakdown || {}).hot_threshold || 0.82);
+            const bHotThreshold = Number((b.score_breakdown || {}).hot_threshold || 0.82);
+
+            const aScore = Number(a.composite_score || 0);
+            const bScore = Number(b.composite_score || 0);
+
+            const aHits = Math.max(Number(a.provider_hits || 0), aLabels);
+            const bHits = Math.max(Number(b.provider_hits || 0), bLabels);
+
+            const aHot = (aHits >= 2 && aScore >= aHotThreshold) ? 1 : 0;
+            const bHot = (bHits >= 2 && bScore >= bHotThreshold) ? 1 : 0;
+
+            const aRising = (!aHot && aHits >= 2 && aScore >= Math.max(0, aHotThreshold - 0.12)) ? 1 : 0;
+            const bRising = (!bHot && bHits >= 2 && bScore >= Math.max(0, bHotThreshold - 0.12)) ? 1 : 0;
+
+            if (bRising !== aRising) return bRising - aRising;
+            if (bHot !== aHot) return bHot - aHot;
+            return bScore - aScore;
+          });
+        } else if (sortMode === "sources_desc"){
+          items = [...(items || [])].sort((a, b) => {
+            const ah = Number(a.provider_hits || 0);
+            const bh = Number(b.provider_hits || 0);
+            if (bh !== ah) return bh - ah;
+            return Number(b.composite_score || 0) - Number(a.composite_score || 0);
+          });
+        } else if (sortMode === "rating_weighted"){
+          items = [...(items || [])].sort((a, b) => {
+            const aw = weightedRating(a);
+            const bw = weightedRating(b);
+            if (bw !== aw) return bw - aw;
+
+            const av = Number(a.vote_count || 0);
+            const bv = Number(b.vote_count || 0);
+            if (bv !== av) return bv - av;
+
+            return Number(b.composite_score || 0) - Number(a.composite_score || 0);
+          });
+        } else if (sortMode === "newest"){
+          items = [...(items || [])].sort((a, b) => {
+            const ay = Number(String(a.year || "").trim()) || 0;
+            const by = Number(String(b.year || "").trim()) || 0;
+            if (by !== ay) return by - ay;
+            return Number(b.composite_score || 0) - Number(a.composite_score || 0);
+          });
+        }
+        // recommended = preserve upstream/default ranking
+      }
+
+      items = dedupeDiscoverItems(items, append);
+      items = Array.isArray(items) ? items.slice(0, discoverLimit) : [];
+
+      if (!Array.isArray(items) || !items.length){
+        if (!append){
+          discoverGrid.innerHTML = "";
+          const hasYearFilter = !!(yearFromNum || yearToNum);
+          const msg =
+            consensusMode === "strong" && genreMode !== "all" && hasYearFilter
+              ? "No strong-consensus items matched this genre and year range yet."
+              : consensusMode === "strong" && genreMode !== "all"
+              ? "No strong-consensus items matched this genre yet."
+              : consensusMode === "strong" && hasYearFilter
+              ? "No strong-consensus items matched this year range yet."
+              : consensusMode === "strong"
+              ? "No strong-consensus items matched this filter yet."
+              : consensusMode === "consensus" && genreMode !== "all" && hasYearFilter
+              ? "No consensus items matched this genre and year range yet."
+              : consensusMode === "consensus" && genreMode !== "all"
+              ? "No consensus items matched this genre yet."
+              : consensusMode === "consensus" && hasYearFilter
+              ? "No consensus items matched this year range yet."
+              : genreMode !== "all" && hasYearFilter
+              ? "No items matched this genre and year range yet."
+              : consensusMode === "consensus"
+              ? "No consensus items matched this filter yet."
+              : genreMode !== "all"
+              ? "No items matched this genre yet."
+              : hasYearFilter
+              ? "No items matched this year range yet."
+              : "Nothing returned for this source yet.";
+          setStatus(msg, "");
+        } else {
+          discoverHasMore = false;
+          if (discoverLoadMoreTimeout){
+            clearTimeout(discoverLoadMoreTimeout);
+            discoverLoadMoreTimeout = null;
+          }
+          if (discoverLoadMoreBtn){
+            discoverLoadMoreBtn.style.display = "none";
+            discoverLoadMoreBtn.disabled = false;
+            discoverLoadMoreBtn.textContent = "Load More";
+          }
+          setStatus("No more results to load.", "");
+        }
+        return;
+      }
+
+      const rendered = items.map(item => {
+        const title = esc(item.title || "");
+        const year = esc(item.year || "");
+        const media = String(item.media_type || "").toUpperCase();
+        const scoreSourceLabel = (() => {
+          const providerScores = item.provider_scores || {};
+          if (providerScores.tmdb_trending !== undefined || providerScores.tmdb_popular !== undefined) return "TMDb";
+          if (providerScores.anilist_anime !== undefined) return "AniList";
+          if (providerScores.jikan_anime_hot !== undefined || providerScores.jikan_anime_rising !== undefined) return "Jikan";
+          if (providerScores.letterboxd !== undefined) return "Letterboxd";
+          return "Score";
+        })();
+
+        const score = (typeof item.vote_average === "number")
+          ? `${scoreSourceLabel} ${ratingDot(item.vote_average)} ${Number(item.vote_average).toFixed(1)}`
+          : "";
+        const source = esc(item.source || "");
+        const poster = item.poster_url
+          ? `<img data-discover-poster="1" data-src="${esc(item.poster_url)}" alt="${title}" loading="lazy" decoding="async">`
+          : `<div class="posterPlaceholder">No poster</div>`;
+        const letterboxdLabels = Array.isArray(item.letterboxd_labels) ? item.letterboxd_labels.filter(Boolean) : [];
+        const letterboxdFeedsText = letterboxdLabels.join(" + ");
+
+        const providerHits = Number(item.provider_hits || 0);
+        const compositeScore = (typeof item.composite_score === "number")
+          ? Number(item.composite_score).toFixed(2)
+          : "";
+        const hiddenGemScore = (typeof item.hidden_gem_score === "number")
+          ? Number(item.hidden_gem_score).toFixed(2)
+          : "";
+        const scoreNum = Number(item.composite_score || 0);
+
+        const letterboxdFeedCount = letterboxdLabels.length;
+        const effectiveSourceHits = Math.max(providerHits, letterboxdFeedCount);
+
+        const breakdown = item.score_breakdown || {};
+        const hotThresholdNum = Number(breakdown.hot_threshold || 0.82);
+        const risingThresholdNum = Math.max(0, hotThresholdNum - 0.12);
+
+        const providerScores = item.provider_scores || {};
+        const breakdownScores = breakdown.provider_scores || {};
+
+        const animeHotBySources =
+          (
+            providerScores.anilist_anime !== undefined &&
+            providerScores.jikan_anime_hot !== undefined
+          ) ||
+          (
+            providerScores.jikan_anime_hot !== undefined &&
+            providerScores.jikan_anime_rising !== undefined
+          );
+
+        const animeRisingBySources =
+          providerScores.jikan_anime_rising !== undefined &&
+          (
+            providerScores.anilist_anime !== undefined ||
+            providerScores.jikan_anime_hot !== undefined
+          );
+
+        const isSpecialHot =
+          animeHotBySources ||
+          (effectiveSourceHits >= 2 && scoreNum >= hotThresholdNum);
+
+        const isRising =
+          (!isSpecialHot) &&
+          (
+            animeRisingBySources ||
+            (effectiveSourceHits >= 2 && scoreNum >= risingThresholdNum)
+          );
+
+        const isHiddenGem = mode === "hidden_gems" && Number(item.hidden_gem_score || 0) >= 0.35;
+        const hasTmdbId = !!item.tmdb_id;
+        const openUrl = hasTmdbId
+          ? `https://www.themoviedb.org/${item.media_type === "movie" ? "movie" : "tv"}/${item.tmdb_id}`
+          : String(item.external_url || "#");
+        const openLabel = hasTmdbId ? "Open TMDb" : "Open Source";
+
+        const sourceBadges = [];
+        let sourceSummary = source;
+        const parts = [];
+
+        if (providerScores.tmdb_trending !== undefined || providerScores.tmdb_popular !== undefined) {
+          sourceBadges.push('<span class="sourceBadge tmdb">TMDb</span>');
+          parts.push("TMDb");
+        }
+
+        if (providerScores.trakt_trending !== undefined || providerScores.trakt_popular !== undefined) {
+          sourceBadges.push('<span class="sourceBadge trakt">Trakt</span>');
+          parts.push("Trakt");
+        }
+
+        if (providerScores.letterboxd !== undefined) {
+          sourceBadges.push('<span class="sourceBadge letterboxd">Letterboxd</span>');
+          parts.push("Letterboxd");
+        }
+
+        if (providerScores.tvmaze_airing !== undefined) {
+          sourceBadges.push('<span class="sourceBadge tvmaze">TVMaze</span>');
+          parts.push("TVMaze");
+        }
+
+        if (providerScores.anilist_anime !== undefined) {
+          sourceBadges.push('<span class="sourceBadge anilist">AniList</span>');
+          parts.push("AniList");
+        }
+
+        if (providerScores.jikan_anime_hot !== undefined) {
+          sourceBadges.push('<span class="sourceBadge anilist">Jikan Hot</span>');
+          parts.push("Jikan Hot");
+        }
+
+        if (providerScores.jikan_anime_rising !== undefined) {
+          sourceBadges.push('<span class="sourceBadge anilist">Jikan Rising</span>');
+          parts.push("Jikan Rising");
+        }
+
+        if (sourceBadges.length >= 2) {
+          sourceBadges.unshift('<span class="sourceBadge aggregate">Aggregate</span>');
+          sourceSummary = parts.join(" + ");
+        } else if (parts.length === 1) {
+          sourceSummary = parts[0];
+        }
+
+        const hotLabel = isSpecialHot ? "HOT" : (isRising ? "RISING" : "");
+
+        const tmdbWhy = breakdownScores.tmdb_trending !== undefined
+          ? `<div class="whyKey">TMDb score</div><div class="whyVal">${esc(Number(breakdownScores.tmdb_trending).toFixed(2))}</div>`
+          : ``;
+        const traktWhy = breakdownScores.trakt_trending !== undefined
+          ? `<div class="whyKey">Trakt score</div><div class="whyVal">${esc(Number(breakdownScores.trakt_trending).toFixed(2))}</div>`
+          : ``;
+
+        const traktPopularWhy = breakdownScores.trakt_popular !== undefined
+          ? `<div class="whyKey">Trakt popular</div><div class="whyVal">${esc(Number(breakdownScores.trakt_popular).toFixed(2))}</div>`
+          : ``;
+
+        const tvmazeWhy = breakdownScores.tvmaze_airing !== undefined
+          ? `<div class="whyKey">TVMaze airing</div><div class="whyVal">${esc(Number(breakdownScores.tvmaze_airing).toFixed(2))}</div>`
+          : ``;
+
+        const anilistWhy = breakdownScores.anilist_anime !== undefined
+          ? `<div class="whyKey">AniList score</div><div class="whyVal">${esc(Number(breakdownScores.anilist_anime).toFixed(2))}</div>`
+          : ``;
+
+        const jikanHotWhy = breakdownScores.jikan_anime_hot !== undefined
+          ? `<div class="whyKey">Jikan Hot</div><div class="whyVal">${esc(Number(breakdownScores.jikan_anime_hot).toFixed(2))}</div>`
+          : ``;
+
+        const jikanRisingWhy = breakdownScores.jikan_anime_rising !== undefined
+          ? `<div class="whyKey">Jikan Rising</div><div class="whyVal">${esc(Number(breakdownScores.jikan_anime_rising).toFixed(2))}</div>`
+          : ``;
+
+        const whyReasons = buildWhyReasons(item, {
+          mode,
+          genreMode,
+          yearFromNum,
+          yearToNum
+        });
+        const whyReasonsHtml = whyReasons.length
+          ? `<div class="whyReasons">${whyReasons.map(r => `<div class="whyReason${r.subtle ? " subtle" : ""}">${esc(r.text)}</div>`).join("")}</div>`
+          : ``;
+
+        const hiddenGemBreakdown = item.hidden_gem_breakdown || null;
+
+        const whyHtml = (mode === "hidden_gems" && hiddenGemBreakdown)
+          ? `
+          <div class="whyTitle">Why this surfaced as a hidden gem</div>
+          <div class="whyGrid">
+            <div class="whyKey">Hidden gem score</div><div class="whyVal">${esc(Number(hiddenGemBreakdown.final_score || 0).toFixed(2))}</div>
+            <div class="whyDivider"></div>
+            ${letterboxdLabels.length ? `<div class="whyKey">Letterboxd feeds</div><div class="whyVal">${esc(letterboxdFeedsText)}</div>` : ``}
+
+            <div class="whyKey">Vote-weighted rating</div><div class="whyVal">${esc(Number(hiddenGemBreakdown.weighted_rating || 0).toFixed(2))}</div>
+            <div class="whyKey">Rating contribution</div><div class="whyVal">+${esc(Number(hiddenGemBreakdown.rating_contribution || 0).toFixed(2))}</div>
+            <div class="whyReason">Strong ratings help, but tiny vote counts are dampened.</div>
+
+            <div class="whyKey">Popularity</div><div class="whyVal">${esc(String(hiddenGemBreakdown.popularity || 0))}</div>
+            <div class="whyKey">Obscurity contribution</div><div class="whyVal">+${esc(Number(hiddenGemBreakdown.obscurity_contribution || 0).toFixed(2))}</div>
+            <div class="whyReason">Lower popularity boosts titles that appear less mainstream.</div>
+
+            <div class="whyKey">Vote count</div><div class="whyVal">${esc(String(hiddenGemBreakdown.vote_count || 0))}</div>
+            <div class="whyKey">Confidence contribution</div><div class="whyVal">+${esc(Number(hiddenGemBreakdown.confidence_contribution || 0).toFixed(2))}</div>
+            <div class="whyReason">More votes increase trust in the rating.</div>
+
+            <div class="whyKey">Source hits</div><div class="whyVal">${esc(String(hiddenGemBreakdown.provider_hits || 0))}</div>
+            <div class="whyKey">Niche contribution</div><div class="whyVal">+${esc(Number(hiddenGemBreakdown.niche_contribution || 0).toFixed(2))}</div>
+            <div class="whyReason">Fewer sources usually indicate a more niche title.</div>
+
+            <div class="whyKey">Mainstream signals</div><div class="whyVal">${esc(String(hiddenGemBreakdown.mainstream_signals || 0))}</div>
+            <div class="whyKey">Mainstream penalty</div><div class="whyVal">-${esc(Number(hiddenGemBreakdown.mainstream_penalty || 0).toFixed(2))}</div>
+            <div class="whyReason">Trending signals reduce hidden gem potential.</div>
+
+            <div class="whyDivider"></div>
+            <div class="whyKey">Final hidden gem score</div><div class="whyVal">${esc(Number(hiddenGemBreakdown.final_score || 0).toFixed(2))}</div>
+          </div>
+        `
+          : `
+          <div class="whyTitle">Why this surfaced</div>
+          <div class="whyGrid">
+            ${tmdbWhy}
+            ${traktWhy}
+            ${traktPopularWhy}
+            ${tvmazeWhy}
+            ${anilistWhy}${jikanHotWhy}${jikanRisingWhy}
+
+            <div class="whyDivider"></div>
+
+            <div class="whyKey">Base score</div><div class="whyVal">${esc(Number(breakdown.base_score || 0).toFixed(2))}</div>
+            <div class="whyKey">Source bonus</div><div class="whyVal">+${esc(Number(breakdown.source_bonus || 0).toFixed(2))}</div>
+            <div class="whyKey">Pre-consensus score</div><div class="whyVal">${esc(Number(breakdown.pre_consensus_score || 0).toFixed(3))}</div>
+            <div class="whyKey">Consensus factor</div><div class="whyVal">×${esc(Number(breakdown.consensus_factor || 1).toFixed(2))}</div>
+            <div class="whyKey">Source hits</div><div class="whyVal">${esc(String(effectiveSourceHits))}</div>
+            ${letterboxdLabels.length ? `<div class="whyKey">Feed overlap</div><div class="whyVal">${esc(String(letterboxdFeedCount))}</div>` : ``}
+            <div class="whyReason">Consensus changes the final score directly. One-source items are penalized, while multi-source agreement boosts confidence.</div>
+
+            ${whyReasonsHtml}
+
+            <div class="whyDivider"></div>
+
+            <div class="whyKey">HOT threshold</div><div class="whyVal">${esc(Number(breakdown.hot_threshold || 0).toFixed(3))}</div>
+            <div class="whyKey">RISING threshold</div><div class="whyVal">${esc((Math.max(0, Number(breakdown.hot_threshold || 0) - 0.12)).toFixed(3))}</div>
+            <div class="whyKey">Final score</div><div class="whyVal">${esc(Number(breakdown.final_score || 0).toFixed(3))}</div>
+            <div class="whyKey">Status</div><div class="whyVal">${
+              Number(breakdown.final_score || 0) >= Number(breakdown.hot_threshold || 0)
+                ? "HOT"
+                : (
+                    Number(breakdown.final_score || 0) >= Math.max(0, Number(breakdown.hot_threshold || 0) - 0.12)
+                  )
+                    ? "RISING"
+                    : "Below HOT"
+            }</div>
+            <div class="whyReason">HOT = final score at or above the HOT threshold. RISING = final score close to the HOT threshold.</div>
+            ${
+              Number(breakdown.final_score || 0) < Number(breakdown.hot_threshold || 0)
+                ? '<div class="whyReason">Its score is below the HOT threshold right now.</div>'
+                : ''
+            }
+            <div class="whyReason">HOT = score at or above the HOT threshold with 2+ source hits. RISING = close to the HOT threshold with 2+ source hits.</div>
+            <div class="whyReason">Items become HOT when the final score clears the threshold with enough source overlap.</div>
+
+            <div class="whyDivider"></div>
+            <div class="whyKey">Final score</div><div class="whyVal">${esc(Number(breakdown.final_score || 0).toFixed(2))}</div>
+          </div>
+        `;
+
+        return `
+          <div class="discoverItem ${isRising ? "consensusHot" : ""} ${isSpecialHot ? "specialHot" : ""}" data-discover-key="${esc(item._discover_key || discoverItemKey(item))}" data-title="${esc(item.title || "")}" data-year="${esc(item.year || "")}" data-media-type="${esc(item.media_type)}" data-tmdb-id="${esc(item.tmdb_id || "")}" data-imdb-id="${esc(item.imdb_id || "")}" data-tvdb-id="${esc(item.tvdb_id || "")}">
+            ${hotLabel ? `<div class="hotBadge">${hotLabel}</div>` : ``}
+            <div class="poster">${poster}</div>
+            <div class="body">
+              <div class="rowTop">
+                <div class="title">${title}${year ? ` (${year})` : ""}</div>
+                <div class="pill">${esc(media)}</div>
+              </div>
+              ${sourceBadges.length ? `<div class="sourceBadges">${sourceBadges.join("")}</div>` : ``}
+              <div class="meta">${esc(sourceSummary)}${score ? ' • <span class="tmdbScore">★ ' + esc(score) + '</span>' : ""}${compositeScore ? (() => {
+  const qdScore = Math.round(Number(compositeScore) * 100);
+  let icon = "📊";
+  if (qdScore >= 85) icon = "🔥";
+  else if (qdScore >= 60) icon = "🎯";
+  return ' • <span class="qdScore" title="QueueDeck discovery score">' + icon + ' ' + esc(String(qdScore)) + '</span>';
+})() : ""}${hiddenGemScore ? ' • <span class="gemScore" title="Hidden gem score">💎 ' + esc(String(Math.round(Number(hiddenGemScore) * 100))) + '</span>' : ""}${providerHits ? " • Sources " + esc(String(providerHits)) : ""}<span class="whyChip" data-why-toggle="1">Why</span><span class="whyChip" data-discover-hide="1">Hide</span></div>
+              ${letterboxdLabels.length ? `<div class="meta" style="margin-top:4px;opacity:.85;">Feeds: ${esc(letterboxdFeedsText)}</div>` : ``}
+              <div class="overview">${esc(item.overview || "No overview available.")}</div>
+              <div class="actions">
+                <button class="btn secondary" type="button" data-request="1">Request</button>
+                <a class="btn secondary" href="${esc(openUrl)}" target="_blank" rel="noopener">${esc(openLabel)}</a>
+              </div>
+              <div class="whyBox" data-why-box>
+                <button class="whyClose" type="button" data-why-close="1" aria-label="Close why overlay">×</button>
+                <div class="whyScroll">${whyHtml}</div>
+              </div>
+              <div class="tvDestMenu" data-tv-dest-menu></div>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      if (append){
+        discoverGrid.insertAdjacentHTML("beforeend", rendered);
+      } else {
+        discoverGrid.innerHTML = rendered;
+      }
+
+      wireRequestButtons();
+      wireWhyButtons();
+      wireWhyCloseButtons();
+      wireDiscoverHideButtons();
+      hydrateDiscoverPosters();
+      hydrateLibraryState();
+
+      if (discoverLoadMoreBtn){
+        discoverLoadMoreBtn.style.display = discoverHasMore ? "" : "none";
+      }
+
+      setStatus(
+        append
+          ? `Loaded ${items.length} more discover item(s).`
+          : `Loaded ${items.length} discover item(s).`,
+        "ok"
+      );
+    }
+
+    async function loadTvDestinations(){
+      seerrTvDestinations = [];
+
+      try{
+        const r = await fetch("/api/seerr/tv-destinations", { cache: "no-store" });
+        const j = await r.json().catch(() => ({}));
+
+        if (!r.ok || !j.ok || !j.configured || !Array.isArray(j.destinations)){
+          seerrTvDestinations = [];
+          return;
+        }
+
+        seerrTvDestinations = j.destinations.map(d => ({
+          key: String(d.key || ""),
+          label: String(d.label || d.key || "Destination"),
+        })).filter(d => d.key);
+      }catch(_){
+        seerrTvDestinations = [];
+      }
+    }
+
+    async function loadSeerrConfig(){
+      try{
+        const r = await fetch("/api/seerr/config", { cache: "no-store" });
+        const j = await r.json().catch(() => ({}));
+        seerrConfigured = !!(j && j.ok && j.configured);
+      }catch(_){
+        seerrConfigured = false;
+      }
+    }
+
+    async function loadLetterboxdSources(){
+      const optgroup = document.getElementById("discoverLetterboxdOptgroup");
+      if (!optgroup) return;
+
+      const current = discoverSource ? String(discoverSource.value || "") : "";
+
+      optgroup.innerHTML = "";
+
+      try{
+        const r = await fetch("/api/discover/letterboxd-sources", { cache: "no-store" });
+        const j = await r.json().catch(() => ({}));
+
+        if (r.ok && j.ok && Array.isArray(j.items) && j.items.length){
+          optgroup.insertAdjacentHTML("beforeend", `<option value="letterboxd_aggregate">Letterboxd Aggregate</option>`);
+
+          j.items.forEach(item => {
+            const key = String(item.key || "").trim();
+            const label = String(item.label || "Feed").trim();
+            if (!key) return;
+            optgroup.insertAdjacentHTML(
+              "beforeend",
+              `<option value="${esc(key)}">Letterboxd — ${esc(label)}</option>`
+            );
+          });
+        }
+      } catch(_){
+      }
+
+      if (discoverSource){
+        const exists = [...discoverSource.options].some(o => o.value === current);
+        if (exists && current){
+          discoverSource.value = current;
+        } else if (current === "letterboxd" || current === "letterboxd_aggregate" || current.startsWith("letterboxd_")){
+          discoverSource.value = "aggregate";
+        }
+      }
+    }
+
+      const key = title.replace(/[^a-z0-9]+/g, "");
+      return `${mediaType}:${key}::${year}`;
+    }
+
+    async function qdFilterForYouOwnedRequested(items){
+      const rows = Array.isArray(items) ? items : [];
+      if (!rows.length) return rows;
+
+      try{
+        const r = await fetch("/api/discover/library-state", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items: rows })
+        });
+
+        const j = await r.json().catch(() => ({}));
+        const stateMap = (j && j.items && typeof j.items === "object") ? j.items : {};
+
+        const filtered = rows.filter((item, idx) => {
+          const state = stateMap[`row-${idx}`] || {};
+
+          const owned =
+            !!state.in_library ||
+            !!state.in_sonarr ||
+            !!state.in_radarr;
+
+          return !owned;
+        });
+
+        return filtered.length ? filtered : rows;
+      }catch(e){
+        console.warn("For You filter failed", e);
+        return rows;
+      }
+    }
+
+    async function loadDiscover(page=1, append=false){
+      const inFlightKey = JSON.stringify({
+        page: Number(page || 1),
+        append: !!append,
+        source: (discoverSource && discoverSource.value) || "",
+        media: (discoverMedia && discoverMedia.value) || "",
+        genre: (discoverGenre && discoverGenre.value) || "",
+        provider: (discoverProvider && discoverProvider.value) || "",
+        min_rating: (discoverMinRating && discoverMinRating.value) || "",
+        year_from: (discoverYearFrom && discoverYearFrom.value) || "",
+        year_to: (discoverYearTo && discoverYearTo.value) || "",
+      });
+
+      if (discoverLoadInFlightKey === inFlightKey){
+        console.warn("Skipping duplicate discover load", inFlightKey);
+        return;
+      }
+
+      discoverLoadInFlightKey = inFlightKey;
+
+      const source = discoverSource.value || "tmdb_trending";
+      await qdLoadForYouProfile();
+
+      const isAnimeSource =
+        source === "anime_aggregate" ||
+        source === "anilist_trending" ||
+        source === "anilist_popular" ||
+        source === "anilist_genre" ||
+        source === "jikan_anime_hot" ||
+        source === "jikan_anime_rising";
+
+      if (isAnimeSource && discoverMedia && String(discoverMedia.value || "") !== "tv"){
+        discoverMedia.value = "tv";
+      }
+
+      const media = isAnimeSource ? "tv" : (discoverMedia.value || "all");
+      const genre = discoverGenre ? (discoverGenre.value || "all") : "all";
+      const provider = discoverProvider ? (discoverProvider.value || "all") : "all";
+      const minRating = discoverMinRating ? String(discoverMinRating.value || "").trim() : "";
+      const yearFrom = discoverYearFrom ? String(discoverYearFrom.value || "").trim() : "";
+      const yearTo = discoverYearTo ? String(discoverYearTo.value || "").trim() : "";
+
+      const requestSeq = ++discoverRequestSeq;
+      discoverActiveRequestSeq = requestSeq;
+
+      if (!append){
+        discoverPage = 1;
+        discoverHasMore = true;
+        setStatus("Loading discover data…", "");
+        discoverGrid.innerHTML = "";
+        if (discoverLoadMoreBtn){
+          discoverLoadMoreBtn.style.display = "none";
+          discoverLoadMoreBtn.disabled = false;
+          discoverLoadMoreBtn.textContent = "Load More";
+        }
+      } else {
+        setStatus("Loading more discover data…", "");
+        if (discoverLoadMoreBtn){
+          discoverLoadMoreBtn.disabled = true;
+          discoverLoadMoreBtn.innerHTML = '<span class="btnSpinner"></span>Loading…';
+        }
+
+        // Let the browser paint the button state before the fetch work begins.
+        await new Promise(resolve => requestAnimationFrame(() => resolve()));
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        if (discoverLoadMoreTimeout){
+          clearTimeout(discoverLoadMoreTimeout);
+        }
+        discoverLoadMoreTimeout = setTimeout(() => {
+          if (discoverLoadMoreBtn){
+            discoverLoadMoreBtn.disabled = false;
+            discoverLoadMoreBtn.textContent = "Load More";
+          }
+          setStatus("Load more is taking unusually long. You can try again.", "bad");
+        }, 30000);
+      }
+
+      try{
+        const { r, j } = await fetchDiscoverPayload(page);
+
+        if (requestSeq !== discoverActiveRequestSeq){
+          return;
+        }
+
+        if (!r.ok || !j.ok){
+          const err = j.error || (r.status === 400 ? "Discover source not configured." : ("HTTP " + r.status));
+          if (err === "tmdb_not_configured"){
+            renderNotConfigured();
+            return;
+          }
+          if (err === "trakt_not_configured"){
+            setStatus("Trakt is not configured yet. Add a Trakt Client ID in Preferences.", "bad");
+            discoverGrid.innerHTML = "";
+            return;
+          }
+          setStatus("Discover failed: " + err, "bad");
+          return;
+        }
+
+        let items = j.items || [];
+        
+
+        if ((source === "aggregate" || source === "anime_aggregate") && String(discoverSort?.value || "") === "for_you"){
+          items = await qdFilterForYouOwnedRequested(items);
+          
+        }
+          j.items = items;
+
+        const genreCounts = {};
+        for (const i of items){
+          const ids1 = Array.isArray(i.genre_ids) ? i.genre_ids.map(x => String(x)) : [];
+          const ids2 = Array.isArray(i.genres)
+            ? i.genres
+                .map(g => (g && typeof g === "object" && g.id != null) ? String(g.id) : null)
+                .filter(Boolean)
+            : [];
+          const gids = [...new Set([...ids1, ...ids2])];
+          for (const g of gids){
+            genreCounts[g] = (genreCounts[g] || 0) + 1;
+          }
+        }
+        
+
+        if (requestSeq !== discoverActiveRequestSeq){
+          return;
+        }
+
+        discoverHasMore = Array.isArray(items) && items.length > 0;
+        discoverPage = page;
+
+        if (discoverHasMore){
+          const nextPage = Number(page || 1) + 1;
+          prefetchDiscoverPage(nextPage);
+
+          if (!append && nextPage === 2 && (source === "anime_aggregate" || source === "aggregate" || source.startsWith("letterboxd_"))){
+            setTimeout(() => prefetchDiscoverPage(nextPage), 250);
+          }
+        }
+
+        renderItems(items, append);
+
+        if (discoverLoadMoreTimeout){
+          clearTimeout(discoverLoadMoreTimeout);
+          discoverLoadMoreTimeout = null;
+        }
+        if (discoverLoadMoreBtn){
+          discoverLoadMoreBtn.disabled = false;
+          discoverLoadMoreBtn.textContent = "Load More";
+        }
+      }catch(e){
+        if (requestSeq !== discoverActiveRequestSeq){
+          return;
+        }
+        if (discoverLoadMoreTimeout){
+          clearTimeout(discoverLoadMoreTimeout);
+          discoverLoadMoreTimeout = null;
+        }
+        if (discoverLoadMoreBtn){
+          discoverLoadMoreBtn.disabled = false;
+          discoverLoadMoreBtn.textContent = "Load More";
+        }
+        setStatus("Discover failed: " + (e.message || e), "bad");
+      }
+    
+      discoverLoadInFlightKey = "";
+    }
+
+    async function requestItem(card, btn, destination=""){
+      const mediaType = String(card.getAttribute("data-media-type") || "");
+      const tmdbId = Number(card.getAttribute("data-tmdb-id") || 0);
+
+      if (!seerrConfigured){
+        setStatus("Seerr is not configured for this user.", "bad");
+        return;
+      }
+      if (!mediaType || !tmdbId){
+        setStatus("Missing media info for request.", "bad");
+        return;
+      }
+
+      const oldText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Requesting…";
+
+      try{
+        const payload = {
+          mediaType: mediaType,
+          mediaId: tmdbId,
+        };
+        if (mediaType === "tv" && destination){
+          payload.destination = destination;
+        }
+
+        const r = await fetch("/api/seerr/request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const j = await r.json().catch(() => ({}));
+
+        if (!r.ok || !j.ok){
+          const errText = String(j.error || j.message || ("HTTP " + r.status));
+          const combined = errText.toLowerCase();
+
+          if (combined.includes("already exists") || combined.includes("already requested")){
+            btn.textContent = "Already Requested";
+            btn.disabled = true;
+            btn.classList.add("libraryRequested");
+            setStatus("Already requested.", "ok");
+            return;
+          }
+
+          throw new Error(errText);
+        }
+
+        btn.textContent = "Requested";
+        setStatus("Request sent successfully.", "ok");
+      }catch(e){
+        btn.disabled = false;
+        btn.textContent = oldText;
+        setStatus("Request failed: " + (e.message || e), "bad");
+      }
+    }
+
+    async function hydrateLibraryState(){
+      const cards = [...discoverGrid.querySelectorAll(".discoverItem[data-discover-key]")];
+      if (!cards.length) return;
+
+      const items = cards.map(card => ({
+        key: String(card.getAttribute("data-discover-key") || ""),
+        title: String(card.getAttribute("data-title") || ""),
+        year: String(card.getAttribute("data-year") || ""),
+        media_type: String(card.getAttribute("data-media-type") || ""),
+        tmdb_id: String(card.getAttribute("data-tmdb-id") || ""),
+        imdb_id: String(card.getAttribute("data-imdb-id") || ""),
+        tvdb_id: String(card.getAttribute("data-tvdb-id") || ""),
+      })).filter(x => x.key && x.title && x.media_type);
+
+      if (!items.length) return;
+
+      const itemByKey = new Map(items.map(x => [x.key, x]));
+      const chunkSize = 80;
+      const mergedHits = {};
+
+      try{
+        for (let i = 0; i < items.length; i += chunkSize){
+          const chunk = items.slice(i, i + chunkSize);
+
+          const r = await fetch("/api/discover/library-state", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: chunk }),
+          });
+
+          const j = await r.json().catch(() => ({}));
+          if (!r.ok || !j.ok || !j.items) continue;
+
+          Object.assign(mergedHits, j.items || {});
+        }
+
+        for (const card of cards){
+          const key = String(card.getAttribute("data-discover-key") || "");
+          const hit = mergedHits[key] || {};
+
+          const btn = card.querySelector("[data-request]");
+          if (!btn) continue;
+
+          btn.classList.remove("libraryOwned", "libraryRequested");
+
+          let finalLabel = "";
+          let finalClass = "";
+
+          const inLibrary = !!hit.in_library;
+          const inRequested = !!hit.in_sonarr || !!hit.in_radarr;
+
+          if (inLibrary){
+            finalLabel = "Already in Library";
+            finalClass = "libraryOwned";
+          } else if (inRequested){
+            finalLabel = "Already Requested";
+            finalClass = "libraryRequested";
+          }
+
+          if (!finalLabel) continue;
+
+          btn.disabled = true;
+          btn.textContent = finalLabel;
+          btn.classList.add(finalClass);
+          btn.removeAttribute("data-request");
+
+          const menu = card.querySelector("[data-tv-dest-menu]");
+          if (menu){
+            menu.classList.remove("open");
+            menu.innerHTML = "";
+          }
+        }
+      }catch(_){
+      }
+    }
+
+    function getDiscoverScrollParent(el){
+      let node = el;
+      while (node && node.parentElement){
+        node = node.parentElement;
+        const style = window.getComputedStyle(node);
+        const overflowY = style ? style.overflowY : "";
+        const canScroll = overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay";
+        if (canScroll && node.scrollHeight > node.clientHeight){
+          return node;
+        }
+      }
+      return window;
+    }
+
+    function updateDiscoverBackToTopVisibility(){
+      if (!discoverBackToTopBtn) return;
+
+      const scrollParent = getDiscoverScrollParent(discoverGrid);
+      let y = 0;
+
+      if (scrollParent === window){
+        y = window.scrollY || document.documentElement.scrollTop || 0;
+      } else {
+        y = scrollParent.scrollTop || 0;
+      }
+
+      if (y > 200){
+        discoverBackToTopBtn.classList.add("show");
+      } else {
+        discoverBackToTopBtn.classList.remove("show");
+      }
+    }
+
+    function closeAllWhyBoxes(){
+      discoverGrid.querySelectorAll("[data-why-box]").forEach(el => {
+        el.classList.remove("open");
+      });
+      discoverGrid.querySelectorAll(".discoverItem.whyOpen").forEach(card => {
+        card.classList.remove("whyOpen");
+      });
+    }
+
+    function wireWhyButtons(){
+      discoverGrid.querySelectorAll("[data-why-toggle]").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          const card = btn.closest(".discoverItem");
+          const box = card ? card.querySelector("[data-why-box]") : null;
+          if (!box) return;
+
+          const wasOpen = box.classList.contains("open");
+          closeAllWhyBoxes();
+          if (!wasOpen){
+            box.classList.add("open");
+            card.classList.add("whyOpen");
+          }
+        });
+      });
+    }
+
+    function wireWhyCloseButtons(){
+      discoverGrid.querySelectorAll("[data-why-close]").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          const box = btn.closest("[data-why-box]");
+          if (box){
+            box.classList.remove("open");
+          }
+          const card = btn.closest(".discoverItem");
+          if (card){
+            card.classList.remove("whyOpen");
+          }
+        });
+      });
+    }
+
+    function closeAllTvDestinationMenus(){
+      discoverGrid.querySelectorAll("[data-tv-dest-menu]").forEach(el => {
+        el.classList.remove("open");
+        el.innerHTML = "";
+      });
+    }
+
+    function toggleTvDestinationMenu(card, btn){
+      const box = card.querySelector("[data-tv-dest-menu]");
+      if (!box) return;
+
+      const isOpen = box.classList.contains("open");
+      closeAllTvDestinationMenus();
+
+      if (isOpen) return;
+
+      if (!Array.isArray(seerrTvDestinations) || !seerrTvDestinations.length){
+        setStatus("No TV destinations are available for this user.", "bad");
+        return;
+      }
+
+      box.innerHTML = `
+        <div class="tvDestTitle">Choose TV destination</div>
+        ${seerrTvDestinations.map(d => `
+          <button class="tvDestBtn" type="button" data-tv-dest-choice="${esc(d.key)}">
+            ${esc(d.label)}
+          </button>
+        `).join("")}
+      `;
+      box.classList.add("open");
+
+      box.querySelectorAll("[data-tv-dest-choice]").forEach(choiceBtn => {
+        choiceBtn.addEventListener("click", async () => {
+          const dest = String(choiceBtn.getAttribute("data-tv-dest-choice") || "");
+          closeAllTvDestinationMenus();
+          await requestItem(card, btn, dest);
+        });
+      });
+    }
+
+    function wireDiscoverHideButtons(){
+      discoverGrid.querySelectorAll("[data-discover-hide]").forEach(btn => {
+        if (btn.dataset.wiredHide === "1") return;
+        btn.dataset.wiredHide = "1";
+
+        btn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          const card = btn.closest(".discoverItem");
+          if (!card) return;
+
+          const payload = {
+            title: card.getAttribute("data-title") || "",
+            year: card.getAttribute("data-year") || "",
+            media_type: card.getAttribute("data-media-type") || "",
+            tmdb_id: card.getAttribute("data-tmdb-id") || ""
+          };
+
+          try{
+            const r = await fetch("/api/action/discover_hide", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+
+            const j = await r.json().catch(() => ({}));
+            if (r.ok && j.ok){
+              card.remove();
+              setStatus("Item hidden from Discover.", "ok");
+            } else {
+              setStatus("Hide failed.", "bad");
+            }
+          }catch(_){
+            setStatus("Hide failed.", "bad");
+          }
+        });
+      });
+    }
+
+    function wireRequestButtons(){
+      discoverGrid.querySelectorAll("[data-request]").forEach(btn => {
+        btn.removeAttribute("title");
+        btn.addEventListener("click", async () => {
+          const card = btn.closest(".discoverItem");
+          if (!card) return;
+
+          const mediaType = String(card.getAttribute("data-media-type") || "");
+          if (mediaType === "tv"){
+            toggleTvDestinationMenu(card, btn);
+            return;
+          }
+
+          await requestItem(card, btn, "");
+        });
+      });
+
+      discoverGrid.querySelectorAll("[data-media-type='movie'] [data-request]").forEach(btn => {
+        btn.textContent = "Request Movie";
+      });
+
+      discoverGrid.querySelectorAll("[data-media-type='tv'] [data-request]").forEach(btn => {
+        btn.textContent = "Request TV";
+      });
+
+      discoverGrid.querySelectorAll(".discoverItem").forEach(card => {
+        const tmdbId = String(card.getAttribute("data-tmdb-id") || "").trim();
+        const btn = card.querySelector("[data-request]");
+        if (!btn) return;
+
+        if (!tmdbId){
+          btn.disabled = true;
+          btn.textContent = "Browse Only";
+          btn.title = "QueueDeck could not match this item to a requestable TMDb entry yet. Try adding a Discover Title Override in Preferences, or use Open Source to verify the title.";
+        }
+      });
+
+      if (!seerrConfigured){
+        discoverGrid.querySelectorAll("[data-request]").forEach(btn => {
+          btn.disabled = true;
+          btn.textContent = "Seerr Not Configured";
+        });
+      }
+    }
+
+    let discoverPrimePolling = null;
+    let discoverPrimeActive = false;
+
+    function setDiscoverPrimeOverlay(show, message="", percent=0, meta=""){
+      const overlay = document.getElementById("discoverPrimeOverlay");
+      const textEl = document.getElementById("discoverPrimeText");
+      const barEl = document.getElementById("discoverPrimeBar");
+      const metaEl = document.getElementById("discoverPrimeMeta");
+      const grid = document.getElementById("discoverGrid");
+
+      if (!overlay || !textEl || !barEl || !metaEl) return;
+
+      overlay.classList.toggle("show", !!show);
+
+      if (grid){
+        grid.classList.toggle("discoverPrimeGate", !!show);
+      }
+
+      if (!show){
+        textEl.textContent = "";
+        metaEl.textContent = "";
+        barEl.style.width = "0%";
+        return;
+      }
+
+      textEl.textContent = message || "Preparing Discover data...";
+      metaEl.textContent = meta || "Please wait while QueueDeck finishes priming Discover.";
+      barEl.style.width = `${Math.max(0, Math.min(100, Number(percent || 0)))}%`;
+    }
+
+    function getDiscoverPrimingStorage(){
+      try{
+        const raw = localStorage.getItem("qd_discover_priming");
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (!data || !data.active) return null;
+
+        const updated = Number(data.updated || 0);
+        if (updated > 0 && (Date.now() - updated) > (20 * 60 * 1000)){
+          localStorage.removeItem("qd_discover_priming");
+          return null;
+        }
+
+        return data;
+      }catch(e){
+        return null;
+      }
+    }
+
+    function clearDiscoverPrimingStorage(){
+      try{
+        localStorage.removeItem("qd_discover_priming");
+      }catch(e){}
+    }
+
+    async function fetchDiscoverWarmStatus(){
+      const r = await fetch("/api/discover/warm-status", {
+        cache: "no-store",
+        credentials: "same-origin"
+      });
+      return await r.json().catch(() => ({}));
+    }
+
+    async function waitForDiscoverPrimeIfNeeded(){
+      let data = {};
+      try{
+        data = await fetchDiscoverWarmStatus();
+      }catch(e){
+        return false;
+      }
+
+      const localPriming = getDiscoverPrimingStorage();
+
+      if (!data.running && !localPriming){
+        setDiscoverPrimeOverlay(false);
+        discoverPrimeActive = false;
+        return false;
+      }
+
+      if (!data.running && localPriming){
+        discoverPrimeActive = true;
+
+        const phase = String(localPriming.message || "Preparing Discover data...").trim();
+        const pct = Math.max(4, Math.min(100, Number(localPriming.percent || 10)));
+        const eta = String(localPriming.eta || "").trim();
+
+        setDiscoverPrimeOverlay(
+          true,
+          phase,
+          pct,
+          eta || "Please wait while QueueDeck finishes priming Discover."
+        );
+
+        if (discoverPrimePolling){
+          clearInterval(discoverPrimePolling);
+          discoverPrimePolling = null;
+        }
+
+        discoverPrimePolling = setInterval(async () => {
+          const localState = getDiscoverPrimingStorage();
+          if (localState){
+            const phase = String(localState.message || "Preparing Discover data...").trim();
+            const pct = Math.max(4, Math.min(100, Number(localState.percent || 10)));
+            const eta = String(localState.eta || "").trim();
+
+            setDiscoverPrimeOverlay(
+              true,
+              phase,
+              pct,
+              eta || "Please wait while QueueDeck finishes priming Discover."
+            );
+            return;
+          }
+
+          clearInterval(discoverPrimePolling);
+          discoverPrimePolling = null;
+          discoverPrimeActive = false;
+          clearDiscoverPrimingStorage();
+
+          setDiscoverPrimeOverlay(true, "Discover ready.", 100, "Loading results...");
+          setTimeout(() => setDiscoverPrimeOverlay(false), 900);
+
+          loadDiscover(1, false);
+        }, 900);
+
+        return true;
+      }
+
+      discoverPrimeActive = true;
+
+      const phase = String(data.message || "Preparing Discover data...").trim();
+      const eta = String(data.eta_bucket || "").trim();
+      const total = Math.max(1, Number(data.total || 1));
+      const progress = Math.max(0, Number(data.progress || 0));
+      const pct = Math.max(4, Math.min(100, Number(data.percent || Math.round((progress / total) * 100) || 0)));
+
+      setDiscoverPrimeOverlay(
+        true,
+        phase,
+        pct,
+        eta || "Please wait while QueueDeck finishes priming Discover."
+      );
+
+      if (discoverPrimePolling){
+        clearInterval(discoverPrimePolling);
+        discoverPrimePolling = null;
+      }
+
+      discoverPrimePolling = setInterval(async () => {
+        try{
+          const j = await fetchDiscoverWarmStatus();
+          const running = !!j.running;
+          const total = Math.max(1, Number(j.total || 1));
+          const progress = Math.max(0, Number(j.progress || 0));
+          const pct = Math.max(4, Math.min(100, Number(j.percent || Math.round((progress / total) * 100) || 0)));
+          const phase = String(j.message || "Preparing Discover data...").trim();
+          const eta = String(j.eta_bucket || "").trim();
+
+          if (running){
+            setDiscoverPrimeOverlay(
+              true,
+              phase,
+              pct,
+              eta || "Please wait while QueueDeck finishes priming Discover."
+            );
+            return;
+          }
+
+          clearInterval(discoverPrimePolling);
+          discoverPrimePolling = null;
+          discoverPrimeActive = false;
+
+          setDiscoverPrimeOverlay(true, "Discover ready.", 100, "Loading results...");
+          setTimeout(() => setDiscoverPrimeOverlay(false), 900);
+
+          loadDiscover(1, false);
+        }catch(e){
+          console.warn("discover prime poll failed", e);
+        }
+      }, 1200);
+
+      return true;
+    }
+
+    discoverSource && discoverSource.addEventListener("change", () => {
+      qdAdjustDiscoverMediaForSource();
+      loadDiscover(1, false);
+    });
+
+    discoverReloadBtn.addEventListener("click", async () => {
+      const gated = await waitForDiscoverPrimeIfNeeded();
+      if (!gated){
+        loadDiscover(1, false);
+      }
+    });
+
+    if (discoverBackToTopBtn){
+      discoverBackToTopBtn.addEventListener("click", () => {
+        const scrollParent = getDiscoverScrollParent(discoverGrid);
+        if (scrollParent === window){
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          scrollParent.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      });
+
+      const scrollParent = getDiscoverScrollParent(discoverGrid);
+      if (scrollParent === window){
+        window.addEventListener("scroll", updateDiscoverBackToTopVisibility, { passive: true });
+      } else {
+        scrollParent.addEventListener("scroll", updateDiscoverBackToTopVisibility, { passive: true });
+      }
+
+      updateDiscoverBackToTopVisibility();
+    }
+
+    qdAdjustDiscoverMediaForSource();
+    if (discoverLoadMoreBtn){
+      discoverLoadMoreBtn.addEventListener("click", () => loadDiscover(discoverPage + 1, true));
+    }
+    if (discoverBackToTopBtn){
+      discoverBackToTopBtn.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
+    if (discoverAdvancedToggle && discoverAdvancedPanel){
+      discoverAdvancedToggle.addEventListener("click", () => {
+        const isOpen = discoverAdvancedPanel.classList.toggle("open");
+        discoverAdvancedToggle.textContent = isOpen ? "Hide Advanced" : "Advanced Filters";
+      });
+    }
+    if (discoverSource){
+      discoverSource.addEventListener("change", () => {
+        qdSetGenreOptionsForSource();
+        loadDiscover(1, false);
+      });
+    }
+    if (discoverMedia){
+      discoverMedia.addEventListener("change", () => loadDiscover(1, false));
+    }
+    if (discoverConsensus){
+      discoverConsensus.addEventListener("change", () => loadDiscover(1, false));
+    }
+    if (discoverGenre){
+      discoverGenre.addEventListener("change", () => loadDiscover(1, false));
+    }
+    if (discoverSort){
+      discoverSort.addEventListener("change", () => loadDiscover(1, false));
+    }
+    if (discoverMode){
+      discoverMode.addEventListener("change", () => {
+        qdSetSortOptionsForMode();
+        loadDiscover(1, false);
+      });
+    }
+    if (discoverYearFrom){
+      discoverYearFrom.addEventListener("change", () => loadDiscover(1, false));
+    }
+    if (discoverYearTo){
+      discoverYearTo.addEventListener("change", () => loadDiscover(1, false));
+    }
+    if (discoverProvider){
+      discoverProvider.addEventListener("change", () => loadDiscover(1, false));
+    }
+    if (discoverMinRating){
+      discoverMinRating.addEventListener("change", () => loadDiscover(1, false));
+    }
+
+    document.addEventListener("click", (e) => {
+      const insideCardMenu = e.target && e.target.closest && e.target.closest(".tvDestMenu");
+      const requestBtn = e.target && e.target.closest && e.target.closest("[data-request]");
+      const whyBtn = e.target && e.target.closest && e.target.closest("[data-why-toggle]");
+      const whyBox = e.target && e.target.closest && e.target.closest("[data-why-box]");
+
+      if (!insideCardMenu && !requestBtn){
+        closeAllTvDestinationMenus();
+      }
+
+      if (!whyBtn && !whyBox){
+        closeAllWhyBoxes();
+      }
+    });
+
+    function qdSeerrEscape(s){
+      return String(s || "").replace(/[&<>"']/g, m => ({
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#39;"
+      }[m]));
+    }
+
+    function qdAdjustDiscoverMediaForSource(){
+      if (!discoverSource || !discoverMedia) return;
+
+      const src = String(discoverSource.value || "").trim();
+
+      const movieOnlySources = new Set([
+        "letterboxd",
+        "letterboxd_aggregate"
+      ]);
+
+      const tvOnlySources = new Set([
+        "anime_aggregate",
+        "anilist_trending",
+        "anilist_popular",
+        "anilist_genre",
+        "jikan_anime_hot",
+        "jikan_anime_rising",
+        "tvmaze_airing"
+      ]);
+
+      if (movieOnlySources.has(src)){
+        if (String(discoverMedia.value || "") !== "all"){
+          discoverMedia.value = "all";
+        }
+        return;
+      }
+
+      if (tvOnlySources.has(src)){
+        if (String(discoverMedia.value || "") !== "tv"){
+          discoverMedia.value = "tv";
+        }
+        return;
+      }
+    }
+
+    function qdSeerrStatusLabel(v){
+      const n = Number(v);
+      if (Number.isNaN(n)) return v ? String(v) : "";
+      if (n === 1) return "Unknown";
+      if (n === 2) return "Pending";
+      if (n === 3) return "Processing";
+      if (n === 4) return "Partially Available";
+      if (n === 5) return "Available";
+      return "Status " + String(v);
+    }
+
+    function qdOpenSeerrSearch(){
+      const modal = document.getElementById("qdSeerrSearchModal");
+      if (!modal) return;
+      modal.style.display = "flex";
+      const input = document.getElementById("qdSeerrQuery");
+      if (input){
+        input.focus();
+        const q = String(input.value || "").trim();
+        if (q.length >= 2){
+          qdSeerrSearch(q);
+        }
+      }
+    }
+
+    function qdCloseSeerrSearch(){
+      const modal = document.getElementById("qdSeerrSearchModal");
+      if (modal) modal.style.display = "none";
+    }
+
+    function qdOpenTvChoiceModal(){
+      const modal = document.getElementById("qdSeerrTvChoiceModal");
+      if (modal) modal.style.display = "flex";
+    }
+
+    function qdCloseTvChoiceModal(){
+      const modal = document.getElementById("qdSeerrTvChoiceModal");
+      if (modal) modal.style.display = "none";
+      window.qdSeerrPendingTvItem = null;
+    }
+
+    let qdSeerrTvDestinations = [];
+    window.qdSeerrPendingTvItem = null;
+
+    async function qdSeerrLoadTvDestinations(){
+      try{
+        const r = await fetch("/api/seerr/tv-destinations", { cache: "no-store" });
+        const j = await r.json().catch(() => ({}));
+        if (r.ok && j.ok && Array.isArray(j.destinations)){
+          qdSeerrTvDestinations = j.destinations;
+        } else {
+          qdSeerrTvDestinations = [];
+        }
+      }catch(_){
+        qdSeerrTvDestinations = [];
+      }
+    }
+
+    function qdSeerrResultCard(item){
+      const poster = item.poster_url || "";
+      const year = item.year || "";
+      const mediaType = item.media_type === "tv" ? "TV" : "Movie";
+      const requested = !!(item.request && item.request.id);
+      const status = qdSeerrStatusLabel(item.status || item.status4k || "");
+      const title = qdSeerrEscape(item.title || "");
+      const resultKey = `${item.media_type || ""}:${item.tmdb_id || item.title || ""}:${item.year || ""}`;
+
+      let badge = "";
+      if (requested){
+        badge = '<div data-qd-seerr-badge="1" style="margin-top:6px; font-size:12px; color:#9fe3a7;">Already Requested</div>';
+      } else if (status){
+        badge = '<div data-qd-seerr-badge="1" style="margin-top:6px; font-size:12px; color:#9ecbff;">' + qdSeerrEscape(status) + '</div>';
+      } else {
+        badge = '<div data-qd-seerr-badge="1" style="margin-top:6px; font-size:12px; color:#9ecbff;">&nbsp;</div>';
+      }
+
+      return `
+        <div data-qd-seerr-card="1" data-qd-seerr-key="${qdSeerrEscape(resultKey)}" data-title="${title}" data-year="${qdSeerrEscape(year)}" data-media-type="${qdSeerrEscape(item.media_type || "")}" data-tmdb-id="${qdSeerrEscape(item.tmdb_id || "")}" data-imdb-id="${qdSeerrEscape(item.imdb_id || "")}" data-tvdb-id="${qdSeerrEscape(item.tvdb_id || "")}" style="background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.10); border-radius:14px; padding:10px;">
+          <div style="aspect-ratio:2/3; overflow:hidden; border-radius:10px; background:rgba(255,255,255,.03); display:flex; align-items:center; justify-content:center;">
+            ${poster ? `<img src="${poster}" alt="${title}" style="width:100%; height:100%; object-fit:cover;">` : `<div style="opacity:.45; font-size:12px;">No Poster</div>`}
+          </div>
+          <div style="margin-top:8px; font-size:14px; font-weight:600; line-height:1.25;">${title}</div>
+          <div style="margin-top:4px; font-size:12px; opacity:.72;">${qdSeerrEscape(mediaType)}${year ? " • " + qdSeerrEscape(year) : ""}</div>
+          ${badge}
+          <button class="btn" type="button" data-qd-seerr-request="${item.tmdb_id}" data-qd-seerr-type="${item.media_type}" style="margin-top:10px; width:100%;" ${requested ? "disabled" : ""}>
+            ${requested ? "Already Requested" : (item.media_type === "tv" ? "Request TV" : "Request")}
+          </button>
+        </div>
+      `;
+    }
+
+    function qdSeerrOpenTvChoice(item){
+      window.qdSeerrPendingTvItem = item;
+
+      const title = document.getElementById("qdSeerrTvChoiceTitle");
+      const list = document.getElementById("qdSeerrTvChoiceList");
+      if (!title || !list) return;
+
+      title.textContent = "Choose TV destination for " + (item.title || "show");
+      list.innerHTML = "";
+
+      const dests = Array.isArray(qdSeerrTvDestinations) ? qdSeerrTvDestinations : [];
+      for (const d of dests){
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn";
+        btn.style.textAlign = "left";
+        btn.style.padding = "12px 14px";
+        btn.innerHTML = `
+          <div style="font-weight:700;">${qdSeerrEscape(d.label || d.key || "Destination")}</div>
+          <div style="font-size:12px; opacity:.72; margin-top:4px;">
+            Root: ${qdSeerrEscape(d.rootFolder || "")}
+            • Profile ID: ${qdSeerrEscape(d.profileId || "")}
+            • Server ID: ${qdSeerrEscape(d.serverId || "")}
+          </div>
+        `;
+        btn.addEventListener("click", () => qdSeerrSendRequest(item, d.key || "tv"));
+        list.appendChild(btn);
+      }
+
+      qdOpenTvChoiceModal();
+    }
+
+    async function qdSeerrSendRequest(item, forcedDestination=null){
+      const status = document.getElementById("qdSeerrStatus");
+      try{
+        const body = {
+          mediaType: item.media_type,
+          mediaId: item.tmdb_id
+        };
+
+        if (item.media_type === "tv"){
+          body.destination = forcedDestination || "tv";
+          if (item.tvdb_id) body.tvdbId = item.tvdb_id;
+        }
+
+        const r = await fetch("/api/seerr/request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+
+        const j = await r.json().catch(() => ({}));
+
+        if (!r.ok || !j.ok){
+          const errText = String(j.error || j.message || ("HTTP " + r.status));
+          const bodyText = String(j.body || "");
+          const combined = (errText + " " + bodyText).toLowerCase();
+
+          if (combined.includes("already exists") || combined.includes("already requested")){
+            if (status) status.textContent = "Already requested.";
+            return;
+          }
+
+          const extra = j.body ? (" — " + j.body) : "";
+          if (status) status.textContent = "Request failed: " + errText + extra;
+          return;
+        }
+
+        if (item.media_type === "tv"){
+          qdCloseTvChoiceModal();
+        }
+
+        if (status) status.textContent = "Request sent for " + (item.title || "item") + ".";
+        await qdSeerrSearch(document.getElementById("qdSeerrQuery")?.value || "");
+      }catch(e){
+        if (status) status.textContent = "Request failed: " + (e.message || e);
+      }
+    }
+
+    async function qdSeerrHydrateSearchState(){
+      const box = document.getElementById("qdSeerrResults");
+      if (!box) return;
+
+      const cards = [...box.querySelectorAll("[data-qd-seerr-card='1']")];
+      if (!cards.length) return;
+
+      const items = cards.map(card => ({
+        key: String(card.getAttribute("data-qd-seerr-key") || ""),
+        title: String(card.getAttribute("data-title") || ""),
+        year: String(card.getAttribute("data-year") || ""),
+        media_type: String(card.getAttribute("data-media-type") || "").toLowerCase(),
+        tmdb_id: String(card.getAttribute("data-tmdb-id") || ""),
+        imdb_id: String(card.getAttribute("data-imdb-id") || ""),
+        tvdb_id: String(card.getAttribute("data-tvdb-id") || "")
+      }));
+
+      try{
+        const r = await fetch("/api/discover/library-state", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items })
+        });
+
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || !j.ok || !j.items) return;
+
+        cards.forEach(card => {
+          const key = String(card.getAttribute("data-qd-seerr-key") || "");
+          const hit = j.items[key] || {};
+          const btn = card.querySelector("[data-qd-seerr-request]");
+          const badge = card.querySelector("[data-qd-seerr-badge='1']");
+          if (!btn || !badge) return;
+
+          if (hit.in_library){
+            btn.disabled = true;
+            btn.textContent = "In Library";
+            btn.classList.remove("primary");
+            btn.classList.add("secondary");
+            btn.style.background = "rgba(80,200,120,.16)";
+            btn.style.borderColor = "rgba(120,220,150,.28)";
+            btn.style.color = "#dff7e7";
+            btn.style.cursor = "not-allowed";
+            badge.textContent = "In Library";
+            badge.style.color = "#9fe3a7";
+          } else if (hit.in_sonarr || hit.in_radarr){
+            btn.disabled = true;
+            btn.textContent = "Already Requested";
+            btn.style.cursor = "not-allowed";
+            badge.textContent = "Already Requested";
+            badge.style.color = "#9fe3a7";
+          }
+        });
+      }catch(_){
+      }
+    }
+
+    async function qdSeerrSearch(q){
+      const status = document.getElementById("qdSeerrStatus");
+      const box = document.getElementById("qdSeerrResults");
+      if (!status || !box) return;
+
+      q = String(q || "").trim();
+
+      if (q.length < 2){
+        box.innerHTML = "";
+        status.textContent = "Type 2+ characters to search.";
+        return;
+      }
+
+      status.textContent = "Searching...";
+      box.innerHTML = "";
+
+      try{
+        const r = await fetch("/api/seerr/search?q=" + encodeURIComponent(q), { cache: "no-store" });
+        const j = await r.json().catch(() => ({}));
+
+        if (!r.ok || j.ok === false){
+          status.textContent = "Search failed: " + (j.error || ("HTTP " + r.status));
+          return;
+        }
+
+        if (j.configured === false){
+          status.textContent = "Seerr is not configured for this user.";
+          return;
+        }
+
+        const items = Array.isArray(j.results) ? j.results : [];
+        if (!items.length){
+          status.textContent = "No results.";
+          return;
+        }
+
+        status.textContent = "Found " + items.length + " result" + (items.length === 1 ? "" : "s") + ".";
+        box.innerHTML = items.map(qdSeerrResultCard).join("");
+        await qdSeerrHydrateSearchState();
+
+        box.querySelectorAll("[data-qd-seerr-request]").forEach(btn => {
+          const id = String(btn.getAttribute("data-qd-seerr-request") || "");
+          const item = items.find(x => String(x.tmdb_id) === id);
+          if (!item || btn.disabled) return;
+
+          btn.addEventListener("click", () => {
+            if (item.media_type === "tv"){
+              qdSeerrOpenTvChoice(item);
+            } else {
+              qdSeerrSendRequest(item);
+            }
+          });
+        });
+      }catch(e){
+        status.textContent = "Search failed: " + (e.message || e);
+      }
+    }
+
+    (async function init(){
+      const qdSearchInput = document.getElementById("qdSeerrQuery");
+      const qdSearchResults = document.getElementById("qdSeerrResults");
+      const qdSearchStatus = document.getElementById("qdSeerrStatus");
+      if (qdSearchInput) qdSearchInput.value = "";
+      if (qdSearchResults) qdSearchResults.innerHTML = "";
+      if (qdSearchStatus) qdSearchStatus.textContent = "Type 2+ characters to search.";
+      normalizeDiscoverFilters();
+
+      try{
+        const r = await fetch("/settings/api", { cache: "no-store" });
+        const j = await r.json().catch(() => ({}));
+        const raw = Number(j.limit_discover_results || 24);
+        qdDiscoverResultsLimit = Math.max(6, Math.min(48, raw || 24));
+      }catch(_){
+        qdDiscoverResultsLimit = 24;
+      }
+      await loadSeerrConfig();
+      await loadTvDestinations();
+      await qdSeerrLoadTvDestinations();
+      await loadLetterboxdSources();
+      qdSetGenreOptionsForSource();
+      qdSetSortOptionsForMode();
+
+      const qdOpenBtn = document.getElementById("qdOpenSeerrSearch");
+      const qdCloseBtn = document.getElementById("qdCloseSeerrSearch");
+      const qdModal = document.getElementById("qdSeerrSearchModal");
+      const qdInput = document.getElementById("qdSeerrQuery");
+      const qdTvChoiceModal = document.getElementById("qdSeerrTvChoiceModal");
+      const qdTvChoiceClose = document.getElementById("qdSeerrTvChoiceClose");
+
+      if (qdOpenBtn) qdOpenBtn.addEventListener("click", qdOpenSeerrSearch);
+      if (qdCloseBtn) qdCloseBtn.addEventListener("click", qdCloseSeerrSearch);
+      if (qdTvChoiceClose) qdTvChoiceClose.addEventListener("click", qdCloseTvChoiceModal);
+
+      if (qdModal){
+        qdModal.addEventListener("click", (e) => {
+          if (e.target === qdModal) qdCloseSeerrSearch();
+        });
+      }
+
+      if (qdTvChoiceModal){
+        qdTvChoiceModal.addEventListener("click", (e) => {
+          if (e.target === qdTvChoiceModal) qdCloseTvChoiceModal();
+        });
+      }
+
+      if (qdInput){
+        let qdTimer;
+        qdInput.addEventListener("input", () => {
+          clearTimeout(qdTimer);
+          qdTimer = setTimeout(() => qdSeerrSearch(qdInput.value), 350);
+        });
+      }
+
+      const gated = await waitForDiscoverPrimeIfNeeded();
+      if (!gated){
+        await loadDiscover(1, false);
+      }
+    })();
+  </script>
+  <script>
+    (function(){
+      const menu = document.getElementById("userMenu");
+      const btn = document.getElementById("userMenuBtn");
+      if (!menu || !btn) return;
+
+      function closeMenu(){
+        menu.classList.remove("open");
+        btn.setAttribute("aria-expanded", "false");
+      }
+
+      function openMenu(){
+        menu.classList.add("open");
+        btn.setAttribute("aria-expanded", "true");
+      }
+
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        menu.classList.contains("open") ? closeMenu() : openMenu();
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!menu.contains(e.target)) closeMenu();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeMenu();
+      });
+    })();
+  </script>
+
+</body>
+</html>
