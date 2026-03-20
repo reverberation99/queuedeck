@@ -129,8 +129,8 @@ def _normalize_search_result(item: dict) -> dict:
         "overview": item.get("overview") or "",
         "poster_path": item.get("posterPath") or "",
         "backdrop_path": item.get("backdropPath") or "",
-        "poster_url": f"https://image.tmdb.org/t/p/w342{item.get('posterPath')}" if item.get("posterPath") else "",
-        "backdrop_url": f"https://image.tmdb.org/t/p/w780{item.get('backdropPath')}" if item.get("backdropPath") else "",
+        "poster_url": f"/img/tmdb{item.get('posterPath')}" if item.get("posterPath") else "",
+        "backdrop_url": f"/img/tmdb{item.get('backdropPath')}" if item.get("backdropPath") else "",
         "status": media_info.get("status"),
         "status4k": media_info.get("status4k"),
         "media_info": media_info,
@@ -339,7 +339,7 @@ def api_seerr_pending_requests():
 
             poster = str(media.get("posterPath") or "").strip()
             if poster and not poster.startswith("http"):
-                poster = f"https://image.tmdb.org/t/p/w342{poster}"
+                poster = f"/img/tmdb{poster}"
 
             out.append({
                 "id": int(row.get("id") or 0),
@@ -516,7 +516,7 @@ def api_seerr_my_requests():
                     or ""
                 ).strip()
                 if details.get("posterPath"):
-                    poster_url = f"https://image.tmdb.org/t/p/w342{details.get('posterPath')}"
+                    poster_url = f"/img/tmdb{details.get('posterPath')}"
                 elif tmdb_id:
                     poster_url = ""
             else:
@@ -529,7 +529,7 @@ def api_seerr_my_requests():
                     or ""
                 ).strip()
                 if details.get("posterPath"):
-                    poster_url = f"https://image.tmdb.org/t/p/w342{details.get('posterPath')}"
+                    poster_url = f"/img/tmdb{details.get('posterPath')}"
                 elif tvdb_id:
                     poster_url = f"/img/sonarr/series/{tvdb_id}.jpg"
 

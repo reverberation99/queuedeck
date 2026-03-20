@@ -39,15 +39,9 @@ def tmdb_get(path: str, headers: dict, auth_params: dict, params: dict | None = 
 
 
 def tmdb_image_base(headers: dict, auth_params: dict) -> str:
-    try:
-        cfg = tmdb_get("/configuration", headers, auth_params)
-        images = cfg.get("images") or {}
-        base = (images.get("secure_base_url") or "").strip()
-        if base:
-            return base.rstrip("/") + "/w342"
-    except Exception:
-        pass
-    return "https://image.tmdb.org/t/p/w342"
+    # Always proxy TMDB artwork through QueueDeck so browsers never hit
+    # image.tmdb.org directly.
+    return "/img/tmdb"
 
 
 def tmdb_trend_score(item: dict) -> float:

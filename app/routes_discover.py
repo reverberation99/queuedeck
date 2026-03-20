@@ -14,6 +14,29 @@ def _qd_tmdb_debug(event: str, **kwargs):
 
 from flask import Blueprint, jsonify, render_template, request, current_app, session
 
+
+def _proxy_tmdb_url(url: str) -> str:
+    url = str(url or "").strip()
+    if not url:
+        return url
+
+    # already proxied or local
+    if url.startswith("/img/tmdb/") or url.startswith("/img/") or url.startswith("/image"):
+        return url
+
+    # normalize direct TMDB CDN URLs
+    if "image.tmdb.org" in url and "/t/p/" in url:
+        try:
+            tail = url.split("/t/p/", 1)[1]
+            # tail looks like: w500/abc.jpg or original/abc.jpg
+            parts = tail.split("/", 1)
+            if len(parts) == 2 and parts[1]:
+                return f"/img/tmdb/{parts[1]}"
+        except Exception:
+            return url
+
+    return url
+
 from .db import get_db
 from .discover.engine import normalize_and_score_items
 from .discover.providers.tmdb import (
@@ -684,7 +707,7 @@ def _fill_missing_tmdb_artwork(items: list[dict], budget: int = 20) -> list[dict
 
             if enriched:
                 if not item.get("poster_url") and enriched.get("poster_url"):
-                    item["poster_url"] = enriched.get("poster_url")
+                    item["poster_url"] = _proxy_tmdb_url(enriched.get("poster_url"))
                 if not item.get("backdrop_url") and enriched.get("backdrop_url"):
                     item["backdrop_url"] = enriched.get("backdrop_url")
                 if not item.get("overview") and enriched.get("overview"):
@@ -2594,7 +2617,7 @@ def api_discover_items():
             )
 
             if fallback:
-                i["poster_url"] = fallback
+                i["poster_url"] = _proxy_tmdb_url(fallback)
                 fallback_poster_hits += 1
 
         if fallback_poster_hits:

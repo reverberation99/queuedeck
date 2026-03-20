@@ -56,6 +56,22 @@ def _proxy_image(url: str, headers: dict | None = None) -> Response:
 
 
 # ---------------------------
+# TMDB images
+# ---------------------------
+
+@bp.get("/img/tmdb/<path:img_path>")
+@login_required_401
+def tmdb_image(img_path: str):
+    clean = (img_path or "").lstrip("/")
+    if not clean:
+        return Response("Missing TMDB image path", status=400)
+
+    # Keep this fixed to posters/backdrops hosted by TMDB CDN.
+    url = f"https://image.tmdb.org/t/p/w500/{clean}"
+    return _proxy_image(url)
+
+
+# ---------------------------
 # Jellyfin images
 # ---------------------------
 

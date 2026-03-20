@@ -254,7 +254,7 @@ def _search_tmdb_movie(title: str, year: str = "", source_label: str = "Letterbo
         return None
 
     poster_path = str(best.get("poster_path") or "").strip()
-    poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else ""
+    poster_url = f"/img/tmdb{poster_path}" if poster_path else ""
 
     release_date = str(best.get("release_date") or "").strip()
     release_year = release_date[:4] if len(release_date) >= 4 else (year or "")
