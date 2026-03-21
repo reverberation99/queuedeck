@@ -503,7 +503,7 @@ def _build_latest_unwatched_movies_for_user(user_id: int, limit: int):
         return []
 
     try:
-        jf_user_id = find_user_id_by_name(jf_username)
+        jf_user_id = find_user_id_by_name(jf_username, base_url=jf_base, api_key=jf_api_key)
         data = _jf_get(
             jf_base,
             jf_api_key,
@@ -656,12 +656,6 @@ def rss_latest_unwatched_movies():
     limit = max(1, min(limit, 120))
 
     items = _build_latest_unwatched_movies_for_user(user_id, limit=limit)
-    items = _apply_event_feed_state(
-        user_id,
-        "latest-unwatched-movies",
-        items,
-        key_fields=["item_id", "date_added"],
-    )
 
     host = request.host_url.rstrip("/")
     return _rss_response(
