@@ -1443,10 +1443,35 @@ object-fit: contain;
 
           const existing = String(ta.value || "").trim();
           const existingLines = existing ? existing.split(/\r?\n/).map(x => x.trim()).filter(Boolean) : [];
-          const existingSet = new Set(existingLines.map(x => x.toLowerCase()));
+
+          const reviewHeader = "# Review these anime suggestions manually:";
+
+          // Split current textarea into:
+          // - existing saved rules
+          // - existing review suggestions
+          const baseLines = [];
+          const existingReviewLines = [];
+          let inReviewSection = false;
+
+          for (const line of existingLines){
+            if (line === reviewHeader){
+              inReviewSection = true;
+              continue;
+            }
+            if (inReviewSection){
+              if (line && !line.startsWith("#")) existingReviewLines.push(line);
+            } else {
+              baseLines.push(line);
+            }
+          }
+
+          const existingSet = new Set(baseLines.map(x => x.toLowerCase()));
+          const existingReviewSet = new Set(existingReviewLines.map(x => x.toLowerCase()));
 
           const autoLines = [];
           const reviewLines = [];
+          const autoSet = new Set();
+          const reviewSet = new Set();
 
           for (const row of suggestions){
             const left = String(row.original_title || "").trim();
@@ -1454,21 +1479,37 @@ object-fit: contain;
             if (!left || !right) continue;
 
             const line = `${left} | ${right}`;
-            if (existingSet.has(line.toLowerCase())) continue;
+            const key = line.toLowerCase();
+
+            if (existingSet.has(key) || existingReviewSet.has(key) || autoSet.has(key) || reviewSet.has(key)) {
+              continue;
+            }
 
             if (shouldAutoApplyAnimeSuggestion(left, right)){
               autoLines.push(line);
-              existingSet.add(line.toLowerCase());
+              autoSet.add(key);
+              existingSet.add(key);
             } else {
               reviewLines.push(line);
+              reviewSet.add(key);
             }
           }
 
-          const merged = [...existingLines, ...autoLines];
-          if (reviewLines.length){
+          const merged = [...baseLines, ...autoLines];
+
+          const finalReviewLines = [...existingReviewLines];
+          const finalReviewSet = new Set(existingReviewLines.map(x => x.toLowerCase()));
+          for (const line of reviewLines){
+            const key = line.toLowerCase();
+            if (finalReviewSet.has(key)) continue;
+            finalReviewLines.push(line);
+            finalReviewSet.add(key);
+          }
+
+          if (finalReviewLines.length){
             if (merged.length) merged.push("");
-            merged.push("# Review these anime suggestions manually:");
-            merged.push(...reviewLines);
+            merged.push(reviewHeader);
+            merged.push(...finalReviewLines);
           }
 
           ta.value = merged.join("\n");
@@ -1563,6 +1604,13 @@ object-fit: contain;
         }
 
         const suggestionResult = await appendAutoAnimeSuggestions();
+
+        // Ensure UI reflects persisted suggestions from backend
+        try {
+          await load();
+        } catch (e) {
+          console.warn("reload after suggestions failed", e);
+        }
 
         let readyText = "Discover primed and ready.";
         if ((suggestionResult.applied || 0) > 0 && (suggestionResult.review || 0) > 0){
@@ -1935,10 +1983,44 @@ object-fit: contain;
         return;
       }
 
-      const existing = (ta.value || "").trim();
-      const append = suggestions.join("\n");
-      ta.value = existing ? (existing + "\n" + append) : append;
-      if (status) status.textContent = `Added ${suggestions.length} suggestion(s). Review and click Save.`;
+      const lines = suggestions
+        .map(row => {
+          if (row && typeof row === "object"){
+            const left = String(row.original_title || "").trim();
+            const right = String(row.override_title || "").trim();
+            if (left && right) return `${left} | ${right}`;
+          }
+          return String(row || "").trim();
+        })
+        .filter(Boolean);
+
+      if (!lines.length){
+        if (status) status.textContent = "No suggestions found right now.";
+        return;
+      }
+
+      const existing = String(ta.value || "").trim();
+      const existingLines = existing
+        ? existing.split(/\r?\n/).map(x => x.trim()).filter(Boolean)
+        : [];
+
+      const existingSet = new Set(existingLines.map(x => x.toLowerCase()));
+      const dedupedNew = [];
+
+      for (const line of lines){
+        const k = String(line || "").trim().toLowerCase();
+        if (!k || existingSet.has(k)) continue;
+        existingSet.add(k);
+        dedupedNew.push(String(line || "").trim());
+      }
+
+      if (!dedupedNew.length){
+        if (status) status.textContent = "No new suggestions found.";
+        return;
+      }
+
+      ta.value = [...existingLines, ...dedupedNew].join("\n");
+      if (status) status.textContent = `Added ${dedupedNew.length} suggestion(s). Review and click Save.`;
     }catch(e){
       if (status) status.textContent = "Generate failed.";
       console.error(e);
