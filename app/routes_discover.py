@@ -323,7 +323,21 @@ _DISCOVER_ANIME_ENRICHED_ITEM_CACHE: dict[tuple[str, str, str], dict] = {}
 _DISCOVER_ANIME_ENRICHED_ITEM_CACHE_TTL_SEC = 43200  # 12 hours
 
 _DISCOVER_CACHE: dict[tuple[str, str, str, str, str, str, int, str], dict] = {}
-_DISCOVER_CACHE_TTL = 300
+def _discover_cache_ttl_sec() -> int:
+    try:
+        from app.routes_settings import _app_settings
+        appcfg = _app_settings()
+        minutes = int(str(appcfg.get("discover_cache_ttl_minutes", "30") or "30").strip())
+    except Exception:
+        minutes = 30
+
+    if minutes < 1:
+        minutes = 1
+    if minutes > 240:
+        minutes = 240
+
+    return minutes * 60
+
 
 _DISCOVER_SOURCE_CACHE: dict[tuple[str, str, int, str, str, str], dict] = {}
 _DISCOVER_SOURCE_CACHE_TTL = 3600
@@ -402,7 +416,7 @@ def _cache_get(source: str, media: str, page: int, genre: str = "all", provider:
         return None
 
     ts = float(row.get("ts") or 0)
-    if (time.time() - ts) > _DISCOVER_CACHE_TTL:
+    if (time.time() - ts) > _discover_cache_ttl_sec():
         _DISCOVER_CACHE.pop(key, None)
         return None
 

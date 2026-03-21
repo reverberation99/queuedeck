@@ -458,6 +458,7 @@ def settings_get():
         data["discover_bonus_4"] = appcfg.get("discover_bonus_4", "0.28")
         data["discover_hot_threshold"] = appcfg.get("discover_hot_threshold", "0.82")
         data["discover_enrich_scale"] = appcfg.get("discover_enrich_scale", "100")
+        data["discover_cache_ttl_minutes"] = appcfg.get("discover_cache_ttl_minutes", "30")
         data["discover_title_overrides"] = appcfg.get("discover_title_overrides", "")
 
     return jsonify(data)
@@ -559,6 +560,7 @@ def settings_post():
         _save_app_setting("discover_bonus_4", payload.get("discover_bonus_4", "0.28"))
         _save_app_setting("discover_hot_threshold", payload.get("discover_hot_threshold", "0.82"))
         _save_app_setting("discover_enrich_scale", payload.get("discover_enrich_scale", "100"))
+        _save_app_setting("discover_cache_ttl_minutes", payload.get("discover_cache_ttl_minutes", "30"))
         _save_app_setting("discover_title_overrides", payload.get("discover_title_overrides", ""))
 
     get_db().commit()

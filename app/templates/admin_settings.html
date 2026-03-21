@@ -10,6 +10,43 @@
 
     <title>QueueDeck Admin Settings</title>
 <style>
+
+    .helpDot{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:18px;
+      height:18px;
+      margin-left:6px;
+      border-radius:50%;
+      background:rgba(255,255,255,.08);
+      font-size:12px;
+      cursor:pointer;
+      position:relative;
+    }
+
+    .helpDot .tip{
+      display:none;
+      position:absolute;
+      top:28px;
+      left:50%;
+      transform:translateX(-50%);
+      background:rgba(20,24,32,.95);
+      border:1px solid rgba(255,255,255,.12);
+      padding:10px 12px;
+      border-radius:10px;
+      font-size:12px;
+      line-height:1.4;
+      width:240px;
+      z-index:50;
+      box-shadow:0 10px 30px rgba(0,0,0,.5);
+    }
+
+    .helpDot:hover .tip,
+    .helpDot:focus .tip{
+      display:block;
+    }
+    
       :root{
         --bg0:#07090c;
         --bg1:#0b0f14;
@@ -493,7 +530,36 @@ object-fit: contain;
         transform: translateY(1px) scale(.985);
       }
 
-    </style>
+    
+/* === FORCE TOOLTIP FIX === */
+.helpDot {
+  position: relative !important;
+}
+
+.helpDot .tip {
+  display: none !important;
+  position: absolute !important;
+  top: 28px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background: rgba(20,24,32,.98) !important;
+  border: 1px solid rgba(255,255,255,.15) !important;
+  padding: 10px 12px !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  width: 240px !important;
+  z-index: 9999 !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,.6) !important;
+  white-space: normal !important;
+}
+
+.helpDot:hover .tip,
+.helpDot:focus .tip {
+  display: block !important;
+}
+
+</style>
   </head>
   <body>
     <div class="wrap">
@@ -827,6 +893,23 @@ object-fit: contain;
               <input id="discover_enrich_scale" type="range" min="0" max="100" step="1" value="100" />
             </div>
 
+            <div class="field">
+              <div class="sliderHead">
+                <label for="discover_cache_ttl_minutes">
+                  Discover Cache Duration (minutes)
+                  <span class="helpDot" tabindex="0">?
+                    <span class="tip">
+                      How long fully built Discover results stay cached before rebuilding them.<br><br>
+                      Higher = faster browsing<br>
+                      Lower = fresher results
+                    </span>
+                  </span>
+                </label>
+                <div class="sliderValue" id="val_discover_cache_ttl_minutes">30</div>
+              </div>
+              <input id="discover_cache_ttl_minutes" type="range" min="1" max="120" step="1" value="30" />
+            </div>
+
             <div class="adminField full">
               <div style="display:flex; gap:10px; align-items:center; margin:8px 0 14px 0;">
                 <button type="button" class="btn secondary" id="clearDiscoverCacheBtn">Clear Discover Cache</button>
@@ -1015,6 +1098,7 @@ object-fit: contain;
         "discover_bonus_6",
         "discover_hot_threshold",
         "discover_enrich_scale",
+        "discover_cache_ttl_minutes",
         "discover_title_overrides",
       ];
 
@@ -1552,6 +1636,7 @@ object-fit: contain;
         "discover_bonus_6",
         "discover_hot_threshold",
         "discover_enrich_scale",
+        "discover_cache_ttl_minutes",
       ];
 
       function syncSliderValue(id){
@@ -1561,6 +1646,8 @@ object-fit: contain;
 
         if (id === "discover_enrich_scale"){
           out.textContent = String(input.value || "0");
+        } else if (id === "discover_cache_ttl_minutes"){
+          out.textContent = String(parseInt(input.value || "30", 10));
         } else {
           out.textContent = Number(input.value || 0).toFixed(2);
         }

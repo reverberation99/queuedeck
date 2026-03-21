@@ -1,7 +1,6 @@
 services:
   queuedeck-dev:
     build: .
-    image: reverberation99/queuedeck:latest
     container_name: queuedeck-dev
     volumes:
       - ./data:/data
