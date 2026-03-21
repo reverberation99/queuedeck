@@ -157,7 +157,7 @@ def _build_nextup_split_for_user(user_id: int, limit: int):
     if not base or not api_key or not username:
         return {"tv": [], "anime": []}
 
-    jf_user_id = find_user_id_by_name(username)
+    jf_user_id = find_user_id_by_name(username, base_url=base, api_key=api_key)
 
     merged = []
 

@@ -138,20 +138,31 @@ def _cache_set(key: str, val: Any, ttl: int = 300) -> None:
 # user resolve
 # ----------------------------
 
-def find_user_id_by_name(username: str) -> str:
-    base = _base()
+def find_user_id_by_name(username: str, base_url: str = "", api_key: str = "") -> str:
+    base = (base_url or "").strip().rstrip("/") or _base()
     if not base:
         raise RuntimeError("JELLYFIN_URL not set (and jellyfin_url not set in settings)")
     if not username:
         raise RuntimeError("JELLYFIN_USER not set (and jellyfin_user not set in settings)")
 
-    ck = f"jf_uid:{username.lower()}"
+    ck = f"jf_uid:{username.lower()}:{base}"
     v = _cache_get(ck)
     if v:
         return v
 
-    data = _get(f"{base}/Users")
-    users = _items_from(data)
+    if api_key:
+        import requests
+        r = requests.get(
+            f"{base}/Users",
+            headers={"X-Emby-Token": api_key},
+            timeout=20,
+        )
+        r.raise_for_status()
+        data = r.json() or []
+        users = data if isinstance(data, list) else _items_from(data)
+    else:
+        data = _get(f"{base}/Users")
+        users = _items_from(data)
 
     for u in users:
         if (u.get("Name") or "").lower() == username.lower():
