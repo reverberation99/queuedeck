@@ -1612,6 +1612,13 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
         </div>
       </div>
 
+      <div style="margin-top:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <label for="hideOwnedRequestedToggle" style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:rgba(255,255,255,.86); font-weight:700;">
+          <input id="hideOwnedRequestedToggle" type="checkbox" style="width:16px; height:16px; accent-color: var(--accent);" />
+          <span>Hide in library / requested</span>
+        </label>
+      </div>
+
       <div class="status" id="discoverStatus">Loading discover data…</div>
 
       <div id="discoverPrimeOverlay" class="discoverPrimeOverlay">
@@ -1688,6 +1695,23 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
     const discoverReloadBtn = document.getElementById("discoverReloadBtn");
     const discoverLoadMoreBtn = document.getElementById("discoverLoadMoreBtn");
     const discoverBackToTopBtn = document.getElementById("discoverBackToTopBtn");
+    const hideOwnedRequestedToggle = document.getElementById("hideOwnedRequestedToggle");
+
+    const qdHideOwnedRequestedKey = "qd_hide_owned_requested";
+
+    function getHideOwnedRequested(){
+      try{
+        return localStorage.getItem(qdHideOwnedRequestedKey) === "1";
+      }catch(e){
+        return false;
+      }
+    }
+
+    function setHideOwnedRequested(v){
+      try{
+        localStorage.setItem(qdHideOwnedRequestedKey, v ? "1" : "0");
+      }catch(e){}
+    }
 
     const qdAniListGenres = [
       "Action",
@@ -1780,7 +1804,8 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
       const yearFrom = discoverYearFrom ? String(discoverYearFrom.value || "").trim() : "";
       const yearTo = discoverYearTo ? String(discoverYearTo.value || "").trim() : "";
 
-      return `/api/discover/items?source=${encodeURIComponent(source)}&media=${encodeURIComponent(media)}&genre=${encodeURIComponent(genre)}&provider=${encodeURIComponent(provider)}&min_rating=${encodeURIComponent(minRating)}&year_from=${encodeURIComponent(yearFrom)}&year_to=${encodeURIComponent(yearTo)}&page=${encodeURIComponent(page)}&sort=${encodeURIComponent(discoverSort?.value || "")}`;
+            const hideOwnedRequested = getHideOwnedRequested() ? "&hide_owned_requested=1" : "";
+      return `/api/discover/items?source=${encodeURIComponent(source)}&media=${encodeURIComponent(media)}&genre=${encodeURIComponent(genre)}&provider=${encodeURIComponent(provider)}&min_rating=${encodeURIComponent(minRating)}&year_from=${encodeURIComponent(yearFrom)}&year_to=${encodeURIComponent(yearTo)}&page=${encodeURIComponent(page)}&sort=${encodeURIComponent(discoverSort?.value || "")}${hideOwnedRequested}`;
     }
 
     function discoverPrefetchKey(page=1){
@@ -3400,6 +3425,10 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
           const inLibrary = !!hit.in_library;
           const inRequested = !!hit.in_sonarr || !!hit.in_radarr;
 
+          if (!inLibrary && !inRequested){
+            card.style.display = "";
+          }
+
           if (inLibrary){
             finalLabel = "Already in Library";
             finalClass = "libraryOwned";
@@ -3408,7 +3437,10 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
             finalClass = "libraryRequested";
           }
 
-          if (!finalLabel) continue;
+          if (!finalLabel){
+            card.style.display = "";
+            continue;
+          }
 
           btn.disabled = true;
           btn.textContent = finalLabel;
@@ -3419,6 +3451,12 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
           if (menu){
             menu.classList.remove("open");
             menu.innerHTML = "";
+          }
+
+          if (getHideOwnedRequested()){
+            card.style.display = "none";
+          } else {
+            card.style.display = "";
           }
         }
       }catch(_){
@@ -3899,6 +3937,14 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
     }
     if (discoverMinRating){
       discoverMinRating.addEventListener("change", () => loadDiscover(1, false));
+    }
+
+    if (hideOwnedRequestedToggle){
+      hideOwnedRequestedToggle.checked = getHideOwnedRequested();
+      hideOwnedRequestedToggle.addEventListener("change", () => {
+        setHideOwnedRequested(!!hideOwnedRequestedToggle.checked);
+        loadDiscover(1, false);
+      });
     }
 
     document.addEventListener("click", (e) => {

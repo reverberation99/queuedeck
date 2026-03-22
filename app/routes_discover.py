@@ -322,7 +322,7 @@ _DISCOVER_ANIME_TMDB_RESOLVE_CACHE_TTL_SEC = 43200  # 12 hours
 _DISCOVER_ANIME_ENRICHED_ITEM_CACHE: dict[tuple[str, str, str], dict] = {}
 _DISCOVER_ANIME_ENRICHED_ITEM_CACHE_TTL_SEC = 43200  # 12 hours
 
-_DISCOVER_CACHE: dict[tuple[str, str, str, str, str, str, int, str], dict] = {}
+_DISCOVER_CACHE: dict[tuple[str, str, str, str, str, str, str, int, str], dict] = {}
 def _discover_cache_ttl_sec() -> int:
     try:
         from app.routes_settings import _app_settings
@@ -346,7 +346,7 @@ _DISCOVER_BUILD_LOCK = threading.Lock()
 _DISCOVER_BUILD_EVENTS: dict[tuple[str, str, str, str, str, str, int, str], threading.Event] = {}
 
 
-def _discover_build_key(source: str, media: str, page: int, genre: str = "all", provider: str = "all", year_from: str = "", year_to: str = ""):
+def _discover_build_key(source: str, media: str, page: int, genre: str = "all", provider: str = "all", year_from: str = "", year_to: str = "", hide_owned_requested: bool = False):
     return (
         str(source),
         str(media),
@@ -354,6 +354,7 @@ def _discover_build_key(source: str, media: str, page: int, genre: str = "all", 
         str(provider),
         str(year_from),
         str(year_to),
+        "1" if hide_owned_requested else "0",
         int(page),
         _discover_settings_signature(),
     )
@@ -409,8 +410,8 @@ def _discover_settings_signature() -> str:
     return "|".join(parts)
 
 
-def _cache_get(source: str, media: str, page: int, genre: str = "all", provider: str = "all", year_from: str = "", year_to: str = ""):
-    key = (str(source), str(media), str(genre), str(provider), str(year_from), str(year_to), int(page), _discover_settings_signature())
+def _cache_get(source: str, media: str, page: int, genre: str = "all", provider: str = "all", year_from: str = "", year_to: str = "", hide_owned_requested: bool = False):
+    key = (str(source), str(media), str(genre), str(provider), str(year_from), str(year_to), "1" if hide_owned_requested else "0", int(page), _discover_settings_signature())
     row = _DISCOVER_CACHE.get(key)
     if not row:
         return None
@@ -423,8 +424,8 @@ def _cache_get(source: str, media: str, page: int, genre: str = "all", provider:
     return row.get("payload")
 
 
-def _cache_set(source: str, media: str, page: int, genre: str = "all", provider: str = "all", year_from: str = "", year_to: str = "", payload: dict | None = None):
-    key = (str(source), str(media), str(genre), str(provider), str(year_from), str(year_to), int(page), _discover_settings_signature())
+def _cache_set(source: str, media: str, page: int, genre: str = "all", provider: str = "all", year_from: str = "", year_to: str = "", hide_owned_requested: bool = False, payload: dict | None = None):
+    key = (str(source), str(media), str(genre), str(provider), str(year_from), str(year_to), "1" if hide_owned_requested else "0", int(page), _discover_settings_signature())
     _DISCOVER_CACHE[key] = {
         "ts": time.time(),
         "payload": payload,
@@ -1965,6 +1966,8 @@ def api_discover_letterboxd_sources():
 @bp.get("/api/discover/items")
 @login_required
 def api_discover_items():
+    hide_owned_requested = str(request.args.get("hide_owned_requested") or "0").strip() == "1"
+
     source = str(request.args.get("source") or "aggregate").strip().lower()
     media = str(request.args.get("media") or "all").strip().lower()
     genre = str(request.args.get("genre") or "all").strip().lower()
@@ -2074,7 +2077,7 @@ def api_discover_items():
 
     if not build_owner:
         waited = build_event.wait(timeout=240)
-        cached = _cache_get(source, media, page, genre, provider, year_from, year_to)
+        cached = _cache_get(source, media, page, genre, provider, year_from, year_to, hide_owned_requested=hide_owned_requested)
         if cached is not None:
             try:
                 print(
@@ -2602,6 +2605,94 @@ def api_discover_items():
                 return f"{media_type}:{key}::{year}"
 
             items = [it for it in (items or []) if _discover_hide_key(it) not in hidden_discover]
+
+            
+            # --------------------------------------------------
+            # Hide owned / requested (server-side with top-up)
+            # --------------------------------------------------
+            if hide_owned_requested and items:
+                try:
+                    TARGET_COUNT = 20
+                    MAX_EXTRA_PAGES = 3
+
+                    collected = []
+                    current_items = items
+                    current_page = int(page or 1)
+                    extra_fetches = 0
+
+                    while True:
+                        batch = []
+                        for idx, it in enumerate(current_items):
+                            batch.append({
+                                "key": f"row-{idx}",
+                                "title": str(it.get("title") or "").strip(),
+                                "year": str(it.get("year") or "").strip(),
+                                "media_type": str(it.get("media_type") or "").strip().lower(),
+                                "tmdb_id": str(it.get("tmdb_id") or "").strip(),
+                                "imdb_id": str(it.get("imdb_id") or "").strip(),
+                                "tvdb_id": str(it.get("tvdb_id") or "").strip(),
+                            })
+
+                        lib_map = find_in_library_batch(batch) or {}
+                        try:
+                            son_map = find_requested_series_batch(batch) or {}
+                        except Exception:
+                            son_map = {}
+                        try:
+                            rad_map = find_requested_movies_batch(batch) or {}
+                        except Exception:
+                            rad_map = {}
+
+                        for idx, it in enumerate(current_items):
+                            key = f"row-{idx}"
+                            lib = lib_map.get(key) or {}
+                            son = son_map.get(key) or {}
+                            rad = rad_map.get(key) or {}
+
+                            owned = bool(lib.get("in_library"))
+                            requested = bool(son.get("in_sonarr")) or bool(rad.get("in_radarr"))
+
+                            if not (owned or requested):
+                                collected.append(it)
+
+                        print(f"[discover-hide-owned] pass page={current_page} collected={len(collected)}", flush=True)
+
+                        if len(collected) >= TARGET_COUNT:
+                            break
+
+                        if extra_fetches >= MAX_EXTRA_PAGES:
+                            break
+
+                        # fetch next page
+                        next_page = current_page + 1
+                        more_payload = _cache_get(source, media, next_page, genre, provider, year_from, year_to)
+
+                        if more_payload is None:
+                            more_payload = _build_discover_payload(
+                                source=source,
+                                media=media,
+                                page=next_page,
+                                genre=genre,
+                                provider=provider,
+                                year_from=year_from,
+                                year_to=year_to,
+                            )
+
+                        more_items = (more_payload or {}).get("items") or []
+                        if not more_items:
+                            break
+
+                        current_items = more_items
+                        current_page = next_page
+                        extra_fetches += 1
+
+                    print(f"[discover-hide-owned] final count={len(collected)}", flush=True)
+                    items = collected
+
+                except Exception as e:
+                    print(f"[discover-hide-owned] error={e}", flush=True)
+
+
         except Exception:
             pass
 
@@ -2709,7 +2800,7 @@ def api_discover_items():
         }
         elapsed = round(time.time() - req_started, 3)
         print(f"[discover-timing] source={source} page={page} items={len(items)} elapsed={elapsed}s", flush=True)
-        _cache_set(source, media, page, genre, provider, year_from, year_to, payload)
+        _cache_set(source, media, page, genre, provider, year_from, year_to, hide_owned_requested=hide_owned_requested, payload=payload)
 
         try:
             current_page = int(page or 1)
@@ -2718,7 +2809,7 @@ def api_discover_items():
 
         if _should_background_warm_next_page(source, media, current_page):
             next_page = current_page + 1
-            if _cache_get(source, media, next_page, genre, provider, year_from, year_to) is None:
+            if _cache_get(source, media, next_page, genre, provider, year_from, year_to, hide_owned_requested=False) is None:
                 _background_warm_discover_page(
                     current_app._get_current_object(),
                     source=source,

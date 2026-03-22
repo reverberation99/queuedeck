@@ -1970,11 +1970,20 @@ object-fit: contain;
       const r = await fetch("/api/discover/generate-title-overrides", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        cache: "no-store"
+        cache: "no-store",
+        credentials: "same-origin"
       });
-      const data = await r.json();
+
+      const raw = await r.text();
+      let data = {};
+      try{
+        data = raw ? JSON.parse(raw) : {};
+      }catch(parseErr){
+        throw new Error("non_json_response: " + raw.slice(0, 180));
+      }
+
       if (!r.ok || !data.ok){
-        throw new Error(data.error || "generation_failed");
+        throw new Error(data.error || ("generation_failed_http_" + r.status));
       }
 
       const suggestions = Array.isArray(data.suggestions) ? data.suggestions : [];
@@ -2022,8 +2031,8 @@ object-fit: contain;
       ta.value = [...existingLines, ...dedupedNew].join("\n");
       if (status) status.textContent = `Added ${dedupedNew.length} suggestion(s). Review and click Save.`;
     }catch(e){
-      if (status) status.textContent = "Generate failed.";
-      console.error(e);
+      if (status) status.textContent = "Generate failed: " + String(e?.message || e);
+      console.error("Generate suggestions failed:", e);
     }finally{
       btn.disabled = false;
     }
