@@ -586,7 +586,20 @@ def _anime_discover_enabled() -> bool:
 
 
 def _aggregate_enrich_limit(page: int) -> int:
-    page = max(1, int(page or 1))
+    try:
+        p = int(page or 1)
+    except Exception:
+        p = 1
+
+    # Stronger enrichment for deeper pages so poster coverage doesn't collapse
+    if p == 1:
+        return 40
+    elif p <= 5:
+        return 25
+    elif p <= 10:
+        return 18
+    else:
+        return 14
 
     # Lower cold-start enrichment cost so fresh installs feel responsive.
     # We still enrich page 1 the most, but much more conservatively.
@@ -1977,7 +1990,7 @@ def api_discover_items():
     year_to = str(request.args.get("year_to") or "").strip()
 
     try:
-        page = max(1, min(int(request.args.get("page") or 1), 10))
+        page = max(1, int(request.args.get("page") or 1))
     except Exception:
         page = 1
 
@@ -2530,9 +2543,18 @@ def api_discover_items():
             artwork_budget = 0
 
             if source == "aggregate":
-                # Keep page 1 looking good, but avoid brutal cold-start stalls
-                # on deeper pages.
-                artwork_budget = 20 if int(page or 1) == 1 else 0
+                # Favor poster consistency across deeper pages.
+                # This is intentionally more generous so pages 8+ do not
+                # collapse into lots of missing artwork.
+                pnum = int(page or 1)
+                if pnum == 1:
+                    artwork_budget = 20
+                elif pnum <= 5:
+                    artwork_budget = 20
+                elif pnum <= 10:
+                    artwork_budget = 18
+                else:
+                    artwork_budget = 16
             else:
                 artwork_budget = 20
 
@@ -2730,6 +2752,94 @@ def api_discover_items():
                 f"[discover-poster-fallback] source={source} page={page} filled={fallback_poster_hits}",
                 flush=True
             )
+
+        # Prefer poster-bearing items on deeper aggregate pages.
+        # If deep pages are filled with valid TMDb items that simply have no poster,
+        # top up from later pages so the UI does not turn into blank cards.
+        if source == "aggregate":
+            try:
+                pnum = int(page or 1)
+            except Exception:
+                pnum = 1
+
+            if pnum >= 8 and items:
+                target_count = len(items)
+                max_extra_pages = 3
+
+                def _has_poster(it):
+                    return bool(str((it or {}).get("poster_url") or "").strip())
+
+                poster_items = [it for it in items if _has_poster(it)]
+                seen_keys = set()
+                deduped = []
+
+                def _poster_key(it):
+                    media_type = str(it.get("media_type") or "").strip().lower()
+                    tmdb_id = str(it.get("tmdb_id") or "").strip()
+                    title = str(it.get("title") or "").strip().lower()
+                    year = str(it.get("year") or "").strip()
+                    if tmdb_id:
+                        return f"{media_type}:{tmdb_id}"
+                    return f"{media_type}:{title}::{year}"
+
+                for it in poster_items:
+                    k = _poster_key(it)
+                    if k in seen_keys:
+                        continue
+                    seen_keys.add(k)
+                    deduped.append(it)
+
+                collected = list(deduped)
+                extra_used = 0
+                next_page = pnum + 1
+
+                while len(collected) < target_count and extra_used < max_extra_pages:
+                    more_payload = _cache_get(
+                        source, media, next_page, genre, provider, year_from, year_to,
+                        hide_owned_requested=hide_owned_requested
+                    )
+
+                    # If not cached, trigger normal build path by calling cache again
+                    if more_payload is None:
+                        try:
+                            # trigger build via normal pipeline
+                            _ = _cache_get(source, media, next_page, genre, provider, year_from, year_to)
+                            more_payload = _cache_get(
+                                source, media, next_page, genre, provider, year_from, year_to,
+                                hide_owned_requested=hide_owned_requested
+                            )
+                        except Exception as e:
+                            print(f"[discover-deep-posters] build failed page={next_page} err={e}", flush=True)
+                            break
+
+                    if more_payload is None:
+                        break
+
+                    more_items = more_payload.get("items") or []
+                    if not more_items:
+                        break
+
+                    for it in more_items:
+                        if not _has_poster(it):
+                            continue
+                        k = _poster_key(it)
+                        if k in seen_keys:
+                            continue
+                        seen_keys.add(k)
+                        collected.append(it)
+                        if len(collected) >= target_count:
+                            break
+
+                    extra_used += 1
+                    next_page += 1
+
+                if collected:
+                    print(
+                        f"[discover-deep-posters] source={source} page={pnum} "
+                        f"before={len(items)} poster_items={len(deduped)} final={len(collected)} extra_pages={extra_used}",
+                        flush=True
+                    )
+                    items = collected[:target_count]
 
         if source == "aggregate":
             items = _prioritize_rich_aggregate_items(items)

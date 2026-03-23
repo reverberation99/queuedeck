@@ -225,7 +225,7 @@ def fetch_tmdb_discover_by_genre(
     auth_params: dict,
     year_from: str = "",
     year_to: str = "",
-    pages_deep: int = 3,
+    pages_deep: int = 5,
 ) -> list[dict]:
     if media not in ("movie", "tv", "all"):
         media = "all"
@@ -240,7 +240,7 @@ def fetch_tmdb_discover_by_genre(
         start_page = 1
 
     try:
-        pages_deep = max(1, min(int(pages_deep), 5))
+        pages_deep = max(1, min(int(pages_deep), 10))
     except Exception:
         pages_deep = 3
 
@@ -331,7 +331,7 @@ def fetch_tmdb_discover_by_provider(
     watch_region: str = "US",
     year_from: str = "",
     year_to: str = "",
-    pages_deep: int = 3,
+    pages_deep: int = 5,
 ) -> list[dict]:
     if media not in ("movie", "tv", "all"):
         media = "all"
@@ -346,7 +346,7 @@ def fetch_tmdb_discover_by_provider(
         start_page = 1
 
     try:
-        pages_deep = max(1, min(int(pages_deep), 5))
+        pages_deep = max(1, min(int(pages_deep), 10))
     except Exception:
         pages_deep = 3
 
