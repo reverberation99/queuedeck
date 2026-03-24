@@ -1139,10 +1139,13 @@ border-radius:10px;
     .downloadMini{
       min-width: 230px;
       max-width: 230px;
+      min-height: 158px;
       border:1px solid rgba(255,255,255,.10);
       background: rgba(0,0,0,.18);
       border-radius: 14px;
       padding: 10px 10px;
+      display:flex;
+      flex-direction:column;
     }
     .downloadMini.tv{
       border-color: rgba(59,130,246,.55);
@@ -1157,14 +1160,29 @@ border-radius:10px;
       font-weight: 850;
       line-height: 1.2;
       margin-bottom: 4px;
-      overflow:hidden;
-      white-space:nowrap;
-      text-overflow:ellipsis;
+      min-height: 2.4em;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      text-overflow: ellipsis;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .downloadMiniMeta{
       font-size: 12px;
       color: var(--muted);
       line-height: 1.3;
+      min-height: 2.6em;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      text-overflow: ellipsis;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .downloadMiniKind{
       display:inline-flex;
@@ -1181,7 +1199,7 @@ border-radius:10px;
       border-radius: 999px;
       background: rgba(255,255,255,.10);
       overflow:hidden;
-      margin-top:8px;
+      margin-top:auto;
       border:1px solid rgba(255,255,255,.06);
     }
     .downloadMiniBarFill{
@@ -2028,6 +2046,162 @@ border-radius:10px;
 }
 
 
+
+    .railNav{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    .navBtn{
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      color: rgba(255,255,255,.92);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease, opacity .12s ease;
+      box-shadow: 0 8px 24px rgba(0,0,0,.28);
+      padding: 0;
+      line-height: 0;
+      flex: 0 0 auto;
+    }
+    .navBtn:hover{
+      background: rgba(255,255,255,.09);
+      border-color: rgba(255,255,255,.18);
+      transform: translateY(-1px);
+    }
+    .navBtn:active{
+      transform: translateY(0);
+    }
+    .navBtn svg{
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+      display:block;
+      pointer-events:none;
+    }
+
+  
+    .downloadStripBodyWrap{
+      position: relative;
+    }
+    .downloadOverlayNav{
+      position: absolute;
+      inset: 0 10px 0 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 4;
+    }
+    .downloadOverlayNav .navBtn{
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: auto;
+    }
+    .downloadOverlayNav .navBtn:hover{
+      transform: translateY(-51%);
+    }
+    #downloadPrevBtn{ left: 10px; }
+    #downloadNextBtn{ right: 10px; }
+
+  
+    /* ===== Mobile UX Fixes (Search + Seerr) ===== */
+
+    /* Prevent iOS zoom on inputs */
+    input, select, textarea{
+      font-size: 16px !important;
+    }
+
+    /* Seerr search input specifically */
+    #qdSeerrQuery{
+      font-size: 16px !important;
+      padding: 14px 16px !important;
+    }
+
+    /* Keep desktop modal sizing intact; only relax on small screens */
+    @media (max-width: 640px){
+      #qdSeerrSearchModal > div,
+      #qdSeerrTvChoiceModal > div{
+        width: min(100%, 96vw) !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+      }
+
+      .btn, button{
+        width: 100%;
+      }
+
+      .filters{
+        grid-template-columns: 1fr !important;
+      }
+    }
+    
+  
+  /* ===== Mobile-safe user dropdown fix ===== */
+  .userMenu{
+    position: relative;
+    overflow: visible;
+  }
+
+  .userDropdown{
+    right: 0 !important;
+    left: auto !important;
+    max-width: min(320px, calc(100vw - 16px)) !important;
+    z-index: 9999 !important;
+    box-sizing: border-box !important;
+  }
+
+  @media (max-width: 760px){
+    .userDropdown{
+      right: 0 !important;
+      left: auto !important;
+      width: min(280px, calc(100vw - 16px)) !important;
+      max-width: calc(100vw - 16px) !important;
+      box-sizing: border-box !important;
+    }
+  }
+
+
+  /* ===== Mobile header/top-links cleanup ===== */
+  @media (max-width: 760px){
+    .top{
+      display: block !important;
+    }
+
+    .top .brand{
+      width: 100% !important;
+      max-width: 100% !important;
+      margin-bottom: 14px !important;
+    }
+
+    .top-links{
+      width: 100% !important;
+      display: flex !important;
+      justify-content: flex-end !important;
+      align-items: center !important;
+      gap: 10px !important;
+      flex-wrap: wrap !important;
+    }
+
+    .top-links > *{
+      flex: 0 0 auto !important;
+    }
+
+    .userMenu{
+      margin-left: auto !important;
+    }
+
+    .userMenuBtn{
+      margin-left: auto !important;
+    }
+  }
+
 </style>
 </head>
 
@@ -2111,7 +2285,17 @@ border-radius:10px;
         </div>
         <div class="chip"><span id="downloadCount">0</span> item(s)</div>
       </div>
-      <div class="downloadStripBody" id="downloadStripBody"></div>
+      <div class="downloadStripBodyWrap" id="downloadStripBodyWrap">
+        <div class="railNav downloadOverlayNav" id="downloadNav" style="display:none;">
+          <button class="navBtn" id="downloadPrevBtn" type="button" aria-label="Scroll downloads left">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 5.5a1 1 0 0 1 0 1.4L10.4 12l5.1 5.1a1 1 0 1 1-1.4 1.4l-5.8-5.8a1.2 1.2 0 0 1 0-1.7l5.8-5.8a1 1 0 0 1 1.4 0Z"/></svg>
+          </button>
+          <button class="navBtn" id="downloadNextBtn" type="button" aria-label="Scroll downloads right">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 18.5a1 1 0 0 1 0-1.4l5.1-5.1-5.1-5.1a1 1 0 1 1 1.4-1.4l5.8 5.8a1.2 1.2 0 0 1 0 1.7l-5.8 5.8a1 1 0 0 1-1.4 0Z"/></svg>
+          </button>
+        </div>
+        <div class="downloadStripBody" id="downloadStripBody"></div>
+      </div>
     </div>
 
     <div class="grid" id="grid"></div>
@@ -2126,6 +2310,60 @@ border-radius:10px;
 1.4l-5.8-5.8a1.2 1.2 0 0 1 0-1.7l5.8-5.8a1 1 0 0 1 1.4 0Z"/></svg>`
         : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 18.5a1 1 0 0 1 0-1.4l5.1-5.1-5.1-5.1a1 1 0 1 1 1.4-
 1.4l5.8 5.8a1.2 1.2 0 0 1 0 1.7l-5.8 5.8a1 1 0 0 1-1.4 0Z"/></svg>`;
+    }
+
+    function updateDownloadNav(){
+      const strip = document.getElementById("downloadStrip");
+      const body = document.getElementById("downloadStripBody");
+      const nav = document.getElementById("downloadNav");
+      const prev = document.getElementById("downloadPrevBtn");
+      const next = document.getElementById("downloadNextBtn");
+      if (!strip || !body || !nav || !prev || !next) return;
+
+      const hasOverflow = (body.scrollWidth - body.clientWidth) > 8 && strip.classList.contains("show");
+      nav.style.display = hasOverflow ? "inline-flex" : "none";
+
+      if (!hasOverflow){
+        prev.style.display = "none";
+        next.style.display = "none";
+        return;
+      }
+
+      const maxScroll = Math.max(0, body.scrollWidth - body.clientWidth);
+      const left = body.scrollLeft || 0;
+
+      prev.style.display = left > 8 ? "inline-flex" : "none";
+      next.style.display = left < (maxScroll - 8) ? "inline-flex" : "none";
+    }
+
+    function bindDownloadNav(){
+      const body = document.getElementById("downloadStripBody");
+      const prev = document.getElementById("downloadPrevBtn");
+      const next = document.getElementById("downloadNextBtn");
+      if (!body || !prev || !next) return;
+
+      const step = () => Math.max(260, Math.floor(body.clientWidth * 0.9));
+
+      prev.onclick = () => body.scrollBy({ left: -step(), behavior: "smooth" });
+      next.onclick = () => body.scrollBy({ left: step(), behavior: "smooth" });
+
+      body.addEventListener("scroll", updateDownloadNav, { passive: true });
+      window.addEventListener("resize", updateDownloadNav);
+      window.addEventListener("load", updateDownloadNav);
+
+      if (typeof ResizeObserver !== "undefined"){
+        const ro = new ResizeObserver(() => updateDownloadNav());
+        ro.observe(body);
+      }
+
+      if (typeof MutationObserver !== "undefined"){
+        const mo = new MutationObserver(() => updateDownloadNav());
+        mo.observe(body, { childList: true, subtree: true, attributes: true });
+      }
+
+      setTimeout(updateDownloadNav, 0);
+      setTimeout(updateDownloadNav, 150);
+      setTimeout(updateDownloadNav, 400);
     }
 
     async function fetchJSON(url, opts = {}){
@@ -2592,6 +2830,13 @@ function airsTonight(dateStr){
       }).join("");
 
       strip.classList.add("show");
+      updateDownloadNav();
+      requestAnimationFrame(() => {
+        updateDownloadNav();
+        requestAnimationFrame(() => updateDownloadNav());
+      });
+      setTimeout(updateDownloadNav, 80);
+      setTimeout(updateDownloadNav, 220);
     }
 
     async function refreshWatchingStrip(){
@@ -2625,6 +2870,8 @@ function airsTonight(dateStr){
       if (!arr.length){
         body.innerHTML = "";
         strip.classList.remove("show");
+        updateDownloadNav();
+        requestAnimationFrame(() => updateDownloadNav());
         return;
       }
 
@@ -3356,6 +3603,7 @@ noopener">Play</a>` : `<span class="btn primary" style="opacity:.55;cursor:defau
       }
 
       const sonarrUrl = (mode === "sonarr" && item.series_id) ? `__SONARR__${item.series_id}` : "";
+      const radarrUrl = (mode === "radarr_missing" && item.tmdb_id) ? `__RADARR__${item.tmdb_id}` : "";
 
       return `
         <div class="${cardClass}" role="listitem" data-kind="${escapeHTML(kind)}" data-sid="${escapeHTML(sid)}" data-mod
@@ -3378,7 +3626,7 @@ e="${escapeHTML(mode)}">
             <button class="btn ghost" type="button" data-action="menu">☰</button>
             ${openBtn}
           </div>
-          ${menuHTML(kind, {...item, _menu_id: sid, _sonarr: sonarrUrl})}
+          ${menuHTML(kind, {...item, _menu_id: sid, _sonarr: sonarrUrl, _radarr: radarrUrl})}
         </div>
       `;
     }
@@ -3556,8 +3804,10 @@ e="${escapeHTML(mode)}">
             }
 
             if (act === "open-series"){
+              const qdWin = qdOpenDeferredWindow();
               const j = await fetchJSON(`/api/jellyfin/open-series?item_id=${encodeURIComponent(sid)}`);
-              if (j && j.url) window.open(j.url, "_blank", "noopener");
+              if (j && j.url) qdNavigateDeferredWindow(qdWin, j.url);
+              else if (qdWin && !qdWin.closed) qdWin.close();
               closeAllMenus();
               return;
             }
@@ -3565,11 +3815,13 @@ e="${escapeHTML(mode)}">
             if (act === "open-sonarr"){
               const seriesId = (menu && menu.getAttribute("data-sonarr-series-id")) || "";
               if (seriesId){
+                const qdWin = qdOpenDeferredWindow();
                 const s = await fetchJSON("/settings/api");
                 const base = String((s.sonarr_url || "")).replace(/\/+$/,"");
                 const seriesSlug = (menu && menu.getAttribute("data-sonarr-series-slug")) || "";
-                  const target = String((seriesSlug || seriesId) || "").trim();
-                  if (base && target) window.open(`${base}/series/${target}`, "_blank", "noopener");
+                const target = String((seriesSlug || seriesId) || "").trim();
+                if (base && target) qdNavigateDeferredWindow(qdWin, `${base}/series/${target}`);
+                else if (qdWin && !qdWin.closed) qdWin.close();
               }
               closeAllMenus();
               return;
@@ -3579,9 +3831,11 @@ e="${escapeHTML(mode)}">
               if (act === "open-radarr"){
                 const tmdbId = (menu && menu.getAttribute("data-radarr-tmdb-id")) || "";
                 if (tmdbId){
+                  const qdWin = qdOpenDeferredWindow();
                   const s = await fetchJSON("/settings/api");
                   const base = String((s.radarr_url || "")).replace(/\/+$/,"");
-                  if (base) window.open(`${base}/movie/${tmdbId}`, "_blank", "noopener");
+                  if (base) qdNavigateDeferredWindow(qdWin, `${base}/movie/${tmdbId}`);
+                  else if (qdWin && !qdWin.closed) qdWin.close();
                 }
                 closeAllMenus();
                 return;
@@ -3910,6 +4164,7 @@ setCount("#chip-rem", nREM);
 
     // Boot
     mountSections();
+    bindDownloadNav();
     wireHelpPopovers();
     let discoverWarmStarted = false;
 
@@ -4235,6 +4490,33 @@ function qdSeerrEscape(s){
   return String(s || "").replace(/[&<>"']/g, m => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
   }[m]));
+}
+
+function qdOpenDeferredWindow(){
+  try{
+    const w = window.open("", "_blank");
+    return w || null;
+  }catch(_){
+    return null;
+  }
+}
+
+function qdNavigateDeferredWindow(w, url){
+  try{
+    if (w && !w.closed){
+      try{ w.opener = null; }catch(_){}
+      w.location.replace(url);
+      return true;
+    }
+  }catch(_){}
+  try{
+    const w2 = window.open(url, "_blank");
+    if (w2){
+      try{ w2.opener = null; }catch(_){}
+      return true;
+    }
+  }catch(_){}
+  return false;
 }
 
 function qdApprovalEscape(s){

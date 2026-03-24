@@ -1435,6 +1435,98 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
         border-color: rgba(255,255,255,.22);
       }
 
+
+    /* ===== Mobile UX Fixes (Search + Seerr) ===== */
+
+    /* Prevent iOS zoom on inputs */
+    input, select, textarea{
+      font-size: 16px !important;
+    }
+
+    /* Seerr search input specifically */
+    #qdSeerrQuery{
+      font-size: 16px !important;
+      padding: 14px 16px !important;
+    }
+
+    /* Keep desktop modal sizing intact; only relax on small screens */
+    @media (max-width: 640px){
+      #qdSeerrSearchModal > div,
+      #qdSeerrTvChoiceModal > div{
+        width: min(100%, 96vw) !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+      }
+
+      .btn, button{
+        width: 100%;
+      }
+
+      .filters{
+        grid-template-columns: 1fr !important;
+      }
+    }
+    
+  
+  /* ===== Mobile-safe user dropdown fix ===== */
+  .userMenu{
+    position: relative;
+    overflow: visible;
+  }
+
+  .userDropdown{
+    right: 0 !important;
+    left: auto !important;
+    max-width: min(320px, calc(100vw - 16px)) !important;
+    z-index: 9999 !important;
+    box-sizing: border-box !important;
+  }
+
+  @media (max-width: 760px){
+    .userDropdown{
+      right: 0 !important;
+      left: auto !important;
+      width: min(280px, calc(100vw - 16px)) !important;
+      max-width: calc(100vw - 16px) !important;
+      box-sizing: border-box !important;
+    }
+  }
+
+
+  /* ===== Mobile header/top-links cleanup ===== */
+  @media (max-width: 760px){
+    .top{
+      display: block !important;
+    }
+
+    .top .brand{
+      width: 100% !important;
+      max-width: 100% !important;
+      margin-bottom: 14px !important;
+    }
+
+    .top-links{
+      width: 100% !important;
+      display: flex !important;
+      justify-content: flex-end !important;
+      align-items: center !important;
+      gap: 10px !important;
+      flex-wrap: wrap !important;
+    }
+
+    .top-links > *{
+      flex: 0 0 auto !important;
+    }
+
+    .userMenu{
+      margin-left: auto !important;
+    }
+
+    .userMenuBtn{
+      margin-left: auto !important;
+    }
+  }
+
 </style>
 </head>
 <body>

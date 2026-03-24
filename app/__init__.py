@@ -1,5 +1,6 @@
 import os
 import importlib
+from pathlib import Path
 from flask import Flask
 
 from .db import init_app
@@ -23,6 +24,16 @@ BLUEPRINT_MODULES = [
 ]
 
 
+def _read_app_version() -> str:
+    try:
+        app_dir = Path(__file__).resolve().parent
+        version_file = app_dir / "VERSION"
+        raw = version_file.read_text(encoding="utf-8").strip()
+        return raw or "dev"
+    except Exception:
+        return "dev"
+
+
 def create_app() -> Flask:
     app = Flask(
         __name__,
@@ -36,6 +47,9 @@ def create_app() -> Flask:
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["SESSION_COOKIE_SECURE"] = bool(int(os.getenv("SESSION_COOKIE_SECURE", "0") or "0"))
 
+    # app version from repo file
+    app.config["APP_VERSION"] = _read_app_version()
+
     # sqlite cleanup hooks
     init_app(app)
 
@@ -43,12 +57,16 @@ def create_app() -> Flask:
     def inject_auth_user():
         return {
             "current_user": current_user(),
+            "app_version": app.config.get("APP_VERSION", "dev"),
         }
 
     # simple health endpoint for docker healthcheck
     @app.get("/health")
     def health():
-        return {"ok": True}
+        return {
+            "ok": True,
+            "version": app.config.get("APP_VERSION", "dev"),
+        }
 
     # Register blueprints if present
     for modname in BLUEPRINT_MODULES:
