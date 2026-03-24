@@ -3288,7 +3288,6 @@ function airsTonight(dateStr){
              data-service-url="${canSeerrService ? escapeHTML(item.service_url || "") : ""}">
           ${canSeries ? `<button data-act="open-series"><span>Open Series</span><span class="muted">↗</span></button>` : ``}
           ${canJellyfin ? `<button data-act="mark-played"><span>Mark Played</span><span class="muted">✓</span></button>` : ``}
-          ${canJellyfin ? `<button data-act="mark-unplayed"><span>Mark Unplayed</span><span class="muted">↺</span></button>` : ``}
           <button data-act="snooze" data-seconds="86400"><span>Snooze 24h</span><span class="muted">⏱</span></button>
           <button data-act="snooze" data-seconds="604800"><span>Snooze 7d</span><span class="muted">⏱</span></button>
           <button data-act="snooze" data-seconds="2592000"><span>Snooze 30d</span><span class="muted">⏱</span></button>
@@ -3780,22 +3779,6 @@ e="${escapeHTML(mode)}">
               closeAllMenus();
 
               // Invalidate any stale in-flight dashboard refresh and force a fresh one
-              qdLoadAllGeneration++;
-              setTimeout(() => { try { loadAll(); } catch(_) {} }, 120);
-              setTimeout(() => { try { loadAll(); } catch(_) {} }, 1400);
-
-              return;
-            }
-
-            if (act === "mark-unplayed"){
-              await fetchJSON("/api/jellyfin/mark-unplayed", {
-                method:"POST",
-                headers: {"Content-Type":"application/json"},
-                body: JSON.stringify({item_id: sid})
-              });
-              card.remove();
-              closeAllMenus();
-
               qdLoadAllGeneration++;
               setTimeout(() => { try { loadAll(); } catch(_) {} }, 120);
               setTimeout(() => { try { loadAll(); } catch(_) {} }, 1400);
