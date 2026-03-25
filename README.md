@@ -187,3 +187,54 @@ Dashboard Initial Load
   - Smarter caching
   - Background warmers
   - Optimized filtering pipelines
+
+---
+
+## 🚀 Quick Start
+
+1. Launch QueueDeck  
+2. Create your admin user  
+3. Open **Admin Settings**
+
+---
+
+### 🔍 Configure Discover
+
+In **Admin Settings**, configure your discovery sources:
+
+- Add your **TMDb API key** *(strongly recommended)*  
+- Add your **Trakt API key** *(optional, improves recommendations)*  
+- Add **Letterboxd RSS feeds** *(optional)*  
+
+After saving:
+- QueueDeck will automatically **prime Discover**
+- This generates suggestions and improves results (especially for anime titles)
+
+---
+
+### 🔌 Configure Connections
+
+Next, connect your media services:
+
+1. Go to **Admin Settings**
+2. Click **User Management** (top of the page)
+3. Open the **Connections** tab
+
+From here you can:
+- Add **Jellyfin, Sonarr, Radarr, and Seerr** connections
+- Create additional users
+- Configure per-user connections
+
+Once configured, your dashboard will begin populating automatically.
+
+---
+
+## 🧩 What Each Integration Does
+
+- **Jellyfin** → Your media library + playback status  
+- **Sonarr** → TV tracking + upcoming episodes  
+- **Radarr** → Movies + missing / upcoming releases  
+- **Seerr** → Request management system  
+- **TMDb** → Posters, metadata, and Discover data *(recommended)*  
+- **Trakt** → Trending content and recommendations *(optional)*  
+- **Letterboxd** → Curated lists and discovery feeds *(optional)*  
