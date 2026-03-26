@@ -1,0 +1,2324 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QueueDeck • Watchlist</title>
+
+  <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/favicon-16.png" />
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png" />
+  <link rel="icon" sizes="192x192" href="/static/icons/icon-192.png" />
+  <link rel="icon" sizes="512x512" href="/static/icons/icon-512.png" />
+
+  <style>
+    :root{
+      --bg0:#07090c;
+      --bg1:#0b0f14;
+      --card: rgba(255,255,255,.055);
+      --card2: rgba(255,255,255,.075);
+      --border: rgba(255,255,255,.10);
+      --muted: rgba(255,255,255,.62);
+      --text: rgba(255,255,255,.92);
+      --shadow: 0 20px 60px rgba(0,0,0,.55);
+      --shadow2: 0 10px 30px rgba(0,0,0,.40);
+      --accent1: #6aa3ff;
+      --accent2: #a855f7;
+      --accent3: #22c55e;
+      --danger: #ef4444;
+      --radarr: #f5c542;
+      --max: 1400px;
+      --pad: 18px;
+      --rowPosterW: 76px;
+      --rowPosterH: 114px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    html{ background:transparent; overflow-x:clip; position:relative; }
+
+    body{
+      margin:0;
+      color:var(--text);
+      font-family: ui-sans-serif, "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      text-rendering: geometricPrecision;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background:
+        radial-gradient(1200px 700px at 15% 0%, rgba(106,163,255,.16), transparent 55%),
+        radial-gradient(1000px 700px at 90% 30%, rgba(168,85,247,.16), transparent 60%),
+        radial-gradient(900px 700px at 40% 110%, rgba(34,197,94,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:-320px;
+      z-index:0;
+      pointer-events:none;
+      background:
+        radial-gradient(1200px 700px at 15% 0%, rgba(106,163,255,.16), transparent 58%),
+        radial-gradient(1100px 720px at 90% 18%, rgba(168,85,247,.18), transparent 62%),
+        radial-gradient(900px 650px at 40% 105%, rgba(34,197,94,.08), transparent 62%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      filter: blur(18px);
+      opacity:.95;
+    }
+
+    a{ color:inherit; text-decoration:none; }
+
+    .wrap{
+      position:relative;
+      z-index:1;
+      max-width:var(--max);
+      margin:0 auto;
+      padding:18px var(--pad) 40px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding:14px 16px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.20);
+      backdrop-filter: blur(10px);
+      border-radius:999px;
+      box-shadow:var(--shadow2);
+      position:sticky;
+      top:12px;
+      z-index:10;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:16px;
+      min-width:0;
+    }
+
+    .logo{
+      width:54px;
+      height:54px;
+      border-radius:16px;
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08),
+        0 12px 34px rgba(0,0,0,.38),
+        0 0 18px rgba(120,140,255,.35),
+        0 0 36px rgba(120,140,255,.15);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      flex:0 0 auto;
+    }
+
+    .logo img{
+      width:50px;
+      height:50px;
+      object-fit:contain;
+      display:block;
+      border-radius:10px;
+    }
+
+    .brand h1{
+      font-size:16px;
+      line-height:1.04;
+      margin:0;
+      font-weight:900;
+      color:rgba(255,255,255,.98);
+    }
+
+    .brand .sub{
+      margin-top:3px;
+      font-size:12px;
+      color:rgba(255,255,255,.70);
+    }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      min-height:42px;
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      color:var(--text);
+      font-weight:800;
+      letter-spacing:.2px;
+      box-shadow:var(--shadow2);
+      cursor:pointer;
+      transition: transform .12s ease, background .15s ease, border-color .15s ease;
+      white-space:nowrap;
+    }
+
+    .btn:hover{
+      transform:translateY(-1px);
+      background: rgba(255,255,255,.09);
+      border-color: rgba(255,255,255,.18);
+    }
+
+    .btn.primary{
+      background: linear-gradient(135deg, rgba(106,163,255,.22), rgba(168,85,247,.18));
+      border-color: rgba(130,160,255,.22);
+    }
+
+    .userMenu{ position:relative; display:flex; align-items:center; flex:0 0 auto; }
+    .userMenuBtn{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      min-height:44px;
+      padding:8px 12px 8px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      color:#fff;
+      cursor:pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 8px 22px rgba(0,0,0,.18);
+    }
+    .userAvatar{
+      width:30px;
+      height:30px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+      font-weight:900;
+      color:#fff;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    }
+    .userMenuName{ font-size:13px; font-weight:800; color:rgba(255,255,255,.92); white-space:nowrap; }
+    .userMenuChevron{ font-size:11px; color:rgba(255,255,255,.72); transition: transform .18s ease; }
+    .userMenu.open .userMenuChevron{ transform: rotate(180deg); }
+
+    .userDropdown{
+      position:absolute;
+      right:0;
+      top:calc(100% + 10px);
+      min-width:220px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(10,12,18,.94);
+      backdrop-filter: blur(10px);
+      border-radius:16px;
+      box-shadow: 0 24px 70px rgba(0,0,0,.55);
+      padding:8px;
+      display:none;
+      z-index:30;
+    }
+    .userMenu.open .userDropdown{ display:block; }
+    .userDropdownHead{
+      padding:10px 12px 8px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      margin-bottom:6px;
+    }
+    .userDropdownTitle{ font-size:13px; font-weight:900; color:rgba(255,255,255,.94); line-height:1.2; }
+    .userDropdownSub{ margin-top:3px; font-size:12px; color:rgba(255,255,255,.62); line-height:1.2; }
+    .userDropdown a{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      font-size:13px;
+      font-weight:700;
+      color:rgba(255,255,255,.88);
+    }
+    .userDropdown a:hover{ background: rgba(255,255,255,.06); color:#fff; }
+    .userDropdown a.danger{ color: rgba(255,130,130,.95); }
+
+    .watchlistTabsRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .watchlistHelpWrap{
+      position:relative;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex:0 0 auto;
+    }
+
+    .watchlistHelpBtn{
+      width:24px;
+      height:24px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.88);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+      font-weight:900;
+      line-height:1;
+      cursor:pointer;
+      transition: background .15s ease, border-color .15s ease, transform .08s ease;
+    }
+
+    .watchlistHelpBtn:hover{
+      background: rgba(255,255,255,.10);
+      border-color: rgba(255,255,255,.24);
+    }
+
+    .watchlistHelpBtn:active{
+      transform: translateY(1px);
+    }
+
+    .watchlistHelpPop{
+      position:absolute;
+      right:0;
+      top:calc(100% + 10px);
+      width:min(460px, calc(100vw - 40px));
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(10,12,18,.94);
+      backdrop-filter: blur(10px);
+      border-radius:14px;
+      box-shadow: 0 24px 70px rgba(0,0,0,.60);
+      padding:12px 14px;
+      display:none;
+      z-index:60;
+    }
+
+    .watchlistHelpPop.open{
+      display:block;
+    }
+
+    .watchlistHelpTitle{
+      font-weight:900;
+      font-size:13px;
+      color:rgba(255,255,255,.94);
+      margin-bottom:8px;
+    }
+
+    .watchlistHelpBody{
+      display:grid;
+      gap:10px;
+      font-size:12.5px;
+      line-height:1.42;
+      color:rgba(255,255,255,.74);
+    }
+
+    .watchlistHelpBody strong{
+      color:rgba(255,255,255,.92);
+      font-weight:900;
+    }
+
+    .panel{
+      margin-top:20px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      backdrop-filter: blur(8px);
+      border-radius:24px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .panelHead{
+      padding:18px 18px 12px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+
+    .panelTitle h2{
+      margin:0;
+      font-size:22px;
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+
+    .panelTitle .sub{
+      margin-top:5px;
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    .tabs{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .tab{
+      min-height:40px;
+      padding:8px 14px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      color:rgba(255,255,255,.84);
+      font-weight:800;
+      cursor:pointer;
+      transition: background .15s ease, border-color .15s ease, transform .12s ease;
+    }
+
+    .tab:hover{
+      background: rgba(255,255,255,.08);
+      border-color: rgba(255,255,255,.16);
+      transform: translateY(-1px);
+    }
+
+    .tab.active{
+      background: linear-gradient(135deg, rgba(106,163,255,.24), rgba(168,85,247,.20));
+      border-color: rgba(130,160,255,.24);
+      color:#fff;
+    }
+
+    .panelBody{ padding:18px; }
+
+    .toolbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+      flex-wrap:wrap;
+    }
+
+    .toolbarLeft{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      min-width:0;
+      flex:1;
+    }
+
+    .count{ font-size:13px; color:var(--muted); font-weight:700; white-space:nowrap; }
+    .sortNote{ font-size:12px; color:rgba(255,255,255,.56); white-space:nowrap; }
+
+    .searchWrap{
+      position:relative;
+      min-width:280px;
+      flex:1 1 360px;
+      max-width:560px;
+    }
+
+    .searchInput{
+      width:100%;
+      min-height:44px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      color:#fff;
+      padding:10px 42px 10px 14px;
+      font-size:16px;
+      outline:none;
+      box-shadow: var(--shadow2);
+    }
+
+    .searchInput::placeholder{ color: rgba(255,255,255,.46); }
+
+    select.searchInput{
+      color:#fff;
+      background: rgba(18,22,30,.96);
+      border:1px solid rgba(255,255,255,.12);
+      appearance:auto;
+      -webkit-appearance:menulist;
+      -moz-appearance:menulist;
+    }
+
+    select.searchInput option{
+      color:#fff;
+      background:#111827;
+    }
+
+    select.searchInput:focus{
+      outline:none;
+      border-color: rgba(130,160,255,.35);
+      box-shadow: 0 0 0 1px rgba(130,160,255,.18), var(--shadow2);
+    }
+
+    .searchClear{
+      position:absolute;
+      right:8px;
+      top:50%;
+      transform:translateY(-50%);
+      width:28px;
+      height:28px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.72);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      font-size:14px;
+      font-weight:800;
+      line-height:1;
+    }
+    .searchClear.show{ display:inline-flex; }
+
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .row{
+      display:flex;
+      gap:14px;
+      padding:12px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.04);
+      transition: transform .14s ease, border-color .14s ease, background .14s ease, box-shadow .14s ease;
+      box-shadow: 0 10px 24px rgba(0,0,0,.18);
+    }
+
+    .row:hover{
+      transform:translateY(-2px);
+      background: rgba(255,255,255,.055);
+      border-color: rgba(255,255,255,.13);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.08),
+        0 14px 30px rgba(0,0,0,.24),
+        0 0 16px rgba(106,163,255,.12);
+    }
+
+    .row.airingSoon{
+      border-color: rgba(168,85,247,.42);
+      box-shadow:
+        0 0 0 1px rgba(168,85,247,.18),
+        0 0 18px rgba(168,85,247,.16),
+        0 10px 24px rgba(0,0,0,.18);
+    }
+
+    .row.missing{
+      border-color: rgba(239,68,68,.36);
+      box-shadow:
+        0 0 0 1px rgba(239,68,68,.10),
+        0 10px 24px rgba(0,0,0,.18);
+    }
+
+    .rowPoster{
+      width:var(--rowPosterW);
+      height:var(--rowPosterH);
+      border-radius:12px;
+      overflow:hidden;
+      flex:0 0 auto;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:rgba(255,255,255,.24);
+      font-size:11px;
+      text-align:center;
+      line-height:1.2;
+    }
+
+    .rowPoster img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      transition: transform .25s ease, filter .25s ease;
+    }
+
+    .row:hover .rowPoster img{
+      transform: scale(1.06);
+      filter: brightness(1.08);
+    }
+
+    .rowMain{
+      min-width:0;
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+
+    .rowTitle{
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:.15px;
+      color:#fff;
+      line-height:1.15;
+    }
+
+    .rowSub{
+      font-size:13px;
+      color:rgba(255,255,255,.74);
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .rowDate{
+      font-size:13px;
+      color:rgba(255,255,255,.82);
+      font-weight:700;
+    }
+
+    .countdownAccent{
+      color: var(--accent2);
+      font-weight:900;
+      letter-spacing:.15px;
+    }
+
+    .rowBadges{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:2px;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      min-height:26px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      font-size:12px;
+      font-weight:800;
+      color:rgba(255,255,255,.88);
+    }
+
+    .badge.movie{ background: rgba(106,163,255,.12); border-color: rgba(106,163,255,.22); }
+    .badge.tv{ background: rgba(168,85,247,.12); border-color: rgba(168,85,247,.22); }
+    .badge.pending{ background: rgba(255,255,255,.07); }
+
+    .rowActions{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      flex-wrap:wrap;
+      flex:0 0 auto;
+    }
+
+    .miniBtn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:36px;
+      padding:8px 12px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color:#fff;
+      font-size:12px;
+      font-weight:800;
+      white-space:nowrap;
+      cursor:pointer;
+    }
+
+    .tmdbBtn{
+      background: rgba(1,180,228,.12);
+      border-color: rgba(1,180,228,.28);
+    }
+
+    .tmdbBtn:hover{
+      background: rgba(1,180,228,.22);
+      border-color: rgba(1,180,228,.42);
+    }
+
+    .directRecPanel{
+      margin-top:10px;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      display:grid;
+      gap:10px;
+      max-width:560px;
+    }
+
+    .directRecPanel textarea,
+    .directRecPanel select{
+      width:100%;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(17,24,39,.96);
+      color:#fff;
+      padding:10px 12px;
+      font: inherit;
+      outline:none;
+    }
+
+    .directRecPanel textarea{
+      min-height:72px;
+      resize:vertical;
+    }
+
+    .directRecActions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .toastHost{
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 80;
+      display: grid;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast{
+      min-width: 220px;
+      max-width: 360px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(17,24,39,.96);
+      color: rgba(255,255,255,.94);
+      box-shadow: 0 14px 36px rgba(0,0,0,.35);
+      transform: translateY(8px);
+      opacity: 0;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .toast.show{
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast.success{
+      border-color: rgba(34,197,94,.30);
+      box-shadow: 0 14px 36px rgba(34,197,94,.10);
+    }
+
+    .recFrom{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 9px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      color:#dcfce7;
+      background: rgba(34,197,94,.12);
+      border:1px solid rgba(34,197,94,.24);
+    }
+
+    .recNote{
+      margin-top:8px;
+      padding:10px 12px;
+      border-radius:12px;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      color: rgba(255,255,255,.88);
+      font-size:13px;
+      line-height:1.45;
+    }
+
+    
+    .seenRow{
+      position: relative;
+      overflow: hidden;
+      align-items: stretch;
+      gap: 14px;
+    }
+
+    .seenRow.series{
+      box-shadow: inset 3px 0 0 rgba(88,146,255,.78);
+    }
+
+    .seenRow.movie{
+      box-shadow: inset 3px 0 0 rgba(245,197,66,.82);
+    }
+
+    .seenRow.recommended{
+      border-color: rgba(34,197,94,.30);
+      box-shadow:
+        inset 3px 0 0 rgba(34,197,94,.72),
+        0 0 0 1px rgba(34,197,94,.08);
+    }
+
+    .seenMain{
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:8px;
+      min-width:0;
+      flex: 1 1 auto;
+    }
+
+    .seenActions{
+      display:flex;
+      flex: 0 0 320px;
+      align-items:center;
+      justify-content:flex-end;
+      margin-left:auto;
+    }
+
+    .seenActions .feedbackBar{
+      margin-top:0;
+      justify-content:flex-end;
+      width:100%;
+    }
+
+    .feedbackBar{
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+
+    @media (max-width: 1100px){
+      .seenRow{
+        gap:12px;
+      }
+
+      .seenActions{
+        flex: 1 1 100%;
+        justify-content:flex-start;
+        margin-left:0;
+      }
+
+      .seenActions .feedbackBar{
+        justify-content:flex-start;
+      }
+    }
+
+.recommendDirectBtn.partial{
+      border-color: rgba(34,197,94,.42);
+      color: #dcfce7;
+      background: rgba(34,197,94,.08);
+    }
+
+    .recommendDirectBtn.active{
+      border-color: rgba(34,197,94,.55);
+      color: #dcfce7;
+      background: rgba(34,197,94,.18);
+      box-shadow: 0 0 0 1px rgba(34,197,94,.14), 0 8px 24px rgba(34,197,94,.10);
+    }
+
+    .feedbackBar{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+
+    .starBar{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .starBtn{
+      width:38px;
+      height:38px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      color: rgba(255,255,255,.72);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      font-size:18px;
+      font-weight:900;
+      line-height:1;
+      transition: transform .12s ease, background .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease;
+    }
+
+    .starBtn:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.08);
+      border-color: rgba(255,255,255,.18);
+      color:#fff;
+    }
+
+    .starBtn.active{
+      color:#f5c542;
+      background: rgba(245,197,66,.12);
+      border-color: rgba(245,197,66,.32);
+      box-shadow: 0 0 0 1px rgba(245,197,66,.12), 0 8px 20px rgba(245,197,66,.10);
+    }
+
+    .recommendDirectBtn{
+      min-height:38px;
+      padding:0 14px;
+      border-radius:12px;
+      font-weight:800;
+    }
+
+    .empty{
+      padding:30px 16px;
+      text-align:center;
+      color:var(--muted);
+      border:1px dashed rgba(255,255,255,.10);
+      border-radius:18px;
+      background: rgba(255,255,255,.03);
+    }
+
+    .error{
+      padding:16px 18px;
+      border-radius:14px;
+      border:1px solid rgba(239,68,68,.28);
+      background: rgba(239,68,68,.08);
+      color: rgba(255,220,220,.96);
+      margin-bottom:14px;
+      display:none;
+    }
+
+    .loading{ padding:18px 0; color:var(--muted); font-size:13px; }
+    .hidden{ display:none !important; }
+
+    .calendarGroup{
+      margin-top:12px;
+    }
+
+    .calendarGroup:first-child{
+      margin-top:0;
+    }
+
+    .calendarHeading{
+      position: sticky;
+      top: 76px;
+      z-index: 5;
+      font-size:14px;
+      font-weight:900;
+      color:rgba(255,255,255,.90);
+      margin:0 0 10px;
+      padding:8px 8px 10px 2px;
+      letter-spacing:.2px;
+      background: rgba(10,12,18,.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+
+    .calendarItem{
+      display:flex;
+      gap:12px;
+      padding:10px 12px;
+      border-radius:16px;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      margin-bottom:10px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.16);
+      align-items:flex-start;
+    }
+
+    .calendarItem.sonarr{
+      border-left: 4px solid var(--accent1);
+    }
+
+    .calendarItem.radarr{
+      border-left: 4px solid var(--radarr);
+    }
+
+    .calendarPoster{
+      width:56px;
+      height:84px;
+      border-radius:10px;
+      overflow:hidden;
+      background: rgba(255,255,255,.06);
+      flex:0 0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:rgba(255,255,255,.22);
+      font-size:10px;
+      text-align:center;
+    }
+
+    .calendarPoster img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .calendarMain{
+      min-width:0;
+      flex:1;
+    }
+
+    .calendarTitle{
+      font-size:16px;
+      font-weight:900;
+      color:#fff;
+      line-height:1.15;
+    }
+
+    .calendarSub{
+      margin-top:4px;
+      font-size:13px;
+      color:rgba(255,255,255,.74);
+    }
+
+    .calendarMeta{
+      margin-top:6px;
+      font-size:13px;
+      font-weight:800;
+      color:rgba(255,255,255,.88);
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .calendarPill{
+      display:inline-flex;
+      align-items:center;
+      min-height:24px;
+      padding:3px 9px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.2px;
+      border:1px solid rgba(255,255,255,.10);
+    }
+
+    .calendarPill.sonarr{
+      background: rgba(106,163,255,.14);
+      border-color: rgba(106,163,255,.24);
+      color:#dbeafe;
+    }
+
+    .calendarPill.radarr{
+      background: rgba(245,197,66,.14);
+      border-color: rgba(245,197,66,.28);
+      color:#fff3bf;
+    }
+
+    @media (max-width: 760px){
+      .userMenuName{ display:none; }
+      .userMenuBtn{ padding-right:10px; }
+      .topbar{ border-radius:24px; padding:14px; align-items:flex-start; }
+      .panel{ border-radius:20px; }
+      .panelHead{ padding:16px 14px 12px; }
+      .panelBody{ padding:14px; }
+      .toolbar{ align-items:stretch; }
+      .toolbarLeft{ width:100%; }
+      .searchWrap{ min-width:0; max-width:none; width:100%; }
+      .rowPoster{ width:62px; height:92px; }
+      .rowTitle{ font-size:16px; }
+      .rowActions{ width:100%; justify-content:flex-start; margin-top:4px; }
+    }
+
+    @media (max-width: 560px){
+      .topbar{ display:block; }
+      .actions{ margin-top:12px; justify-content:flex-start; }
+      .userDropdown{
+        right:8px;
+        left:auto;
+        width:min(280px, calc(100vw - 16px));
+        max-width:calc(100vw - 16px);
+      }
+
+      .row{
+        display:grid;
+        grid-template-columns: 62px 1fr;
+        grid-template-areas:
+          "poster main"
+          "poster actions";
+      }
+      .rowPoster{ grid-area:poster; }
+      .rowMain{ grid-area:main; }
+      .rowActions{ grid-area:actions; margin-top:2px; }
+
+      .calendarItem{
+        display:grid;
+        grid-template-columns:56px 1fr;
+      }
+    }
+  
+
+/* ===== Watchlist polish (hover + calendar) ===== */
+
+/* Poster hover zoom */
+.rowPoster img{
+  transition: transform .25s ease, filter .25s ease;
+}
+
+.row:hover .rowPoster img{
+  transform: scale(1.06);
+  filter: brightness(1.08);
+}
+
+/* Row glow */
+.row:hover{
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.08),
+    0 10px 24px rgba(0,0,0,.24),
+    0 0 16px rgba(106,163,255,.12);
+}
+
+/* Calendar sticky headers */
+.calendarHeading{
+  position: sticky;
+  top: 70px;
+  background: rgba(10,12,18,.95);
+  backdrop-filter: blur(8px);
+  z-index: 5;
+  padding-top:6px;
+}
+
+/* Countdown highlight */
+.rowDate span:first-child{
+  color:#a855f7;
+  font-weight:900;
+}
+
+
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <a class="logo" href="/">
+          <img src="/static/icons/icon-192.png" alt="QueueDeck">
+        </a>
+        <div>
+          <h1>QueueDeck • Watchlist</h1>
+          <div class="sub">Full requested media timeline for your account</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <a class="btn" href="/">Dashboard</a>
+        <a class="btn primary" href="/discover">Discover</a>
+
+        <div class="userMenu" id="userMenu">
+          <button class="userMenuBtn" id="userMenuBtn" type="button" aria-haspopup="menu" aria-expanded="false">
+            <span class="userAvatar">
+              {% set _name = (me.username if me and me.username else 'U') %}
+              {{ (_name[:1] or 'U').upper() }}
+            </span>
+            <span class="userMenuName">{{ me.username if me and me.username else "User" }}</span>
+            <span class="userMenuChevron">▾</span>
+          </button>
+
+          <div class="userDropdown" id="userDropdown" role="menu" aria-hidden="true">
+            {% include "_user_menu.html" %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="panel">
+      <div class="panelHead">
+        <div class="panelTitle">
+          <h2>Watchlist</h2>
+          <div class="sub">TV sorted by air date • Movies sorted by release date • Calendar grouped by day</div>
+        </div>
+
+        <div class="watchlistTabsRow">
+          <div class="tabs">
+            <button class="tab active" type="button" data-tab="tv">TV</button>
+            <button class="tab" type="button" data-tab="movies">Movies</button>
+            <button class="tab" type="button" data-tab="calendar">Calendar</button>
+            <button class="tab" type="button" data-tab="seen">Seen</button>
+            <button class="tab" type="button" data-tab="recommended">Recommended to You</button>
+          </div>
+
+          <div class="watchlistHelpWrap">
+            <button class="watchlistHelpBtn" id="watchlistHelpBtn" type="button" aria-expanded="false" aria-haspopup="dialog" title="How watchlist sources work">?</button>
+            <div class="watchlistHelpPop" id="watchlistHelpPop" aria-hidden="true">
+              <div class="watchlistHelpTitle">Why watchlist data can differ by user</div>
+              <div class="watchlistHelpBody">
+                <div><strong>TV</strong> — If you have your own Sonarr connection, TV shows the full upcoming Sonarr list. Without Sonarr, TV is built from your Jellyfin watch history, so it only shows upcoming episodes for shows you appear to watch.</div>
+                <div><strong>Movies</strong> — If you have your own Radarr connection, Movies shows the full upcoming Radarr list. Without Radarr, Movies falls back to your Seerr requests, so the list may be smaller.</div>
+                <div><strong>Calendar</strong> — Calendar combines the TV and Movie sources available to your account.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panelBody">
+        <div class="error" id="watchlistError"></div>
+
+        <div class="toolbar">
+          <div class="toolbarLeft">
+            <div class="count" id="watchlistCount">Loading…</div>
+            <div class="sortNote">Search filters the active tab live</div>
+            <select id="movieSortSelect" class="searchInput hidden" style="max-width:240px; min-width:220px; flex:0 0 auto; padding-right:14px;">
+              <option value="smart_date">Sort: Smart Date</option>
+              <option value="digital_release">Sort: Digital Release</option>
+              <option value="title">Sort: Title A–Z</option>
+            </select>
+          </div>
+
+          <div class="searchWrap">
+            <input
+              id="watchlistSearch"
+              class="searchInput"
+              type="text"
+              inputmode="search"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="Search watchlist..."
+              aria-label="Search watchlist"
+            />
+            <button id="watchlistSearchClear" class="searchClear" type="button" aria-label="Clear search">✕</button>
+          </div>
+        </div>
+
+        <div class="loading" id="watchlistLoading">Loading watchlist…</div>
+
+        <div class="list" id="watchlistTV"></div>
+        <div class="list hidden" id="watchlistMovies"></div>
+        <div class="list hidden" id="watchlistCalendar"></div>
+        <div class="list hidden" id="watchlistSeen"></div>
+        <div class="list hidden" id="watchlistRecommended"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const initialTab = new URLSearchParams(window.location.search).get("tab") || "tv";
+
+    const state = {
+      activeTab: initialTab,
+      tv: [],
+      movies: [],
+      calendar: [],
+      seen: { movies: [], episodes: [] },
+      recommended: { direct: [], community: [] },
+      feedback: {},
+      directRecommend: { openKey: "", users: [], sent: {} },
+      query: "",
+      movieSort: "smart_date",
+    };
+
+    function escapeHTML(s){
+      let out = String(s ?? "");
+      out = out.split("&").join("&amp;");
+      out = out.split("<").join("&lt;");
+      out = out.split(">").join("&gt;");
+      out = out.split('"').join("&quot;");
+      out = out.split("'").join("&#039;");
+      return out;
+    }
+
+    function parseDate(raw){
+      const s = String(raw || "").trim();
+      if (!s) return null;
+      const d = new Date(s);
+      return Number.isFinite(d.getTime()) ? d : null;
+    }
+
+    function formatDate(raw){
+      const d = parseDate(raw);
+      if (!d) return String(raw || "");
+      return d.toLocaleString(undefined, {
+        month:"short",
+        day:"numeric",
+        year:"numeric",
+        hour:"numeric",
+        minute:"2-digit"
+      });
+    }
+
+    function formatDayHeading(raw){
+      const d = parseDate(raw);
+      if (!d) return "Unknown Date";
+
+      const today = new Date();
+      const t0 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const d0 = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const diffDays = Math.round((d0 - t0) / 86400000);
+
+      if (diffDays === 0) return "Today";
+      if (diffDays === 1) return "Tomorrow";
+
+      return d.toLocaleDateString(undefined, {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      });
+    }
+
+    function badgeHTML(text, klass=""){
+      return `<span class="badge ${klass}">${escapeHTML(text)}</span>`;
+    }
+
+    function rowPosterHTML(url, title){
+      if (url){
+        return `<div class="rowPoster"><img src="${escapeHTML(url)}" alt="${escapeHTML(title)}"></div>`;
+      }
+      return `<div class="rowPoster">No<br>Poster</div>`;
+    }
+
+    function calendarPosterHTML(url, title){
+      if (url){
+        return `<div class="calendarPoster"><img src="${escapeHTML(url)}" alt="${escapeHTML(title)}"></div>`;
+      }
+      return `<div class="calendarPoster">No<br>Poster</div>`;
+    }
+
+    function renderTVRow(item){
+      const poster = rowPosterHTML(item.poster_url, item.title);
+      const air = item.air_date ? formatDate(item.air_date) : "";
+      const countdown = String(item.countdown || "").trim();
+
+      const badges = [
+        badgeHTML("TV", "tv"),
+        item.status ? badgeHTML(item.status, "pending") : "",
+        item.is_airing_soon ? badgeHTML("Airing Soon", "tv") : "",
+        item.is_missing ? badgeHTML("Missing", "pending") : ""
+      ].filter(Boolean).join("");
+
+      const actions = [
+        item.sonarr_url ? `<a class="miniBtn" href="${escapeHTML(item.sonarr_url)}" target="_blank" rel="noopener">Open Sonarr</a>` : ""
+      ].filter(Boolean).join("");
+
+      const rowClass = [
+        "row",
+        item.is_airing_soon ? "airingSoon" : "",
+        item.is_missing ? "missing" : ""
+      ].filter(Boolean).join(" ");
+
+      return `
+        <div class="${rowClass}">
+          ${poster}
+          <div class="rowMain">
+            <div class="rowTitle">${escapeHTML(item.title || "Untitled")}</div>
+            ${(item.episode_tag || item.episode_title) ? `
+              <div class="rowSub">
+                ${item.episode_tag ? `<span class="badge tv">${escapeHTML(item.episode_tag)}</span>` : ``}
+                ${item.episode_title ? escapeHTML(item.episode_title) : ``}
+              </div>
+            ` : ``}
+            ${air
+              ? `<div class="rowDate"><span class="countdownAccent">${escapeHTML(countdown || "Upcoming")}</span> • ${escapeHTML(air)}</div>`
+              : `<div class="rowDate"><span class="countdownAccent">${escapeHTML(countdown || "Upcoming")}</span></div>`}
+            <div class="rowBadges">${badges}</div>
+          </div>
+          <div class="rowActions">${actions}</div>
+        </div>
+      `;
+    }
+
+    function renderMovieRow(item){
+      const poster = rowPosterHTML(item.poster_url, item.title);
+      const release = item.release_date ? formatDate(item.release_date) : "";
+      const digitalRelease = item.digital_release ? formatDate(item.digital_release) : "";
+      const theatricalRelease = item.in_cinemas ? formatDate(item.in_cinemas) : "";
+      const movieState = String(item.status || "").trim();
+
+      const sub = [
+        item.year ? String(item.year) : "",
+        movieState || ""
+      ].filter(Boolean).join(" • ");
+
+      let primaryLabel = "Release Date";
+      let primaryValue = "";
+
+      if (movieState === "Digital Soon" && digitalRelease){
+        primaryLabel = "Digital Release";
+        primaryValue = digitalRelease;
+      } else if (movieState === "In Theaters" && theatricalRelease){
+        primaryLabel = "Theatrical Release";
+        primaryValue = theatricalRelease;
+      } else if (digitalRelease){
+        primaryLabel = "Digital Release";
+        primaryValue = digitalRelease;
+      } else if (release){
+        primaryLabel = "Release Date";
+        primaryValue = release;
+      }
+
+      const movieStateBadge =
+        movieState === "In Theaters" ? badgeHTML("🎬 In Theaters", "pending") :
+        movieState === "Digital Soon" ? badgeHTML("📀 Digital Soon", "pending") :
+        badgeHTML("⏳ Announced", "pending");
+
+      const badges = [
+        badgeHTML("Movie", "movie"),
+        movieStateBadge
+      ].filter(Boolean).join("");
+
+      const actions = [
+        item.radarr_url ? `<a class="miniBtn" href="${escapeHTML(item.radarr_url)}" target="_blank" rel="noopener">Radarr</a>` : "",
+        item.tmdb_id ? `<a class="miniBtn tmdbBtn" href="https://www.themoviedb.org/movie/${escapeHTML(item.tmdb_id)}" target="_blank" rel="noopener">TMDB</a>` : ""
+      ].filter(Boolean).join("");
+
+      return `
+        <div class="row">
+          ${poster}
+          <div class="rowMain">
+            <div class="rowTitle">${escapeHTML(item.title || "Untitled")}</div>
+            ${sub ? `<div class="rowSub">${escapeHTML(sub)}</div>` : ``}
+            ${primaryValue
+              ? `<div class="rowDate">${escapeHTML(primaryLabel)}: ${escapeHTML(primaryValue)}</div>`
+              : `<div class="rowDate">Release date unknown</div>`}
+            <div class="rowBadges">${badges}</div>
+          </div>
+          <div class="rowActions">${actions}</div>
+        </div>
+      `;
+    }
+
+    function renderCalendarItem(item){
+      const poster = calendarPosterHTML(item.poster_url, item.title);
+      const sourceClass = item.source === "radarr" ? "radarr" : "sonarr";
+      const sourceLabel = item.source === "radarr" ? "Radarr" : "Sonarr";
+      const when = formatDate(item.date);
+      const action = item.open_url
+        ? `<a class="miniBtn" href="${escapeHTML(item.open_url)}" target="_blank" rel="noopener">Open ${escapeHTML(sourceLabel)}</a>`
+        : "";
+
+      return `
+        <div class="calendarItem ${sourceClass}">
+          ${poster}
+          <div class="calendarMain">
+            <div class="calendarTitle">${escapeHTML(item.title || "Untitled")}</div>
+            ${item.subtitle ? `<div class="calendarSub">${escapeHTML(item.subtitle)}</div>` : ``}
+            <div class="calendarMeta">
+              <span class="calendarPill ${sourceClass}">${escapeHTML(sourceLabel)}</span>
+              <span>${escapeHTML(when)}</span>
+            </div>
+          </div>
+          <div class="rowActions">${action}</div>
+        </div>
+      `;
+    }
+
+    function itemMatchesQuery(item){
+      const q = String(state.query || "").trim().toLowerCase();
+      if (!q) return true;
+
+      const hay = [
+        item.title,
+        item.year,
+        item.status,
+        item.air_date,
+        item.release_date,
+        item.episode_title,
+        item.episode_tag,
+        item.subtitle,
+        item.source,
+        formatDate(item.air_date || item.release_date || item.date || "")
+      ].filter(Boolean).join(" ").toLowerCase();
+
+      return hay.includes(q);
+    }
+
+    function filteredTV(){ return state.tv.filter(itemMatchesQuery); }
+
+    function sortedMovies(items){
+      const rows = [...items];
+      const mode = String(state.movieSort || "smart_date");
+
+      function smartDate(item){
+        const movieState = String(item.status || "").trim();
+
+        if (movieState === "Digital Soon") return parseDate(item.digital_release || item.release_date || item.in_cinemas);
+        if (movieState === "In Theaters") return parseDate(item.in_cinemas || item.digital_release || item.release_date);
+        return parseDate(item.digital_release || item.release_date || item.in_cinemas);
+      }
+
+      if (mode === "digital_release"){
+        rows.sort((a, b) => {
+          const ad = parseDate(a.digital_release);
+          const bd = parseDate(b.digital_release);
+
+          const aHas = !!ad;
+          const bHas = !!bd;
+
+          if (aHas && !bHas) return -1;
+          if (!aHas && bHas) return 1;
+
+          const at = ad ? ad.getTime() : Number.MAX_SAFE_INTEGER;
+          const bt = bd ? bd.getTime() : Number.MAX_SAFE_INTEGER;
+
+          if (at !== bt) return at - bt;
+          return String(a.title || "").localeCompare(String(b.title || ""));
+        });
+        return rows;
+      }
+
+      if (mode === "title"){
+        rows.sort((a, b) => String(a.title || "").localeCompare(String(b.title || "")));
+        return rows;
+      }
+
+      rows.sort((a, b) => {
+        const ad = smartDate(a);
+        const bd = smartDate(b);
+        const at = ad ? ad.getTime() : Number.MAX_SAFE_INTEGER;
+        const bt = bd ? bd.getTime() : Number.MAX_SAFE_INTEGER;
+        return at - bt;
+      });
+      return rows;
+    }
+
+    function filteredMovies(){
+      return sortedMovies(state.movies.filter(itemMatchesQuery));
+    }
+
+    function filteredCalendar(){ return state.calendar.filter(itemMatchesQuery); }
+
+    function renderCalendarGroups(items){
+      if (!items.length){
+        return `<div class="empty">${state.query ? "No calendar results match your search." : "No upcoming calendar items found."}</div>`;
+      }
+
+      const groups = new Map();
+      for (const item of items){
+        const key = formatDayHeading(item.date);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(item);
+      }
+
+      let html = "";
+      for (const [heading, rows] of groups.entries()){
+        html += `<section class="calendarGroup">`;
+        html += `<h3 class="calendarHeading">${escapeHTML(heading)}</h3>`;
+        html += rows.map(renderCalendarItem).join("");
+        html += `</section>`;
+      }
+      return html;
+    }
+
+    
+    function feedbackCacheKey(mediaKind, mediaKey){
+      return `${String(mediaKind || "").trim().toLowerCase()}::${String(mediaKey || "").trim()}`;
+    }
+
+    function getFeedbackForItem(item){
+      const key = feedbackCacheKey(item.media_kind, item.media_key);
+      return state.feedback[key] || { rating: null, recommended: false };
+    }
+
+    function feedbackStarsHTML(item){
+      const fb = getFeedbackForItem(item);
+      const rating = Number(fb.rating || 0);
+
+      let html = `<div class="starBar">`;
+      for (let i = 1; i <= 5; i++){
+        const active = i <= rating;
+        html += `
+          <button
+            class="starBtn ${active ? "active" : ""}"
+            type="button"
+            data-feedback-action="rate"
+            data-media-kind="${escapeHTML(item.media_kind || "")}"
+            data-media-key="${escapeHTML(item.media_key || "")}"
+            data-rating="${i}"
+            title="Rate ${i} star${i === 1 ? "" : "s"}"
+            aria-label="Rate ${i} star${i === 1 ? "" : "s"}"
+          >★</button>
+        `;
+      }
+      html += `</div>`;
+      return html;
+    }
+
+    function feedbackRecommendHTML(item){
+      const fb = getFeedbackForItem(item);
+      return `
+        <button
+          class="miniBtn"
+          type="button"
+          data-feedback-action="recommend"
+          data-media-kind="${escapeHTML(item.media_kind || "")}"
+          data-media-key="${escapeHTML(item.media_key || "")}"
+          style="${fb.recommended ? "border-color:rgba(34,197,94,.42);background:rgba(34,197,94,.14);" : ""}"
+        >${fb.recommended ? "Recommended" : "Recommend"}</button>
+      `;
+    }
+
+    async function saveFeedbackForItem(item, patch = {}){
+      const key = feedbackCacheKey(item.media_kind, item.media_key);
+      const current = state.feedback[key] || { rating: null, recommended: false };
+
+      const payload = {
+        media_kind: item.media_kind,
+        media_key: item.media_key,
+        source: item.source || "jellyfin",
+        title: item.title || "",
+        poster_url: item.poster_url || "",
+        rating: Object.prototype.hasOwnProperty.call(patch, "rating") ? patch.rating : current.rating,
+        recommended: Object.prototype.hasOwnProperty.call(patch, "recommended") ? !!patch.recommended : !!current.recommended,
+      };
+
+      const r = await fetch("/api/watchlist/feedback", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok){
+        throw new Error(j.error || ("HTTP " + r.status));
+      }
+
+      state.feedback[key] = j.feedback || payload;
+      renderSeen();
+      // renderRecommendedFeed removed
+
+      wireSeenFeedbackActions();
+      wireSeenFeedbackActions();
+    }
+
+    async function loadSeenFeedback(){
+      const items = [
+        ...(Array.isArray(state.seen?.movies) ? state.seen.movies : []),
+        ...(Array.isArray(state.seen?.series) ? state.seen.series : []),
+      ].filter(item => item && item.media_kind && item.media_key);
+
+      const unique = new Map();
+      for (const item of items){
+        unique.set(feedbackCacheKey(item.media_kind, item.media_key), item);
+      }
+
+      const jobs = [];
+      for (const item of unique.values()){
+        jobs.push(
+          fetch(`/api/watchlist/feedback?media_kind=${encodeURIComponent(item.media_kind)}&media_key=${encodeURIComponent(item.media_key)}`, {
+            credentials: "same-origin",
+            cache: "no-store",
+          })
+          .then(r => r.json().catch(() => ({})).then(j => ({ ok: r.ok, j })))
+          .then(({ ok, j }) => {
+            if (ok && j.ok && j.feedback){
+              state.feedback[feedbackCacheKey(item.media_kind, item.media_key)] = j.feedback;
+            }
+          })
+          .catch(() => {})
+        );
+      }
+
+      await Promise.all(jobs);
+    }
+
+
+    async function loadRecommendUsers(){
+      if (Array.isArray(state.directRecommend?.users) && state.directRecommend.users.length) return;
+
+      const r = await fetch("/api/watchlist/users", {
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok){
+        throw new Error(j.error || ("HTTP " + r.status));
+      }
+
+      state.directRecommend.users = Array.isArray(j.users) ? j.users : [];
+    }
+
+    function directRecommendPanelHTML(item){
+      const openKey = String(state.directRecommend?.openKey || "");
+      const myKey = feedbackCacheKey(item.media_kind, item.media_key);
+      if (openKey !== myKey) return "";
+
+      const users = Array.isArray(state.directRecommend?.users) ? state.directRecommend.users : [];
+      const sent = state.directRecommend?.sent?.[myKey] || { recipients: [], everyone: false };
+      const recipients = Array.isArray(sent.recipients) ? sent.recipients : [];
+
+      const options = [
+        `<option value="">Choose destination...</option>`,
+        `<option value="__everyone__">${sent.everyone ? "Everyone ✓ already sent" : "Everyone"}</option>`,
+        ...users.map(u => {
+          const already = recipients.includes(u.username);
+          const label = already ? `${u.username} ✓ already sent` : u.username;
+          return `<option value="${escapeHTML(u.username)}">${escapeHTML(label)}</option>`;
+        })
+      ].join("");
+
+      return `
+        <div class="directRecPanel" data-direct-panel="${escapeHTML(myKey)}">
+          <select data-direct-user="${escapeHTML(myKey)}">
+            ${options}
+          </select>
+          <textarea data-direct-note="${escapeHTML(myKey)}" placeholder="Optional note..."></textarea>
+          <div class="directRecActions">
+            <button class="miniBtn" type="button" data-feedback-action="recommend-direct-send" data-media-kind="${escapeHTML(item.media_kind || "")}" data-media-key="${escapeHTML(item.media_key || "")}">Send</button>
+            <button class="miniBtn" type="button" data-feedback-action="recommend-direct-cancel" data-media-kind="${escapeHTML(item.media_kind || "")}" data-media-key="${escapeHTML(item.media_key || "")}">Cancel</button>
+          </div>
+        </div>
+      `;
+    }
+
+
+    async function loadSentRecommendations(){
+      const r = await fetch("/api/watchlist/recommendations_sent", {
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok){
+        throw new Error(j.error || ("HTTP " + r.status));
+      }
+
+      const out = {};
+      for (const item of (Array.isArray(j.items) ? j.items : [])){
+        const key = feedbackCacheKey(item.media_kind, item.media_key);
+        out[key] = {
+          recipients: Array.isArray(item.recipients) ? item.recipients : [],
+          everyone: !!item.everyone,
+        };
+      }
+      state.directRecommend.sent = out;
+    }
+
+    function sentRecommendationState(item){
+      const key = feedbackCacheKey(item.media_kind, item.media_key);
+      const sent = state.directRecommend?.sent?.[key] || { recipients: [], everyone: false };
+      const recipients = Array.isArray(sent.recipients) ? sent.recipients : [];
+      const totalUsers = Array.isArray(state.directRecommend?.users) ? state.directRecommend.users.length : 0;
+      const full = !!sent.everyone || (totalUsers > 0 && recipients.length >= totalUsers);
+      const partial = !full && recipients.length > 0;
+
+      let label = "Recommend to User";
+      if (full) label = "Recommended";
+      else if (partial) label = recipients.length === 1 ? "Recommended to 1 User" : `Recommended to ${recipients.length} Users`;
+
+      return { full, partial, label, recipients };
+    }
+
+    function directRecommendButtonHTML(item){
+      const st = sentRecommendationState(item);
+      return `<button class="miniBtn recommendDirectBtn ${st.full ? "active" : ""} ${st.partial ? "partial" : ""}" type="button" data-feedback-action="recommend-direct" data-media-kind="${escapeHTML(item.media_kind || "")}" data-media-key="${escapeHTML(item.media_key || "")}">${escapeHTML(st.label)}</button>`;
+    }
+
+
+    function ensureToastHost(){
+      let host = document.getElementById("toastHost");
+      if (host) return host;
+
+      host = document.createElement("div");
+      host.id = "toastHost";
+      host.className = "toastHost";
+      document.body.appendChild(host);
+      return host;
+    }
+
+    function showToast(message, variant="success"){
+      const host = ensureToastHost();
+      const el = document.createElement("div");
+      el.className = `toast ${variant}`;
+      el.textContent = message;
+      host.appendChild(el);
+
+      requestAnimationFrame(() => el.classList.add("show"));
+
+      setTimeout(() => {
+        el.classList.remove("show");
+        setTimeout(() => el.remove(), 220);
+      }, 2200);
+    }
+
+    function wireSeenFeedbackActions(){
+      document.querySelectorAll("[data-feedback-action='rate']").forEach(btn => {
+        if (btn.dataset.boundFeedback === "1") return;
+        btn.dataset.boundFeedback = "1";
+        btn.addEventListener("click", async () => {
+          const mediaKind = btn.getAttribute("data-media-kind") || "";
+          const mediaKey = btn.getAttribute("data-media-key") || "";
+          const rating = Number(btn.getAttribute("data-rating") || 0);
+
+          const item = [
+            ...(Array.isArray(state.seen?.movies) ? state.seen.movies : []),
+            ...(Array.isArray(state.seen?.series) ? state.seen.series : []),
+          ].find(x => String(x.media_kind || "") === mediaKind && String(x.media_key || "") === mediaKey);
+
+          if (!item) return;
+
+          try{
+            const current = Number((getFeedbackForItem(item).rating || 0));
+            const nextRating = (current === rating) ? null : rating;
+            await saveFeedbackForItem(item, { rating: nextRating });
+          }catch(e){
+            console.error(e);
+            alert("Rating save failed.");
+          }
+        });
+      });
+
+      document.querySelectorAll("[data-feedback-action='recommend']").forEach(btn => {
+        if (btn.dataset.boundFeedback === "1") return;
+        btn.dataset.boundFeedback = "1";
+        btn.addEventListener("click", async () => {
+          const mediaKind = btn.getAttribute("data-media-kind") || "";
+          const mediaKey = btn.getAttribute("data-media-key") || "";
+
+          const item = [
+            ...(Array.isArray(state.seen?.movies) ? state.seen.movies : []),
+            ...(Array.isArray(state.seen?.series) ? state.seen.series : []),
+          ].find(x => String(x.media_kind || "") === mediaKind && String(x.media_key || "") === mediaKey);
+
+          if (!item) return;
+
+          const fb = getFeedbackForItem(item);
+
+          try{
+            await saveFeedbackForItem(item, { recommended: !fb.recommended });
+          }catch(e){
+            console.error(e);
+            alert("Recommend save failed.");
+          }
+        });
+      });
+
+      document.querySelectorAll("[data-feedback-action='recommend-direct']").forEach(btn => {
+        if (btn.dataset.boundFeedback === "1") return;
+        btn.dataset.boundFeedback = "1";
+        btn.addEventListener("click", async () => {
+          const mediaKind = btn.getAttribute("data-media-kind") || "";
+          const mediaKey = btn.getAttribute("data-media-key") || "";
+
+          const item = [
+            ...(Array.isArray(state.seen?.movies) ? state.seen.movies : []),
+            ...(Array.isArray(state.seen?.series) ? state.seen.series : []),
+          ].find(x => String(x.media_kind || "") === mediaKind && String(x.media_key || "") === mediaKey);
+
+          if (!item) return;
+
+          try{
+            await loadRecommendUsers();
+            state.directRecommend.openKey = feedbackCacheKey(item.media_kind, item.media_key);
+            renderSeen();
+            wireSeenFeedbackActions();
+          }catch(e){
+            console.error(e);
+            alert("Could not load users.");
+          }
+        });
+      });
+
+      document.querySelectorAll("[data-feedback-action='recommend-direct-cancel']").forEach(btn => {
+        if (btn.dataset.boundFeedback === "1") return;
+        btn.dataset.boundFeedback = "1";
+        btn.addEventListener("click", async () => {
+          state.directRecommend.openKey = "";
+          renderSeen();
+          wireSeenFeedbackActions();
+        });
+      });
+
+      document.querySelectorAll("[data-feedback-action='recommend-direct-send']").forEach(btn => {
+        if (btn.dataset.boundFeedback === "1") return;
+        btn.dataset.boundFeedback = "1";
+        btn.addEventListener("click", async () => {
+          const mediaKind = btn.getAttribute("data-media-kind") || "";
+          const mediaKey = btn.getAttribute("data-media-key") || "";
+
+          const item = [
+            ...(Array.isArray(state.seen?.movies) ? state.seen.movies : []),
+            ...(Array.isArray(state.seen?.series) ? state.seen.series : []),
+          ].find(x => String(x.media_kind || "") === mediaKind && String(x.media_key || "") === mediaKey);
+
+          if (!item) return;
+
+          const key = feedbackCacheKey(item.media_kind, item.media_key);
+          const userEl = document.querySelector(`[data-direct-user="${key}"]`);
+          const noteEl = document.querySelector(`[data-direct-note="${key}"]`);
+
+          const choice = (userEl?.value || "").trim();
+          const note = (noteEl?.value || "").trim();
+
+          if (!choice){
+            alert("Choose a destination first.");
+            return;
+          }
+
+          try{
+            if (choice === "__everyone__"){
+              await saveFeedbackForItem(item, { recommended: true });
+            } else {
+              const r = await fetch("/api/watchlist/recommend/direct", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  media_kind: item.media_kind,
+                  media_key: item.media_key,
+                  source: item.source || "jellyfin",
+                  title: item.title || "",
+                  poster_url: item.poster_url || "",
+                  to_username: choice,
+                  note: note,
+                }),
+              });
+
+              const j = await r.json().catch(() => ({}));
+              if (!r.ok || !j.ok){
+                throw new Error(j.error || ("HTTP " + r.status));
+              }
+            }
+
+            state.directRecommend.openKey = "";
+            // loadRecommendedFeed removed
+
+            renderSeen();
+            // renderRecommendedFeed removed
+
+            wireSeenFeedbackActions();
+            showToast(choice === "__everyone__" ? "Recommended to everyone." : `Sent to ${choice}.`);
+          }catch(e){
+            console.error(e);
+            alert("Recommendation failed: " + (e && e.message ? e.message : e));
+          }
+        });
+      });
+    }
+
+    function renderSeen(){
+      const container = document.getElementById("watchlistSeen");
+      if (!container) return;
+
+      const movies = Array.isArray(state.seen?.movies) ? state.seen.movies.filter(itemMatchesQuery) : [];
+      const series = Array.isArray(state.seen?.series) ? state.seen.series.filter(itemMatchesQuery) : [];
+
+      function row(item, kind){
+        const poster = rowPosterHTML(item.poster_url, item.title);
+        const watched = item.date ? formatDate(item.date) : "";
+
+        let subtitle = "";
+        let badges = "";
+        const sentState = sentRecommendationState(item);
+        const rowClasses = [
+          "row",
+          "seenRow",
+          kind === "series" ? "series" : "movie",
+          (sentState.full || sentState.partial) ? "recommended" : ""
+        ].join(" ");
+
+        if (kind === "series"){
+          const count = Number(item.episode_count || 0);
+          subtitle = [
+            count ? `${count} episode${count === 1 ? "" : "s"} watched` : "",
+            watched ? `Last watched ${watched}` : ""
+          ].filter(Boolean).join(" • ");
+          badges = badgeHTML("Series", "tv") + badgeHTML("Seen", "pending");
+        } else {
+          subtitle = watched ? `Watched ${watched}` : "";
+          badges = badgeHTML("Movie", "movie") + badgeHTML("Seen", "pending");
+        }
+
+        return `
+          <div class="${rowClasses}">
+            ${poster}
+            <div class="rowMain seenMain">
+              <div class="rowTitle">${escapeHTML(item.title || "Untitled")}</div>
+              ${subtitle ? `<div class="rowSub">${escapeHTML(subtitle)}</div>` : ``}
+              <div class="rowBadges">${badges}</div>
+            </div>
+            <div class="rowActions seenActions">
+              <div class="feedbackBar">
+                ${feedbackStarsHTML(item)}
+                ${directRecommendButtonHTML(item)}
+              </div>
+            </div>
+          </div>
+          ${directRecommendPanelHTML(item)}
+        `;
+      }
+
+      let html = "";
+
+      if (series.length){
+        html += `
+          <section class="calendarGroup">
+            <h3 class="calendarHeading">Recently Watched Series (${series.length})</h3>
+            ${series.map(item => row(item, "series")).join("")}
+          </section>
+        `;
+      }
+
+      if (movies.length){
+        html += `
+          <section class="calendarGroup">
+            <h3 class="calendarHeading">Recently Watched Movies (${movies.length})</h3>
+            ${movies.map(item => row(item, "movies")).join("")}
+          </section>
+        `;
+      }
+
+      if (!html){
+        html = `<div class="empty">${state.query ? "No seen items match your search." : "No seen items found."}</div>`;
+      }
+
+      container.innerHTML = html;
+    }
+
+
+function renderLists(){
+      const tvEl = document.getElementById("watchlistTV");
+      const movieEl = document.getElementById("watchlistMovies");
+      const calEl = document.getElementById("watchlistCalendar");
+
+      const tvRows = filteredTV();
+      const movieRows = filteredMovies();
+      const calRows = filteredCalendar();
+
+      tvEl.innerHTML = tvRows.length
+        ? tvRows.map(renderTVRow).join("")
+        : `<div class="empty">${state.query ? "No TV results match your search." : "No TV items found."}</div>`;
+
+      movieEl.innerHTML = movieRows.length
+        ? movieRows.map(renderMovieRow).join("")
+        : `<div class="empty">${state.query ? "No movie results match your search." : "No movie items found."}</div>`;
+
+      calEl.innerHTML = renderCalendarGroups(calRows);
+      renderSeen();
+      renderRecommendedFeed();
+      wireSeenFeedbackActions();
+    }
+
+    function renderCurrentTab(){
+      const tvEl = document.getElementById("watchlistTV");
+      const movieEl = document.getElementById("watchlistMovies");
+      const calEl = document.getElementById("watchlistCalendar");
+      const seenEl = document.getElementById("watchlistSeen");
+      const recEl = document.getElementById("watchlistRecommended");
+      const countEl = document.getElementById("watchlistCount");
+      const movieSortEl = document.getElementById("movieSortSelect");
+
+      const showingTV = state.activeTab === "tv";
+      const showingMovies = state.activeTab === "movies";
+      const showingCal = state.activeTab === "calendar";
+      const showingSeen = state.activeTab === "seen";
+      const showingRec = state.activeTab === "recommended";
+
+      const tvRows = filteredTV();
+      const movieRows = filteredMovies();
+      const calRows = filteredCalendar();
+      const seenMovies = Array.isArray(state.seen?.movies) ? state.seen.movies.filter(itemMatchesQuery) : [];
+      const seenSeries = Array.isArray(state.seen?.series) ? state.seen.series.filter(itemMatchesQuery) : [];
+      const seenCount = seenMovies.length + seenSeries.length;
+      const directRecs = Array.isArray(state.recommended?.direct) ? state.recommended.direct.filter(itemMatchesQuery) : [];
+      const communityRecs = Array.isArray(state.recommended?.community) ? state.recommended.community.filter(itemMatchesQuery) : [];
+      const recommendedCount = directRecs.length + communityRecs.length;
+
+      tvEl.classList.toggle("hidden", !showingTV);
+      movieEl.classList.toggle("hidden", !showingMovies);
+      calEl.classList.toggle("hidden", !showingCal);
+      if (seenEl) seenEl.classList.toggle("hidden", !showingSeen);
+      if (recEl) recEl.classList.toggle("hidden", !showingRec);
+
+      document.querySelectorAll(".tab").forEach(btn => {
+        btn.classList.toggle("active", btn.getAttribute("data-tab") === state.activeTab);
+      });
+
+      if (showingTV) countEl.textContent = `${tvRows.length} TV item(s)`;
+      else if (showingMovies) countEl.textContent = `${movieRows.length} movie item(s)`;
+      else if (showingCal) countEl.textContent = `${calRows.length} calendar item(s)`;
+      else if (showingSeen) countEl.textContent = `${seenCount} seen item(s)`;
+      else {
+        countEl.textContent = `${recommendedCount} recommendation(s)`;
+        renderRecommendedFeed();
+      }
+
+      if (movieSortEl){
+        movieSortEl.classList.toggle("hidden", !showingMovies);
+        movieSortEl.value = state.movieSort || "smart_date";
+      }
+    }
+
+    function refreshSearchUI(){
+      const clearBtn = document.getElementById("watchlistSearchClear");
+      clearBtn.classList.toggle("show", !!String(state.query || "").trim());
+    }
+
+    function applyFilter(){
+      renderLists();
+      renderCurrentTab();
+      refreshSearchUI();
+    }
+
+
+    async function loadRecommendedFeed(){
+      const r = await fetch("/api/watchlist/recommended_to_you", {
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok){
+        throw new Error(j.error || ("HTTP " + r.status));
+      }
+
+      state.recommended = {
+        direct: Array.isArray(j.direct) ? j.direct : [],
+        community: Array.isArray(j.community) ? j.community : [],
+      };
+    }
+
+    function renderRecommendedFeed(){
+      const el = document.getElementById("watchlistRecommended");
+      if (!el) return;
+
+      const direct = Array.isArray(state.recommended?.direct) ? state.recommended.direct.filter(itemMatchesQuery) : [];
+      const community = Array.isArray(state.recommended?.community) ? state.recommended.community.filter(itemMatchesQuery) : [];
+
+      function row(item, kind){
+        const poster = rowPosterHTML(item.poster_url, item.title);
+        const subtitle = kind === "direct"
+          ? [item.created_at ? formatDate(item.created_at) : ""].filter(Boolean).join(" • ")
+          : [item.recommend_count ? `${item.recommend_count} recommendation${item.recommend_count === 1 ? "" : "s"}` : "", item.avg_rating ? `Avg ${item.avg_rating}★` : "", item.updated_at ? formatDate(item.updated_at) : ""].filter(Boolean).join(" • ");
+
+        return `
+          <div class="row">
+            ${poster}
+            <div class="rowMain">
+              <div class="rowTitle">${escapeHTML(item.title || "Untitled")}</div>
+              ${kind === "direct" && item.from_username ? `<div class="rowSub"><span class="recFrom">From ${escapeHTML(item.from_username)}</span></div>` : ``}
+              ${subtitle ? `<div class="rowSub">${escapeHTML(subtitle)}</div>` : ``}
+              ${kind === "direct" && item.note ? `<div class="recNote">${escapeHTML(item.note)}</div>` : ``}
+              <div class="rowBadges">
+                ${item.media_kind === "series" ? badgeHTML("Series", "tv") : badgeHTML("Movie", "movie")}
+                ${kind === "direct" ? badgeHTML("For You", "pending") : badgeHTML("Community", "pending")}
+              </div>
+              <div class="rowActions" style="justify-content:flex-start;margin-top:8px;">
+                ${item.open_url ? `<a class="miniBtn" href="${escapeHTML(item.open_url)}" target="_blank" rel="noopener noreferrer">Play</a>` : ``}
+                <button class="miniBtn" type="button" data-rec-action="watched" data-media-kind="${escapeHTML(item.media_kind || "")}" data-media-key="${escapeHTML(item.media_key || "")}">Watched</button>
+                <button class="miniBtn" type="button" data-rec-action="dismiss" data-media-kind="${escapeHTML(item.media_kind || "")}" data-media-key="${escapeHTML(item.media_key || "")}">Dismiss</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      let html = "";
+
+      if (direct.length){
+        html += `
+          <section class="calendarGroup">
+            <h3 class="calendarHeading">Directly Recommended to You (${direct.length})</h3>
+            ${direct.map(item => row(item, "direct")).join("")}
+          </section>
+        `;
+      }
+
+      if (community.length){
+        html += `
+          <section class="calendarGroup">
+            <h3 class="calendarHeading">Recommended by QueueDeck Users (${community.length})</h3>
+            ${community.map(item => row(item, "community")).join("")}
+          </section>
+        `;
+      }
+
+      if (!html){
+        html = `<div class="empty">${state.query ? "No recommendations match your search." : "No recommendations yet."}</div>`;
+      }
+
+      el.innerHTML = html;
+    }
+
+    async function loadWatchlist(){
+      const loading = document.getElementById("watchlistLoading");
+      const err = document.getElementById("watchlistError");
+
+      loading.style.display = "block";
+      err.style.display = "none";
+      err.textContent = "";
+
+      try{
+        const r = await fetch("/api/watchlist", {
+          credentials: "same-origin",
+          cache: "no-store",
+        });
+
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || !j.ok){
+          throw new Error(j.error || ("HTTP " + r.status));
+        }
+
+        state.tv = Array.isArray(j.tv) ? j.tv : [];
+        state.movies = Array.isArray(j.movies) ? j.movies : [];
+        state.calendar = Array.isArray(j.calendar) ? j.calendar : [];
+      state.seen = j.seen || { movies: [], series: [] };
+
+        await loadSeenFeedback();
+        await loadRecommendUsers();
+        await loadSentRecommendations();
+        await loadRecommendedFeed();
+        applyFilter();
+      }catch(e){
+        console.error(e);
+        err.style.display = "block";
+        err.textContent = "Watchlist failed to load: " + (e.message || e);
+        document.getElementById("watchlistCount").textContent = "0 item(s)";
+      }finally{
+        loading.style.display = "none";
+      }
+    }
+
+    document.querySelectorAll(".tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.activeTab = btn.getAttribute("data-tab") || "tv";
+        renderCurrentTab();
+      });
+    });
+
+    const searchEl = document.getElementById("watchlistSearch");
+    const clearEl = document.getElementById("watchlistSearchClear");
+    const movieSortEl = document.getElementById("movieSortSelect");
+
+    searchEl.addEventListener("input", () => {
+      state.query = searchEl.value || "";
+      applyFilter();
+    });
+
+    clearEl.addEventListener("click", () => {
+      state.query = "";
+      searchEl.value = "";
+      applyFilter();
+      searchEl.focus();
+    });
+
+    if (movieSortEl){
+      movieSortEl.addEventListener("change", () => {
+        state.movieSort = movieSortEl.value || "smart_date";
+        applyFilter();
+      });
+    }
+
+
+    (function wireWatchlistHelp(){
+      const btn = document.getElementById("watchlistHelpBtn");
+      const pop = document.getElementById("watchlistHelpPop");
+      if (!btn || !pop) return;
+
+      function close(){
+        pop.classList.remove("open");
+        pop.setAttribute("aria-hidden", "true");
+        btn.setAttribute("aria-expanded", "false");
+      }
+
+      function open(){
+        pop.classList.add("open");
+        pop.setAttribute("aria-hidden", "false");
+        btn.setAttribute("aria-expanded", "true");
+      }
+
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (pop.classList.contains("open")) close();
+        else open();
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!pop.contains(e.target) && !btn.contains(e.target)) close();
+      });
+
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") close();
+      });
+    })();
+
+    (function wireUserMenu(){
+      const root = document.getElementById("userMenu");
+      const btn = document.getElementById("userMenuBtn");
+      const pop = document.getElementById("userDropdown");
+      if (!root || !btn || !pop) return;
+
+      function close(){
+        root.classList.remove("open");
+        btn.setAttribute("aria-expanded", "false");
+        pop.setAttribute("aria-hidden", "true");
+      }
+
+      function open(){
+        root.classList.add("open");
+        btn.setAttribute("aria-expanded", "true");
+        pop.setAttribute("aria-hidden", "false");
+      }
+
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        root.classList.contains("open") ? close() : open();
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!root.contains(e.target)) close();
+      });
+
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") close();
+      });
+    })();
+
+
+    function wireRecommendedActionsDelegated(){
+      if (document.body.dataset.recommendedDelegated === "1") return;
+      document.body.dataset.recommendedDelegated = "1";
+
+      document.addEventListener("click", async (e) => {
+        const btn = e.target.closest("[data-rec-action]");
+        if (!btn) return;
+
+        const action = btn.getAttribute("data-rec-action") || "";
+        const mediaKind = btn.getAttribute("data-media-kind") || "";
+        const mediaKey = btn.getAttribute("data-media-key") || "";
+
+        if (!mediaKind || !mediaKey) return;
+
+        const state = action === "watched" ? "watched" : "dismissed";
+
+        try{
+          const r = await fetch("/api/watchlist/recommendation_state", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              media_kind: mediaKind,
+              media_key: mediaKey,
+              state: state,
+            }),
+          });
+
+          const j = await r.json().catch(() => ({}));
+          if (!r.ok || !j.ok){
+            throw new Error(j.error || ("HTTP " + r.status));
+          }
+
+          await loadRecommendedFeed();
+          renderRecommendedFeed();
+          renderCurrentTab();
+        }catch(err){
+          console.error(err);
+          alert("Could not update recommendation.");
+        }
+      });
+    }
+
+    wireRecommendedActionsDelegated();
+    loadWatchlist();
+  </script>
+</body>
+</html>

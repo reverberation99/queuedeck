@@ -187,6 +187,61 @@ ce; }
       white-space: nowrap;
     }
 
+
+    .dashRecHost{
+      margin-top:14px;
+    }
+
+    .dashRecBanner{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+      padding:14px 16px;
+      border-radius:18px;
+      border:1px solid rgba(34,197,94,.24);
+      background: rgba(34,197,94,.10);
+      box-shadow: 0 14px 36px rgba(0,0,0,.24);
+    }
+
+    .dashRecText{
+      display:grid;
+      gap:4px;
+      min-width:0;
+    }
+
+    .dashRecTitle{
+      font-size:14px;
+      font-weight:900;
+      color: rgba(255,255,255,.96);
+    }
+
+    .dashRecSub{
+      font-size:13px;
+      color: rgba(255,255,255,.76);
+      line-height:1.35;
+    }
+
+    .dashRecBtn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:40px;
+      padding:0 14px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.28);
+      color:#fff;
+      font-weight:800;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+
+    .dashRecBtn:hover{
+      background: rgba(255,255,255,.08);
+      border-color: rgba(255,255,255,.20);
+    }
     .topbar{
       display:flex;
       align-items:center;
@@ -2220,7 +2275,7 @@ border-radius:10px;
 
       <div class="actions">
         <button id="qdOpenSeerrSearch" class="btn primary" type="button">🔎 Search / Request</button>
-        <a class="btn primary" href="/discover">Discover</a>
+          <a class="btn primary" href="/discover">Discover</a>
         <button class="btn statusPill" id="statusPill" type="button" title="Status">
           <span class="statusDot" id="statusDot"></span>
           <span class="statusLabel" id="statusText">Ready</span>
@@ -2235,16 +2290,7 @@ border-radius:10px;
           </button>
 
           <div class="userDropdown" id="userDropdown" role="menu">
-            <div class="userDropdownHead">
-              <div class="userDropdownTitle">{{ username }}</div>
-              <div class="userDropdownSub">QueueDeck user</div>
-            </div>
-
-            <a href="/settings" role="menuitem">Preferences</a>
-            <a href="/stats" role="menuitem">Statistics</a>
-            <a href="/hidden" role="menuitem">Hidden Items</a>
-            {% if me and me.get("is_admin") %}<a href="/admin/settings">Admin Settings</a>{% endif %}
-            <a class="danger" href="/logout" role="menuitem">Log out</a>
+            {% include "_user_menu.html" %}
           </div>
         </div>
       </div>
@@ -2261,6 +2307,7 @@ border-radius:10px;
 
     </div>
 
+    <div id="dashRecHost" class="dashRecHost"></div>
 
     <div class="approvalStrip" id="approvalStrip">
       <div class="approvalStripHead">
@@ -4240,6 +4287,8 @@ setCount("#chip-rem", nREM);
     }
 
     loadAll();
+    loadDashboardRecommendationBanner();
+
     // qdBootstrapRetry temporarily disabled for dashboard performance testing
     // setTimeout(qdBootstrapRetry, 1200);
     // window.addEventListener("pageshow", () => {
@@ -5006,6 +5055,63 @@ document.addEventListener("DOMContentLoaded", () => {
 
   <script>
     (function(){
+
+    async function loadDashboardRecommendationBanner(){
+      try{
+        const r = await fetch("/api/watchlist/notifications", {
+          credentials: "same-origin",
+          cache: "no-store",
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || !j.ok || !j.count){
+          return;
+        }
+
+        const host = document.getElementById("dashRecHost");
+        if (!host) return;
+
+        const first = (j.items || [])[0] || {};
+        const title = j.count === 1 ? "New recommendation" : `${j.count} new recommendations`;
+
+        let sub = "";
+        if (first.from_username && first.title){
+          sub = `${first.from_username} recommended ${first.title}`;
+        } else if (first.from_username){
+          sub = `From ${first.from_username}`;
+        } else if (first.title){
+          sub = first.title;
+        }
+
+        host.innerHTML = `
+          <div class="dashRecBanner">
+            <div class="dashRecText">
+              <div class="dashRecTitle">${title}</div>
+              <div class="dashRecSub">${sub ? sub : "Open your recommendations."}</div>
+            </div>
+            <button class="dashRecBtn" type="button" id="dashRecOpenBtn">View</button>
+          </div>
+        `;
+
+        const btn = document.getElementById("dashRecOpenBtn");
+        if (btn){
+          btn.addEventListener("click", async () => {
+            try{
+              await fetch("/api/watchlist/notifications/mark-seen", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json" },
+              });
+            }catch(e){
+              console.warn("mark-seen failed", e);
+            }
+            window.location.href = "/watchlist?tab=recommended";
+          });
+        }
+      }catch(e){
+        console.warn("dashboard recommendation banner failed", e);
+      }
+    }
+
       const menu = document.getElementById("userMenu");
       const btn = document.getElementById("userMenuBtn");
       const dropdown = document.getElementById("userDropdown");
@@ -5280,6 +5386,78 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     })();
   </script>
+
+<script>
+(function(){
+  async function qdLoadRecBanner(){
+    try{
+      const host = document.getElementById("dashRecHost");
+      if (!host) return;
+
+      const r = await fetch("/api/watchlist/notifications", {
+        credentials: "same-origin",
+        cache: "no-store"
+      });
+
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok || !j.count || !Array.isArray(j.items) || !j.items.length){
+        host.innerHTML = "";
+        return;
+      }
+
+      const first = j.items[0] || {};
+      const title = j.count === 1 ? "New recommendation" : `${j.count} new recommendations`;
+
+      let sub = "Open your recommendations.";
+      if (first.from_username && first.title){
+        sub = `${first.from_username} recommended ${first.title}`;
+      } else if (first.from_username){
+        sub = `From ${first.from_username}`;
+      } else if (first.title){
+        sub = first.title;
+      }
+
+      host.innerHTML = `
+        <div class="dashRecBanner">
+          <div class="dashRecText">
+            <div class="dashRecTitle"></div>
+            <div class="dashRecSub"></div>
+          </div>
+          <button class="dashRecBtn" type="button">View</button>
+        </div>
+      `;
+
+      host.querySelector(".dashRecTitle").textContent = title;
+      host.querySelector(".dashRecSub").textContent = sub;
+
+      const btn = host.querySelector(".dashRecBtn");
+      if (btn){
+        btn.addEventListener("click", async () => {
+          try{
+            await fetch("/api/watchlist/notifications/mark-seen", {
+              method: "POST",
+              credentials: "same-origin",
+              headers: { "Content-Type": "application/json" }
+            });
+          }catch(e){}
+          window.location.href = "/watchlist?tab=recommended";
+        });
+      }
+    }catch(e){
+      console.warn("qd rec banner failed", e);
+    }
+  }
+
+  if (document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", qdLoadRecBanner);
+  } else {
+    qdLoadRecBanner();
+  }
+
+  window.qdLoadRecBanner = qdLoadRecBanner;
+})();
+</script>
+
 </body>
 
 

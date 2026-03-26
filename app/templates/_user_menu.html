@@ -1,0 +1,40 @@
+{% set path = request.path %}
+
+<div class="userDropdownHead">
+  <div class="userDropdownTitle">{{ me.username if me and me.username else username }}</div>
+  <div class="userDropdownSub">
+    {% if me and me.get("is_admin") %}QueueDeck Admin{% else %}QueueDeck User{% endif %}
+  </div>
+</div>
+
+{% if path != "/" %}
+<a href="/">Dashboard</a>
+{% endif %}
+
+{% if path != "/discover" %}
+<a href="/discover">Discover</a>
+{% endif %}
+
+{% if path != "/watchlist" %}
+<a href="/watchlist">Watchlist</a>
+{% endif %}
+
+{% if path != "/settings" %}
+<a href="/settings">Preferences</a>
+{% endif %}
+
+{% if path != "/hidden" %}
+<a href="/hidden">Hidden Items</a>
+{% endif %}
+
+{% if path != "/stats" %}
+<a href="/stats">Statistics</a>
+{% endif %}
+
+{% if me and me.get("is_admin") %}
+  {% if path != "/admin/settings" %}
+  <a href="/admin/settings">Admin Settings</a>
+  {% endif %}
+{% endif %}
+
+<a href="/logout" role="menuitem" class="danger">Log Out</a>

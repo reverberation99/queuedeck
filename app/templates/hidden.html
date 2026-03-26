@@ -529,16 +529,7 @@ filter: drop-shadow(0 4px 10px rgba(0,0,0,.4));
           </button>
 
           <div class="userDropdown" id="userDropdown" role="menu">
-            <div class="userDropdownHead">
-              <div class="userDropdownTitle">{{ username }}</div>
-              <div class="userDropdownSub">QueueDeck user</div>
-            </div>
-            <a href="/">Dashboard</a>
-              <a href="/settings">Preferences</a>
-              <a href="/discover">Discover</a>
-            <a href="/stats">Statistics</a>
-            {% if me and me.get("is_admin") %}<a href="/admin/settings">Admin Settings</a>{% endif %}
-            <a class="danger" href="/logout">Log out</a>
+            {% include "_user_menu.html" %}
           </div>
         </div>
       </div>

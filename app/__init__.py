@@ -19,6 +19,7 @@ BLUEPRINT_MODULES = [
     "app.routes_admin",
     "app.routes_discover",
     "app.routes_stats",
+    "app.routes_watchlist",
     "app.blueprints.auth",
     "app.blueprints.admin",
 ]

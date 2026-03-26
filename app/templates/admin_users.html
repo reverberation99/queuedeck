@@ -699,17 +699,7 @@
           </button>
 
           <div class="userDropdown" id="userDropdown" role="menu">
-            <div class="userDropdownHead">
-              <div class="userDropdownTitle">{{ username }}</div>
-              <div class="userDropdownSub">QueueDeck admin</div>
-            </div>
-            <a href="/">Dashboard</a>
-              <a href="/discover">Discover</a>
-            <a href="/stats">Statistics</a>
-            <a href="/hidden">Hidden Items</a>
-            {% if me and me.get("is_admin") %}<a href="/admin/settings">Admin Settings</a>{% endif %}
-            {% if me and me.get("is_admin") %}<a href="/admin/users">User Management</a>{% endif %}
-            <a class="danger" href="/logout">Log out</a>
+            {% include "_user_menu.html" %}
           </div>
         </div>
       </div>

@@ -39,6 +39,22 @@ CREATE TABLE IF NOT EXISTS user_admin_settings (
     PRIMARY KEY (user_id, key),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS user_media_feedback (
+    user_id INTEGER NOT NULL,
+    media_kind TEXT NOT NULL,
+    media_key TEXT NOT NULL,
+    source TEXT NOT NULL DEFAULT '',
+    title TEXT NOT NULL DEFAULT '',
+    poster_url TEXT NOT NULL DEFAULT '',
+    rating INTEGER,
+    recommended INTEGER NOT NULL DEFAULT 0,
+    note TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, media_kind, media_key),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
 """
 
 

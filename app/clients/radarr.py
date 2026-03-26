@@ -92,7 +92,14 @@ def get_upcoming_missing(days: int = 90, limit: int = 30):
             "title": m.get("title"),
             "year": m.get("year"),
             "tmdb_id": m.get("tmdbId"),
+            "radarr_id": m.get("id"),
+            "status": m.get("status"),
+            "has_file": bool(m.get("hasFile")),
+            "monitored": bool(m.get("monitored")),
             "release_date": d.isoformat(),
+            "digitalRelease": m.get("digitalRelease"),
+            "physicalRelease": m.get("physicalRelease"),
+            "inCinemas": m.get("inCinemas"),
             "_released_missing": bool(d <= now),
         }
 
@@ -151,6 +158,145 @@ def _get_all_movies_cached(force: bool = False):
     _RADARR_REQ_CACHE["ts"] = now
     _RADARR_REQ_CACHE["rows"] = rows
     return rows
+
+
+
+_TMDB_RELEASE_CACHE: dict[str, object] = {"rows": {}, "ts": {}}
+_TMDB_RELEASE_TTL_SEC = 43200  # 12 hours
+
+
+def _tmdb_headers() -> dict:
+    try:
+        from app.routes_discover import _tmdb_auth_headers
+        return _tmdb_auth_headers()
+    except Exception:
+        return {}
+
+
+def _tmdb_params(extra: dict | None = None) -> dict:
+    try:
+        from app.routes_discover import _tmdb_auth_params
+        params = dict(_tmdb_auth_params() or {})
+    except Exception:
+        params = {}
+    if extra:
+        params.update(extra)
+    return params
+
+
+def _pick_earliest_dt(values):
+    vals = [v for v in (values or []) if v]
+    if not vals:
+        return ""
+    vals.sort()
+    return vals[0]
+
+
+def _tmdb_release_dates_for_movie(tmdb_id: str, region: str = "US") -> dict:
+    tmdb_id = str(tmdb_id or "").strip()
+    region = str(region or "US").strip().upper() or "US"
+    if not tmdb_id:
+        return {}
+
+    now_ts = time.time()
+    rows_cache = _TMDB_RELEASE_CACHE.setdefault("rows", {})
+    ts_cache = _TMDB_RELEASE_CACHE.setdefault("ts", {})
+
+    cached = rows_cache.get(tmdb_id)
+    cached_ts = float(ts_cache.get(tmdb_id) or 0.0)
+    if cached and (now_ts - cached_ts) < _TMDB_RELEASE_TTL_SEC:
+        return dict(cached)
+
+    headers = _tmdb_headers()
+    params = _tmdb_params()
+    if not headers and not params:
+        rows_cache[tmdb_id] = {}
+        ts_cache[tmdb_id] = now_ts
+        return {}
+
+    try:
+        r = requests.get(
+            f"https://api.themoviedb.org/3/movie/{tmdb_id}/release_dates",
+            headers=headers,
+            params=params,
+            timeout=20,
+        )
+        r.raise_for_status()
+        data = r.json() or {}
+    except Exception as e:
+        print(f"[watchlist-tmdb] release_dates failed tmdb_id={tmdb_id!r} err={e}", flush=True)
+        rows_cache[tmdb_id] = {}
+        ts_cache[tmdb_id] = now_ts
+        return {}
+
+    results = data.get("results") or []
+    chosen = None
+
+    for row in results:
+        if str(row.get("iso_3166_1") or "").upper() == region:
+            chosen = row
+            break
+
+    if chosen is None:
+        for row in results:
+            if str(row.get("iso_3166_1") or "").upper() == "US":
+                chosen = row
+                break
+
+    if chosen is None and results:
+        chosen = results[0]
+
+    out = {
+        "tmdb_premiere_release": "",
+        "tmdb_theatrical_release": "",
+        "tmdb_digital_release": "",
+        "tmdb_physical_release": "",
+        "tmdb_tv_release": "",
+    }
+
+    release_dates = (chosen or {}).get("release_dates") or []
+    grouped = {
+        1: [],  # Premiere
+        2: [],  # Theatrical (limited)
+        3: [],  # Theatrical
+        4: [],  # Digital
+        5: [],  # Physical
+        6: [],  # TV
+    }
+
+    for item in release_dates:
+        try:
+            typ = int(item.get("type") or 0)
+        except Exception:
+            typ = 0
+        dt = str(item.get("release_date") or "").strip()
+        if typ in grouped and dt:
+            grouped[typ].append(dt)
+
+    theatrical_vals = list(grouped[2]) + list(grouped[3])
+
+    out["tmdb_premiere_release"] = _pick_earliest_dt(grouped[1])
+    out["tmdb_theatrical_release"] = _pick_earliest_dt(theatrical_vals)
+    out["tmdb_digital_release"] = _pick_earliest_dt(grouped[4])
+    out["tmdb_physical_release"] = _pick_earliest_dt(grouped[5])
+    out["tmdb_tv_release"] = _pick_earliest_dt(grouped[6])
+
+    rows_cache[tmdb_id] = dict(out)
+    ts_cache[tmdb_id] = now_ts
+    return out
+
+
+def enrich_movies_with_tmdb_release_dates(items: list[dict], region: str = "US") -> list[dict]:
+    out = []
+    for raw in (items or []):
+        row = dict(raw or {})
+        tmdb_id = str(row.get("tmdb_id") or row.get("tmdbId") or "").strip()
+        if tmdb_id:
+            extra = _tmdb_release_dates_for_movie(tmdb_id, region=region)
+            if extra:
+                row.update(extra)
+        out.append(row)
+    return out
 
 
 def find_requested_movies_batch(items: list[dict]) -> dict[str, dict]:

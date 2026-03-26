@@ -73,7 +73,7 @@ def _fetch_recently_played(base: str, api_key: str, user_id: str, limit: int = 2
         "SortOrder": "Descending",
         "Limit": str(limit),
         "Filters": "IsPlayed",
-        "IncludeItemTypes": "Movie,Series",
+        "IncludeItemTypes": "Movie,Series,Episode",
         "Fields": "Genres,Studios,ProductionYear,Tags,ProviderIds,Path",
         "EnableTotalRecordCount": "false",
         "EnableImages": "false",
