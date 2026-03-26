@@ -2838,12 +2838,8 @@ function airsTonight(dateStr){
       }[ch] || ch));
 
       const rows = Array.isArray(items) ? items : [];
-      const payloadKey = JSON.stringify(rows);
-
-      if (payloadKey === qdWatchingLastPayload){
-        return;
-      }
-      qdWatchingLastPayload = payloadKey;
+      // Always re-render (state like pause/play may not change payload shape)
+      qdWatchingLastPayload = JSON.stringify(rows);
 
       if (!rows.length){
         strip.classList.remove("show");
@@ -4287,7 +4283,6 @@ setCount("#chip-rem", nREM);
     }
 
     loadAll();
-    loadDashboardRecommendationBanner();
 
     // qdBootstrapRetry temporarily disabled for dashboard performance testing
     // setTimeout(qdBootstrapRetry, 1200);
@@ -5110,6 +5105,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }catch(e){
         console.warn("dashboard recommendation banner failed", e);
       }
+    }
+
+
+    if (typeof loadDashboardRecommendationBanner === "function") {
+      loadDashboardRecommendationBanner();
     }
 
       const menu = document.getElementById("userMenu");

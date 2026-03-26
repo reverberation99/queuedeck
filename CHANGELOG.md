@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.3.1 - 2026-03-26
+
+**Bug Fixes for 1.3**
+
+- Fixed Posters for Seen
+- Fixed non-sonarr and radarr users watch history
+- Fixed auto load issue with dashboard
+- Added automatic recommendation table creation for upgrades
+- Unified user dropdown menu across all major pages
+- Improved watchlist help tooltip for mixed data-source behavior
+
+
+
 ## v1.3.0 - 2026-03-26
 
 **Recommendations and personalized watchlist**

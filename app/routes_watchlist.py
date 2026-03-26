@@ -104,6 +104,33 @@ def _jf_headers(api_key: str) -> dict[str, str]:
     }
 
 
+def _safe_sonarr_calendar(start_date: str, end_date: str) -> list[dict]:
+    base = _cfg("sonarr_url", "SONARR_URL", "").rstrip("/")
+    api_key = _cfg("sonarr_api_key", "SONARR_API_KEY", "").strip()
+
+    if not base or not api_key:
+        return []
+
+    try:
+        r = requests.get(
+            f"{base}/api/v3/calendar",
+            headers={"X-Api-Key": api_key},
+            params={
+                "start": start_date,
+                "end": end_date,
+                "includeSeries": "true",
+                "includeEpisodeFile": "true",
+            },
+            timeout=25,
+        )
+        r.raise_for_status()
+        data = r.json() or []
+        return data if isinstance(data, list) else []
+    except Exception as e:
+        print(f"[watchlist-tv] sonarr calendar failed: {e}", flush=True)
+        return []
+
+
 def _fetch_recent_tv_titles(limit: int = 250) -> set[str]:
     base = _cfg("jellyfin_url", "JELLYFIN_URL", "").rstrip("/")
     api_key = _cfg("jellyfin_api_key", "JELLYFIN_API_KEY", "")
@@ -188,6 +215,62 @@ def _recommended_open_url(media_key: str, poster_url: str = "") -> str:
         return ""
 
     return f"{base}/web/#/details?id={item_id}"
+
+
+def _ensure_recommendation_tables():
+    db = get_db()
+
+    db.execute("""
+    CREATE TABLE IF NOT EXISTS user_direct_recommendations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        from_user_id INTEGER NOT NULL,
+        to_user_id INTEGER NOT NULL,
+        media_kind TEXT NOT NULL,
+        media_key TEXT NOT NULL,
+        source TEXT NOT NULL DEFAULT '',
+        title TEXT NOT NULL DEFAULT '',
+        poster_url TEXT NOT NULL DEFAULT '',
+        note TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        seen INTEGER NOT NULL DEFAULT 0,
+        UNIQUE(from_user_id, to_user_id, media_kind, media_key)
+    )
+    """)
+
+    cols = [r[1] for r in db.execute("PRAGMA table_info(user_direct_recommendations)").fetchall()]
+    if "seen" not in cols:
+        db.execute("ALTER TABLE user_direct_recommendations ADD COLUMN seen INTEGER NOT NULL DEFAULT 0")
+
+    db.execute("""
+    CREATE TABLE IF NOT EXISTS user_recommendation_state (
+        user_id INTEGER NOT NULL,
+        media_kind TEXT NOT NULL,
+        media_key TEXT NOT NULL,
+        state TEXT NOT NULL DEFAULT '',
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        PRIMARY KEY (user_id, media_kind, media_key)
+    )
+    """)
+
+    db.execute("""
+    CREATE TABLE IF NOT EXISTS user_media_feedback (
+        user_id INTEGER NOT NULL,
+        media_kind TEXT NOT NULL,
+        media_key TEXT NOT NULL,
+        source TEXT NOT NULL DEFAULT '',
+        title TEXT NOT NULL DEFAULT '',
+        poster_url TEXT NOT NULL DEFAULT '',
+        rating INTEGER,
+        recommended INTEGER NOT NULL DEFAULT 0,
+        note TEXT NOT NULL DEFAULT '',
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        PRIMARY KEY (user_id, media_kind, media_key)
+    )
+    """)
+
+    db.commit()
+
 
 def _seerr_watchlist_payload() -> dict:
     try:
@@ -323,6 +406,8 @@ def _feedback_row_to_dict(row):
 @bp.get("/api/watchlist/feedback")
 @login_required
 def api_watchlist_feedback_get():
+    _ensure_recommendation_tables()
+    _ensure_recommendation_tables()
     uid = _feedback_user_id()
     media_kind = _normalize_media_kind(request.args.get("media_kind"))
     media_key = _normalize_media_key(request.args.get("media_key"))
@@ -348,6 +433,8 @@ def api_watchlist_feedback_get():
 @bp.post("/api/watchlist/feedback")
 @login_required
 def api_watchlist_feedback_upsert():
+    _ensure_recommendation_tables()
+    _ensure_recommendation_tables()
     uid = _feedback_user_id()
     if uid <= 0:
         return jsonify(ok=False, error="not_logged_in"), 401
@@ -412,6 +499,8 @@ def api_watchlist_feedback_upsert():
 @bp.get("/api/watchlist/recommendations")
 @login_required
 def api_watchlist_recommendations():
+    _ensure_recommendation_tables()
+    _ensure_recommendation_tables()
     rows = get_db().execute(
         """
         SELECT
@@ -484,6 +573,8 @@ def _lookup_user_by_username(username: str):
 @bp.post("/api/watchlist/recommend/direct")
 @login_required
 def api_watchlist_recommend_direct():
+    _ensure_recommendation_tables()
+    _ensure_recommendation_tables()
     uid = _feedback_user_id()
     if uid <= 0:
         return jsonify(ok=False, error="not_logged_in"), 401
@@ -533,6 +624,8 @@ def api_watchlist_recommend_direct():
 @bp.post("/api/watchlist/recommendation_state")
 @login_required
 def api_watchlist_recommendation_state():
+    _ensure_recommendation_tables()
+    _ensure_recommendation_tables()
     uid = _feedback_user_id()
     if uid <= 0:
         return jsonify(ok=False, error="not_logged_in"), 401
@@ -579,6 +672,8 @@ def api_watchlist_recommendation_state():
 @bp.get("/api/watchlist/recommended_to_you")
 @login_required
 def api_watchlist_recommended_to_you():
+    _ensure_recommendation_tables()
+    _ensure_recommendation_tables()
     uid = _feedback_user_id()
     if uid <= 0:
         return jsonify(ok=False, error="not_logged_in"), 401
@@ -681,6 +776,8 @@ def api_watchlist_recommended_to_you():
 @bp.get("/api/watchlist/recommendations_sent")
 @login_required
 def api_watchlist_recommendations_sent():
+    _ensure_recommendation_tables()
+    _ensure_recommendation_tables()
     uid = _feedback_user_id()
     if uid <= 0:
         return jsonify(ok=False, error="not_logged_in"), 401
@@ -794,8 +891,10 @@ def api_watchlist():
 
         # ================= TV =================
         if sonarr_ok:
-            cal = get_calendar(now.date().isoformat(),
-                               (now + timedelta(days=365)).date().isoformat()) or []
+            cal = _safe_sonarr_calendar(
+                now.date().isoformat(),
+                (now + timedelta(days=365)).date().isoformat()
+            ) or []
 
             slug_map = get_series_slug_map(force=False) or {}
             base = _cfg("sonarr_url", "SONARR_URL").rstrip("/")
@@ -934,7 +1033,7 @@ def api_watchlist():
 
                         seen["movies"].append({
                             "title": row.get("Name"),
-                            "poster_url": f"{jf_base}/Items/{row.get('Id')}/Images/Primary",
+                            "poster_url": f"/img/jellyfin/primary/{row.get('Id')}",
                             "date": played,
                             "media_kind": "movie",
                             "media_key": media_key,
@@ -953,7 +1052,7 @@ def api_watchlist():
                         if not cur:
                             cur = {
                                 "title": series_name,
-                                "poster_url": f"{jf_base}/Items/{row.get('SeriesId') or row.get('Id')}/Images/Primary",
+                                "poster_url": f"/img/jellyfin/series/{row.get('SeriesId') or row.get('Id')}",
                                 "date": played,
                                 "episode_count": 0,
                                 "media_kind": "series",
@@ -1014,6 +1113,8 @@ def api_watchlist():
 @bp.get("/api/watchlist/notifications")
 @login_required
 def api_watchlist_notifications():
+    _ensure_recommendation_tables()
+    _ensure_recommendation_tables()
     uid = _feedback_user_id()
     if uid <= 0:
         return jsonify(ok=False, error="not_logged_in"), 401
@@ -1060,6 +1161,8 @@ def api_watchlist_notifications():
 @bp.post("/api/watchlist/notifications/mark-seen")
 @login_required
 def api_watchlist_notifications_mark_seen():
+    _ensure_recommendation_tables()
+    _ensure_recommendation_tables()
     uid = _feedback_user_id()
     if uid <= 0:
         return jsonify(ok=False, error="not_logged_in"), 401
