@@ -131,6 +131,51 @@ def _safe_sonarr_calendar(start_date: str, end_date: str) -> list[dict]:
         return []
 
 
+def _seen_range_cutoff(seen_range: str, now: datetime | None = None):
+    now = now or datetime.now(timezone.utc)
+    sr = str(seen_range or "3m").strip().lower()
+
+    if sr in {"all", "alltime", "year+", "plus"}:
+        return None
+
+    days_map = {
+        "1m": 31,
+        "3m": 92,
+        "6m": 183,
+        "1y": 366,
+    }
+    days = days_map.get(sr, 92)
+    return now - timedelta(days=days)
+
+
+def _seen_fetch_limit(seen_range: str) -> int:
+    sr = str(seen_range or "3m").strip().lower()
+    return {
+        "1m": 250,
+        "3m": 600,
+        "6m": 1200,
+        "1y": 2000,
+        "all": 3000,
+        "alltime": 3000,
+        "year+": 3000,
+        "plus": 3000,
+    }.get(sr, 600)
+
+
+def _seen_display_cap(seen_range: str) -> int:
+    sr = str(seen_range or "3m").strip().lower()
+    return {
+        "1m": 60,
+        "3m": 120,
+        "6m": 180,
+        "1y": 250,
+        "all": 350,
+        "alltime": 350,
+        "year+": 350,
+        "plus": 350,
+    }.get(sr, 120)
+
+
 def _fetch_recent_tv_titles(limit: int = 250) -> set[str]:
     base = _cfg("jellyfin_url", "JELLYFIN_URL", "").rstrip("/")
     api_key = _cfg("jellyfin_api_key", "JELLYFIN_API_KEY", "")
@@ -212,9 +257,78 @@ def _recommended_open_url(media_key: str, poster_url: str = "") -> str:
                 item_id = ""
 
     if not item_id:
-        return ""
+        # try TMDB fallback
+        return _tmdb_overview(media_key)
 
     return f"{base}/web/#/details?id={item_id}"
+
+
+
+
+def _jellyfin_series_tmdb_id(series_id: str) -> str:
+    series_id = str(series_id or "").strip()
+    if not series_id:
+        return ""
+
+    base = _cfg("jellyfin_url", "JELLYFIN_URL", "").rstrip("/")
+    api_key = _cfg("jellyfin_api_key", "JELLYFIN_API_KEY", "").strip()
+    if not base or not api_key:
+        return ""
+
+    try:
+        r = requests.get(
+            f"{base}/Items/{series_id}",
+            headers=_jf_headers(api_key),
+            timeout=20,
+        )
+        r.raise_for_status()
+        data = r.json() or {}
+        prov = data.get("ProviderIds") or {}
+        return str(prov.get("Tmdb") or "").strip()
+    except Exception:
+        return ""
+def _recommended_overview(media_key: str) -> str:
+    media_key = str(media_key or "").strip()
+    item_id = ""
+
+    if media_key.startswith("jellyfin_movie:"):
+        item_id = media_key.split(":", 1)[1].strip()
+    elif media_key.startswith("jellyfin_series:"):
+        item_id = media_key.split(":", 1)[1].strip()
+
+    if not item_id:
+        return _tmdb_overview(media_key)
+
+    base = _cfg("jellyfin_url", "JELLYFIN_URL", "").rstrip("/")
+    api_key = _cfg("jellyfin_api_key", "JELLYFIN_API_KEY", "").strip()
+    username = _cfg("jellyfin_user", "JELLYFIN_USER", "").strip()
+    if not base or not api_key:
+        return ""
+
+    try:
+        user_id = _get_user_id(base, api_key, username) if username else ""
+        url = f"{base}/Users/{user_id}/Items/{item_id}" if user_id else f"{base}/Items/{item_id}"
+
+        r = requests.get(
+            url,
+            headers=_jf_headers(api_key),
+            timeout=20,
+        )
+        r.raise_for_status()
+        data = r.json() or {}
+
+        overview = str(data.get("Overview") or "").strip()
+        if overview:
+            return overview
+
+        prov = data.get("ProviderIds") or {}
+        tmdb_id = str(prov.get("Tmdb") or "").strip()
+        if tmdb_id:
+            return _tmdb_overview(f"tmdb:{tmdb_id}")
+
+        return ""
+    except Exception:
+        return ""
 
 
 def _ensure_recommendation_tables():
@@ -764,6 +878,7 @@ def api_watchlist_recommended_to_you():
             "title": str(row["title"] or ""),
             "poster_url": str(row["poster_url"] or ""),
             "open_url": _recommended_open_url(str(row["media_key"] or ""), str(row["poster_url"] or "")),
+            "overview": str(row.get("overview") or ""),
             "recommend_count": int(row["recommend_count"] or 0),
             "avg_rating": (float(row["avg_rating"]) if row["avg_rating"] is not None else None),
             "updated_at": str(row["updated_at"] or ""),
@@ -879,6 +994,10 @@ def watchlist_page():
 def api_watchlist():
     try:
         now = datetime.now(timezone.utc)
+        seen_range = str(request.args.get("seen_range") or "3m").strip().lower()
+        seen_cutoff = _seen_range_cutoff(seen_range, now)
+        seen_fetch_limit = _seen_fetch_limit(seen_range)
+        seen_display_cap = _seen_display_cap(seen_range)
 
         sonarr_ok = bool(_cfg("sonarr_url", "SONARR_URL") and _cfg("sonarr_api_key", "SONARR_API_KEY"))
         radarr_ok = bool(_cfg("radarr_url", "RADARR_URL") and _cfg("radarr_api_key", "RADARR_API_KEY"))
@@ -946,66 +1065,69 @@ def api_watchlist():
 
         # ================= MOVIES =================
         if radarr_ok and radarr_user_ok:
-            raw = get_upcoming_missing(days=365, limit=500) or []
-            raw = enrich_movies_with_tmdb_release_dates(raw, region="US")
-            base = _cfg("radarr_url", "RADARR_URL").rstrip("/")
+            try:
+                raw = get_upcoming_missing(days=365, limit=500) or []
+                raw = enrich_movies_with_tmdb_release_dates(raw, region="US")
+                base = _cfg("radarr_url", "RADARR_URL").rstrip("/")
 
-            for m in raw:
-                radarr_digital = _parse_dt(m.get("digitalRelease"))
-                radarr_theater = _parse_dt(m.get("inCinemas"))
+                for m in raw:
+                    radarr_digital = _parse_dt(m.get("digitalRelease"))
+                    radarr_theater = _parse_dt(m.get("inCinemas"))
 
-                tmdb_digital = _parse_dt(m.get("tmdb_digital_release"))
-                tmdb_theater = _parse_dt(m.get("tmdb_theatrical_release"))
-                tmdb_physical = _parse_dt(m.get("tmdb_physical_release"))
+                    tmdb_digital = _parse_dt(m.get("tmdb_digital_release"))
+                    tmdb_theater = _parse_dt(m.get("tmdb_theatrical_release"))
+                    tmdb_physical = _parse_dt(m.get("tmdb_physical_release"))
 
-                digital = tmdb_digital or radarr_digital
-                theater = tmdb_theater or radarr_theater
-                physical = tmdb_physical
+                    digital = tmdb_digital or radarr_digital
+                    theater = tmdb_theater or radarr_theater
+                    physical = tmdb_physical
 
-                # REMOVE if already digitally released
-                if digital and digital <= now:
-                    continue
+                    # REMOVE if already digitally released
+                    if digital and digital <= now:
+                        continue
 
-                # REMOVE useless items (old theater, no digital, no physical)
-                if (theater and theater <= now) and not digital and not physical:
-                    continue
+                    # REMOVE useless items (old theater, no digital, no physical)
+                    if (theater and theater <= now) and not digital and not physical:
+                        continue
 
-                # determine state (future-focused)
-                if digital and digital > now:
-                    state = "Digital Soon"
-                elif theater and theater > now:
-                    state = "In Theaters"
-                else:
-                    state = "Announced"
+                    # determine state (future-focused)
+                    if digital and digital > now:
+                        state = "Digital Soon"
+                    elif theater and theater > now:
+                        state = "In Theaters"
+                    else:
+                        state = "Announced"
 
-                # choose best upcoming date
-                release_dt = digital or theater or physical
+                    # choose best upcoming date
+                    release_dt = digital or theater or physical
 
-                movies.append({
-                    "title": m.get("title"),
-                    "year": m.get("year"),
-                    "tmdb_id": m.get("tmdb_id"),
-                    "poster_url": f"/img/radarr/tmdb/{m.get('tmdb_id')}.jpg",
-                    "status": state,
-                    "release_date": release_dt.isoformat() if release_dt else "",
-                    "digital_release": digital.isoformat() if digital else "",
-                    "in_cinemas": theater.isoformat() if theater else "",
-                    "physical_release": physical.isoformat() if physical else "",
-                    "radarr_url": f"{base}/movie/{m.get('tmdb_id')}"
-                })
-
-                if release_dt and release_dt >= now:
-                    calendar_items.append({
-                        "kind": "movie",
-                        "source": "radarr",
+                    movies.append({
                         "title": m.get("title"),
-                        "subtitle": state,
-                        "date": release_dt.isoformat(),
+                        "year": m.get("year"),
+                        "tmdb_id": m.get("tmdb_id"),
                         "poster_url": f"/img/radarr/tmdb/{m.get('tmdb_id')}.jpg",
-                        "open_url": f"{base}/movie/{m.get('tmdb_id')}"
+                        "status": state,
+                        "release_date": release_dt.isoformat() if release_dt else "",
+                        "digital_release": digital.isoformat() if digital else "",
+                        "in_cinemas": theater.isoformat() if theater else "",
+                        "physical_release": physical.isoformat() if physical else "",
+                        "radarr_url": f"{base}/movie/{m.get('tmdb_id')}"
                     })
 
-            movies.sort(key=lambda x: _parse_dt(x["release_date"]) or datetime.max.replace(tzinfo=timezone.utc))
+                    if release_dt and release_dt >= now:
+                        calendar_items.append({
+                            "kind": "movie",
+                            "source": "radarr",
+                            "title": m.get("title"),
+                            "subtitle": state,
+                            "date": release_dt.isoformat(),
+                            "poster_url": f"/img/radarr/tmdb/{m.get('tmdb_id')}.jpg",
+                            "open_url": f"{base}/movie/{m.get('tmdb_id')}"
+                        })
+
+                movies.sort(key=lambda x: _parse_dt(x["release_date"]) or datetime.max.replace(tzinfo=timezone.utc))
+            except Exception as e:
+                print(f"[watchlist-movies] radarr load failed: {e}", flush=True)
 
         
         # ================= SEEN =================
@@ -1018,13 +1140,20 @@ def api_watchlist():
 
             if jf_base and jf_key and jf_user:
                 user_id = _get_user_id(jf_base, jf_key, jf_user)
-                rows = _fetch_recently_played(jf_base, jf_key, user_id, limit=250)
+                rows = _fetch_recently_played(jf_base, jf_key, user_id, limit=seen_fetch_limit)
 
                 series_map = {}
 
                 for row in rows:
                     typ = str(row.get("Type") or "").strip().lower()
                     played = row.get("DatePlayed")
+                    played_dt = _parse_dt(played)
+
+                    if seen_cutoff is not None:
+                        # Only filter when Jellyfin actually gives us a valid played date.
+                        # Missing DatePlayed should not wipe out the Seen list.
+                        if played_dt and played_dt < seen_cutoff:
+                            continue
 
                     if typ == "movie":
                         provider_ids = row.get("ProviderIds") or {}
@@ -1056,7 +1185,11 @@ def api_watchlist():
                                 "date": played,
                                 "episode_count": 0,
                                 "media_kind": "series",
-                                "media_key": f"jellyfin_series:{row.get('SeriesId') or row.get('Id')}",
+                                "media_key": (
+                                    f"tmdb:{_jellyfin_series_tmdb_id(row.get('SeriesId') or row.get('Id'))}"
+                                    if _jellyfin_series_tmdb_id(row.get('SeriesId') or row.get('Id'))
+                                    else f"jellyfin_series:{row.get('SeriesId') or row.get('Id')}"
+                                ),
                                 "source": "jellyfin",
                             }
                             series_map[key] = cur
@@ -1079,8 +1212,8 @@ def api_watchlist():
                     reverse=True
                 )
 
-                seen["movies"] = seen["movies"][:60]
-                seen["series"] = seen["series"][:60]
+                seen["movies"] = seen["movies"][:seen_display_cap]
+                seen["series"] = seen["series"][:seen_display_cap]
 
         except Exception as e:
             print(f"[seen] error: {e}", flush=True)
@@ -1108,6 +1241,81 @@ def api_watchlist():
 
     except Exception as e:
         return jsonify(ok=False, error=str(e), tv=[], movies=[], calendar=[], seen={"movies":[],"series":[]}), 500
+
+
+@bp.get("/api/watchlist/community-ratings")
+@login_required
+def api_watchlist_community_ratings():
+    _ensure_recommendation_tables()
+
+    db = get_db()
+
+    rows = db.execute(
+        """
+        SELECT
+            f.media_kind,
+            f.media_key,
+            MAX(f.source) AS source,
+            MAX(f.title) AS title,
+            MAX(f.poster_url) AS poster_url,
+            ROUND(AVG(CAST(f.rating AS REAL)), 1) AS avg_rating,
+            COUNT(*) AS rating_count,
+            MAX(f.updated_at) AS updated_at
+        FROM user_media_feedback f
+        WHERE f.rating IS NOT NULL
+        GROUP BY f.media_kind, f.media_key
+        ORDER BY datetime(MAX(f.updated_at)) DESC
+        LIMIT 100
+        """
+    ).fetchall()
+
+    items = []
+    for row in rows:
+        media_kind = str(row["media_kind"] or "")
+        media_key = str(row["media_key"] or "")
+
+        rating_rows = db.execute(
+            """
+            SELECT
+                u.username,
+                f.rating
+            FROM user_media_feedback f
+            JOIN users u ON u.id = f.user_id
+            WHERE f.media_kind = ?
+              AND f.media_key = ?
+              AND f.rating IS NOT NULL
+            ORDER BY lower(u.username) ASC
+            """,
+            (media_kind, media_key),
+        ).fetchall()
+
+        ratings = []
+        for rr in rating_rows:
+            try:
+                rating_val = int(rr["rating"])
+            except Exception:
+                continue
+            ratings.append({
+                "user": str(rr["username"] or ""),
+                "rating": rating_val,
+            })
+
+        items.append({
+            "media_kind": media_kind,
+            "media_key": media_key,
+            "source": str(row["source"] or ""),
+            "title": str(row["title"] or ""),
+            "poster_url": str(row["poster_url"] or ""),
+            "open_url": _recommended_open_url(media_key, str(row["poster_url"] or "")),
+            "overview": _recommended_overview(media_key),
+            "avg_rating": float(row["avg_rating"] or 0),
+            "rating_count": int(row["rating_count"] or 0),
+            "updated_at": str(row["updated_at"] or ""),
+            "ratings": ratings,
+        })
+
+    return jsonify(ok=True, items=items)
+
 
 
 @bp.get("/api/watchlist/notifications")
@@ -1176,3 +1384,38 @@ def api_watchlist_notifications_mark_seen():
     db.commit()
 
     return jsonify(ok=True)
+
+
+def _tmdb_overview(media_key: str) -> str:
+    media_key = str(media_key or "").strip()
+
+    if not media_key.startswith("tmdb:"):
+        return ""
+
+    tmdb_id = media_key.split(":", 1)[1].strip()
+    if not tmdb_id:
+        return ""
+
+    api_key = _cfg("tmdb_api_key", "TMDB_API_KEY", "").strip()
+    if not api_key:
+        return ""
+
+    try:
+        r = requests.get(
+            f"https://api.themoviedb.org/3/movie/{tmdb_id}",
+            params={"api_key": api_key},
+            timeout=20,
+        )
+        if r.status_code == 404:
+            # try tv fallback
+            r = requests.get(
+                f"https://api.themoviedb.org/3/tv/{tmdb_id}",
+                params={"api_key": api_key},
+                timeout=20,
+            )
+
+        r.raise_for_status()
+        data = r.json() or {}
+        return str(data.get("overview") or "").strip()
+    except Exception:
+        return ""

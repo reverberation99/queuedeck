@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.4 - 2026-03-27
+
+**Added a Community Rating system for Seen**
+
+- Now users can review tv and movies they've seen and share them with other users
+
+
+
 ## v1.3.1 - 2026-03-26
 
 **Bug Fixes for 1.3**

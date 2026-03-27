@@ -737,6 +737,131 @@
       line-height:1.45;
     }
 
+    .communityRatingBadge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 9px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      color:#fff3c4;
+      background: rgba(245,197,66,.12);
+      border:1px solid rgba(245,197,66,.24);
+    }
+
+    .communityRatingBreakdown{
+      margin-top:8px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .communityRatingChip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      color: rgba(255,255,255,.88);
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    .seenRangeField,
+    .seenTypeField{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin-left:12px;
+      flex:0 0 auto;
+    }
+
+    .seenRangeField label,
+    .seenTypeField label{
+      font-size:12px;
+      font-weight:800;
+      color:rgba(255,255,255,.72);
+      white-space:nowrap;
+    }
+
+    .seenControl{
+      position:relative;
+      min-width:160px;
+    }
+
+    .seenControlBtn{
+      min-height:36px;
+      width:100%;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      color: rgba(255,255,255,.92);
+      padding:0 12px;
+      font-size:13px;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      cursor:pointer;
+    }
+
+    .seenControlBtn:hover{
+      background: rgba(255,255,255,.08);
+      border-color: rgba(255,255,255,.18);
+    }
+
+    .seenControlCaret{
+      font-size:11px;
+      color: rgba(255,255,255,.72);
+      transition: transform .16s ease;
+    }
+
+    .seenControl.open .seenControlCaret{
+      transform: rotate(180deg);
+    }
+
+    .seenControlMenu{
+      position:absolute;
+      left:0;
+      top:calc(100% + 8px);
+      min-width:100%;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(10,12,18,.96);
+      backdrop-filter: blur(10px);
+      border-radius:14px;
+      box-shadow: 0 24px 70px rgba(0,0,0,.55);
+      padding:8px;
+      display:none;
+      z-index:40;
+    }
+
+    .seenControl.open .seenControlMenu{
+      display:block;
+    }
+
+    .seenControlOption{
+      width:100%;
+      border:none;
+      background: transparent;
+      color: rgba(255,255,255,.88);
+      text-align:left;
+      padding:10px 12px;
+      border-radius:10px;
+      font-size:13px;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .seenControlOption:hover,
+    .seenControlOption.active{
+      background: rgba(255,255,255,.08);
+      color:#fff;
+    }
+
     
     .seenRow{
       position: relative;
@@ -1094,6 +1219,164 @@
 }
 
 
+
+
+    /* --- Community ratings clean layout --- */
+    .communityRow{
+      display:grid;
+      grid-template-columns:110px minmax(0, 1fr) 156px;
+      gap:18px;
+      align-items:center;
+    }
+
+    .communityRow .rowMain{
+      min-width:0;
+    }
+
+    .communityExtra{
+      margin-top:12px;
+      min-width:0;
+      max-width:900px;
+    }
+
+    .communityOverviewLabel{
+      font-size:12px;
+      font-weight:900;
+      color:rgba(255,255,255,.72);
+      margin-bottom:6px;
+    }
+
+    .communityOverview{
+      font-size:13px;
+      line-height:1.5;
+      color:rgba(255,255,255,.80);
+      display:-webkit-box;
+      -webkit-line-clamp:3;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+      text-align:left;
+    }
+
+    
+
+    
+
+    @media (max-width: 900px){
+      .communityRow{
+        grid-template-columns:96px minmax(0, 1fr);
+        gap:16px;
+        align-items:start;
+      }
+
+      
+    }
+
+    @media (max-width: 640px){
+      .communityRow{
+        grid-template-columns:88px minmax(0, 1fr);
+        gap:14px;
+      }
+
+      .communityOverview{
+        -webkit-line-clamp:4;
+      }
+
+      
+    }
+
+
+
+/* --- Community compactness tweak --- */
+.communityRatingBreakdown.compact{
+  margin-top:8px;
+  gap:6px;
+}
+
+.communityRatingChip{
+  padding:4px 8px;
+  font-size:12px;
+  font-weight:700;
+}
+
+.communityRatingBadge{
+  padding:4px 10px;
+  font-size:12px;
+}
+
+.communityOverviewLabel{
+  margin-top:2px;
+}
+
+@media (max-width: 640px){
+  .communityRatingChip{
+    font-size:11px;
+    padding:4px 7px;
+  }
+}
+
+
+
+    /* --- Community Play button brand styling (FINAL FIX) --- */
+    a.communityPlayBtn{
+      justify-self:end;
+      align-self:center;
+      width:140px;
+      min-width:140px;
+      max-width:140px;
+      min-height:38px;
+      padding:8px 14px;
+      border-radius:999px;
+      border:none;
+      background: linear-gradient(135deg, #6fa0ff 0%, #9b5cff 100%);
+      color:#fff;
+      -webkit-text-fill-color:#fff;
+      font-weight:800;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow: 0 10px 28px rgba(87, 76, 255, .25);
+      transition: all .15s ease;
+      text-decoration:none;
+    }
+
+    a.communityPlayBtn.miniBtn{
+      background: linear-gradient(135deg, #6fa0ff 0%, #9b5cff 100%);
+      border:none;
+      color:#fff;
+      -webkit-text-fill-color:#fff;
+    }
+
+    a.communityPlayBtn:hover{
+      transform:translateY(-1px);
+      filter:brightness(1.06);
+      color:#fff;
+      -webkit-text-fill-color:#fff;
+    }
+
+    a.communityPlayBtn:visited,
+    a.communityPlayBtn:active,
+    a.communityPlayBtn:focus{
+      color:#fff;
+      -webkit-text-fill-color:#fff;
+      text-decoration:none;
+    }
+
+    @media (max-width: 900px){
+      a.communityPlayBtn{
+        width:auto;
+        min-width:140px;
+        max-width:180px;
+      }
+    }
+
+    @media (max-width: 640px){
+      a.communityPlayBtn{
+        width:100%;
+        min-width:0;
+        max-width:none;
+      }
+    }
+
 </style>
 </head>
 <body>
@@ -1209,7 +1492,21 @@
       movies: [],
       calendar: [],
       seen: { movies: [], episodes: [] },
+      seenRange: (() => {
+        try { return localStorage.getItem("qdSeenRange") || "3m"; }
+        catch(_) { return "3m"; }
+      })(),
+      seenTypeFilter: (() => {
+        try { return localStorage.getItem("qdSeenTypeFilter") || "all"; }
+        catch(_) { return "all"; }
+      })(),
       recommended: { direct: [], community: [] },
+      communityRatings: [],
+      recFilters: {
+        minStars: 0,
+        type: "all",
+        sort: "newest"
+      },
       feedback: {},
       directRecommend: { openKey: "", users: [], sent: {} },
       query: "",
@@ -1898,8 +2195,14 @@
       const container = document.getElementById("watchlistSeen");
       if (!container) return;
 
-      const movies = Array.isArray(state.seen?.movies) ? state.seen.movies.filter(itemMatchesQuery) : [];
-      const series = Array.isArray(state.seen?.series) ? state.seen.series.filter(itemMatchesQuery) : [];
+      let movies = Array.isArray(state.seen?.movies) ? state.seen.movies.filter(itemMatchesQuery) : [];
+      let series = Array.isArray(state.seen?.series) ? state.seen.series.filter(itemMatchesQuery) : [];
+
+      if (state.seenTypeFilter === "movies"){
+        series = [];
+      } else if (state.seenTypeFilter === "tv"){
+        movies = [];
+      }
 
       function row(item, kind){
         const poster = rowPosterHTML(item.poster_url, item.title);
@@ -1970,6 +2273,7 @@
         html = `<div class="empty">${state.query ? "No seen items match your search." : "No seen items found."}</div>`;
       }
 
+      html += communityRatingsSectionHTML();
       container.innerHTML = html;
     }
 
@@ -2005,6 +2309,9 @@ function renderLists(){
       const recEl = document.getElementById("watchlistRecommended");
       const countEl = document.getElementById("watchlistCount");
       const movieSortEl = document.getElementById("movieSortSelect");
+      const recControls = document.getElementById("recControls");
+      const seenRangeWrap = document.querySelector(".seenRangeField");
+      const seenTypeWrap = document.querySelector(".seenTypeField");
 
       const showingTV = state.activeTab === "tv";
       const showingMovies = state.activeTab === "movies";
@@ -2015,18 +2322,65 @@ function renderLists(){
       const tvRows = filteredTV();
       const movieRows = filteredMovies();
       const calRows = filteredCalendar();
-      const seenMovies = Array.isArray(state.seen?.movies) ? state.seen.movies.filter(itemMatchesQuery) : [];
-      const seenSeries = Array.isArray(state.seen?.series) ? state.seen.series.filter(itemMatchesQuery) : [];
+      let seenMovies = Array.isArray(state.seen?.movies) ? state.seen.movies.filter(itemMatchesQuery) : [];
+      let seenSeries = Array.isArray(state.seen?.series) ? state.seen.series.filter(itemMatchesQuery) : [];
+
+      if (state.seenTypeFilter === "movies"){
+        seenSeries = [];
+      } else if (state.seenTypeFilter === "tv"){
+        seenMovies = [];
+      }
+
       const seenCount = seenMovies.length + seenSeries.length;
       const directRecs = Array.isArray(state.recommended?.direct) ? state.recommended.direct.filter(itemMatchesQuery) : [];
       const communityRecs = Array.isArray(state.recommended?.community) ? state.recommended.community.filter(itemMatchesQuery) : [];
-      const recommendedCount = directRecs.length + communityRecs.length;
+      let communityRatings = Array.isArray(state.communityRatings) ? state.communityRatings.filter(itemMatchesQuery) : [];
+
+      // ---- FILTERS ----
+      const f = state.recFilters || {};
+
+      if (f.minStars){
+        communityRatings = communityRatings.filter(x => Number(x.avg_rating || 0) >= f.minStars);
+      }
+
+      if (f.type === "movies"){
+        communityRatings = communityRatings.filter(x => x.media_kind !== "series");
+      } else if (f.type === "tv"){
+        communityRatings = communityRatings.filter(x => x.media_kind === "series");
+      }
+
+      // ---- SORT ----
+      if (f.sort === "rating"){
+        communityRatings.sort((a,b)=> (b.avg_rating||0)-(a.avg_rating||0));
+      } else if (f.sort === "count"){
+        communityRatings.sort((a,b)=> (b.rating_count||0)-(a.rating_count||0));
+      } else {
+        communityRatings.sort((a,b)=> new Date(b.updated_at||0)-new Date(a.updated_at||0));
+      }
+      const recommendedCount = directRecs.length + communityRecs.length + communityRatings.length;
 
       tvEl.classList.toggle("hidden", !showingTV);
       movieEl.classList.toggle("hidden", !showingMovies);
       calEl.classList.toggle("hidden", !showingCal);
-      if (seenEl) seenEl.classList.toggle("hidden", !showingSeen);
-      if (recEl) recEl.classList.toggle("hidden", !showingRec);
+      if (seenEl){
+        seenEl.classList.toggle("hidden", !showingSeen);
+        seenEl.style.display = showingSeen ? "" : "none";
+      }
+      if (recEl){
+        recEl.classList.toggle("hidden", !showingRec);
+        recEl.style.display = showingRec ? "" : "none";
+      }
+
+      if (recControls){
+        recControls.style.display = showingRec ? "" : "none";
+      }
+
+      if (seenRangeWrap){
+        seenRangeWrap.style.display = showingSeen ? "" : "none";
+      }
+      if (seenTypeWrap){
+        seenTypeWrap.style.display = showingSeen ? "" : "none";
+      }
 
       document.querySelectorAll(".tab").forEach(btn => {
         btn.classList.toggle("active", btn.getAttribute("data-tab") === state.activeTab);
@@ -2075,12 +2429,169 @@ function renderLists(){
       };
     }
 
-    function renderRecommendedFeed(){
+
+    async function loadCommunityRatings(){
+      try{
+        const r = await fetch("/api/watchlist/community-ratings", {
+          credentials: "same-origin",
+          cache: "no-store",
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || !j.ok){
+          throw new Error(j.error || ("HTTP " + r.status));
+        }
+        state.communityRatings = Array.isArray(j.items) ? j.items : [];
+      }catch(err){
+        console.error(err);
+        state.communityRatings = [];
+      }
+    }
+
+    function communityRatingsSectionHTML(){
+      const items = Array.isArray(state.communityRatings) ? state.communityRatings.filter(itemMatchesQuery) : [];
+      if (!items.length){
+        return "";
+      }
+
+      const row = (item) => {
+        const poster = rowPosterHTML(item.poster_url, item.title);
+        const avg = Number(item.avg_rating || 0).toFixed(1);
+        const count = Number(item.rating_count || 0);
+        const breakdownText = (Array.isArray(item.ratings) ? item.ratings : [])
+          .map(r => `${r.user} — ${"★".repeat(Number(r.rating || 0))}`)
+          .join(" | ");
+
+        const breakdownHtml = (Array.isArray(item.ratings) ? item.ratings : []).map(r => `
+          <span class="communityRatingChip">${escapeHTML(r.user || "")} — ${escapeHTML("★".repeat(Number(r.rating || 0)))}</span>
+        `).join("");
+
+        return `
+          <div class="row">
+            ${poster}
+            <div class="rowMain">
+              <div class="rowTitle">${escapeHTML(item.title || "Untitled")}</div>
+              <div class="rowSub">
+                <span class="communityRatingBadge" title="${escapeHTML(breakdownText)}">★ ${escapeHTML(avg)} · ${escapeHTML(String(count))} ratings</span>
+              </div>
+              <div class="rowBadges">
+                ${item.media_kind === "series" ? badgeHTML("Series", "tv") : badgeHTML("Movie", "movie")}
+                ${badgeHTML("Community", "pending")}
+              </div>
+              <div class="communityRatingBreakdown">
+                ${breakdownHtml}
+              </div>
+            </div>
+          </div>
+        `;
+      };
+
+      return `
+        <section class="calendarGroup">
+          <h3 class="calendarHeading">Community Ratings (${items.length})</h3>
+          ${items.map(row).join("")}
+        </section>
+      `;
+    }
+
+    
+function ensureRecommendedControls(){
+  if (document.getElementById("recControls")) return;
+
+  const toolbarLeft = document.querySelector(".toolbarLeft");
+  if (!toolbarLeft) return;
+
+  const wrap = document.createElement("div");
+  wrap.className = "seenRangeField";
+  wrap.id = "recControls";
+
+  wrap.innerHTML = `
+    <label>Filter</label>
+    <div class="seenControl" id="recStarsControl">
+      <button class="seenControlBtn"><span data-seen-control-value></span><span class="seenControlCaret">▾</span></button>
+      <div class="seenControlMenu">
+        <button class="seenControlOption" data-value="0" data-label="All">All</button>
+        <button class="seenControlOption" data-value="2" data-label="2★+">2★+</button>
+        <button class="seenControlOption" data-value="3" data-label="3★+">3★+</button>
+        <button class="seenControlOption" data-value="4" data-label="4★+">4★+</button>
+        <button class="seenControlOption" data-value="5" data-label="5★">5★</button>
+      </div>
+    </div>
+
+    <div class="seenControl" id="recTypeControl">
+      <button class="seenControlBtn"><span data-seen-control-value></span><span class="seenControlCaret">▾</span></button>
+      <div class="seenControlMenu">
+        <button class="seenControlOption" data-value="all" data-label="All">All</button>
+        <button class="seenControlOption" data-value="movies" data-label="Movies">Movies</button>
+        <button class="seenControlOption" data-value="tv" data-label="TV">TV</button>
+      </div>
+    </div>
+
+    <div class="seenControl" id="recSortControl">
+      <button class="seenControlBtn"><span data-seen-control-value></span><span class="seenControlCaret">▾</span></button>
+      <div class="seenControlMenu">
+        <button class="seenControlOption" data-value="newest" data-label="Newest">Newest</button>
+        <button class="seenControlOption" data-value="rating" data-label="Highest Rated">Highest Rated</button>
+        <button class="seenControlOption" data-value="count" data-label="Most Rated">Most Rated</button>
+      </div>
+    </div>
+  `;
+
+  toolbarLeft.appendChild(wrap);
+
+  qdInitSeenControl(document.getElementById("recStarsControl"), "0", async (val)=>{
+    state.recFilters.minStars = Number(val||0);
+    renderRecommendedFeed();
+  });
+
+  qdInitSeenControl(document.getElementById("recTypeControl"), "all", async (val)=>{
+    state.recFilters.type = val || "all";
+    renderRecommendedFeed();
+  });
+
+  qdInitSeenControl(document.getElementById("recSortControl"), "newest", async (val)=>{
+    state.recFilters.sort = val || "newest";
+    renderRecommendedFeed();
+  });
+}
+function renderRecommendedFeed(){
       const el = document.getElementById("watchlistRecommended");
       if (!el) return;
 
       const direct = Array.isArray(state.recommended?.direct) ? state.recommended.direct.filter(itemMatchesQuery) : [];
       const community = Array.isArray(state.recommended?.community) ? state.recommended.community.filter(itemMatchesQuery) : [];
+      let communityRatings = Array.isArray(state.communityRatings) ? state.communityRatings.filter(itemMatchesQuery) : [];
+
+      const f = state.recFilters || { minStars: 0, type: "all", sort: "newest" };
+
+      if (Number(f.minStars || 0) > 0){
+        communityRatings = communityRatings.filter(x => Number(x.avg_rating || 0) >= Number(f.minStars || 0));
+      }
+
+      if (f.type === "movies"){
+        communityRatings = communityRatings.filter(x => String(x.media_kind || "") !== "series");
+      } else if (f.type === "tv"){
+        communityRatings = communityRatings.filter(x => String(x.media_kind || "") === "series");
+      }
+
+      if (f.sort === "rating"){
+        communityRatings.sort((a, b) => {
+          const diff = Number(b.avg_rating || 0) - Number(a.avg_rating || 0);
+          if (diff !== 0) return diff;
+          return Number(b.rating_count || 0) - Number(a.rating_count || 0);
+        });
+      } else if (f.sort === "count"){
+        communityRatings.sort((a, b) => {
+          const diff = Number(b.rating_count || 0) - Number(a.rating_count || 0);
+          if (diff !== 0) return diff;
+          return Number(b.avg_rating || 0) - Number(a.avg_rating || 0);
+        });
+      } else {
+        communityRatings.sort((a, b) => {
+          const ad = new Date(a.updated_at || 0).getTime();
+          const bd = new Date(b.updated_at || 0).getTime();
+          return bd - ad;
+        });
+      }
 
       function row(item, kind){
         const poster = rowPosterHTML(item.poster_url, item.title);
@@ -2110,6 +2621,49 @@ function renderLists(){
         `;
       }
 
+      function communityRatingRow(item){
+        const poster = rowPosterHTML(item.poster_url, item.title);
+        const avg = Number(item.avg_rating || 0).toFixed(1);
+        const count = Number(item.rating_count || 0);
+
+        const overview = String(item.overview || "").trim();
+
+        const breakdownText = (Array.isArray(item.ratings) ? item.ratings : [])
+          .map(r => `${r.user} — ${"★".repeat(Number(r.rating || 0))}`)
+          .join(" | ");
+
+        const typeLabel = item.media_kind === "series" ? "TV" : "Movie";
+        const ratingLabel = `${avg} · ${count} rating${count === 1 ? "" : "s"} · ${typeLabel}`;
+
+        const breakdownHtml = (Array.isArray(item.ratings) ? item.ratings : []).map(r => `
+          <span class="communityRatingChip">${escapeHTML(r.user || "")} ${escapeHTML("★".repeat(Number(r.rating || 0)))}</span>
+        `).join("");
+
+        return `
+          <div class="row communityRow">
+            ${poster}
+            <div class="rowMain">
+              <div class="rowTitle">${escapeHTML(item.title || "Untitled")}</div>
+              <div class="rowSub">
+                <span class="communityRatingBadge" title="${escapeHTML(breakdownText)}">★ ${escapeHTML(ratingLabel)}</span>
+              </div>
+              <div class="communityRatingBreakdown compact">
+                ${breakdownHtml}
+              </div>
+
+              ${overview ? `
+                <div class="communityExtra">
+                  <div class="communityOverviewLabel">Synopsis:</div>
+                  <div class="communityOverview">${escapeHTML(overview)}</div>
+                </div>
+              ` : ``}
+            </div>
+
+            ${item.open_url ? `<a class="miniBtn communityPlayBtn" href="${escapeHTML(item.open_url)}" target="_blank" rel="noopener noreferrer">▶ Play</a>` : ``}
+          </div>
+        `;
+      }
+
       let html = "";
 
       if (direct.length){
@@ -2130,11 +2684,153 @@ function renderLists(){
         `;
       }
 
+      if (communityRatings.length){
+        html += `
+          <section class="calendarGroup">
+            <h3 class="calendarHeading">Community Ratings (${communityRatings.length})</h3>
+            ${communityRatings.map(item => communityRatingRow(item)).join("")}
+          </section>
+        `;
+      }
+
       if (!html){
         html = `<div class="empty">${state.query ? "No recommendations match your search." : "No recommendations yet."}</div>`;
       }
 
       el.innerHTML = html;
+    }
+
+
+    function qdCloseSeenControls(){
+      document.querySelectorAll(".seenControl.open").forEach(el => el.classList.remove("open"));
+    }
+
+    function qdInitSeenControl(root, currentValue, onSelect){
+      if (!root) return;
+
+      const btn = root.querySelector(".seenControlBtn");
+      const menu = root.querySelector(".seenControlMenu");
+      const valueEl = root.querySelector("[data-seen-control-value]");
+
+      if (!btn || !menu || !valueEl) return;
+
+      const options = Array.from(menu.querySelectorAll(".seenControlOption"));
+
+      function syncActive(val){
+        options.forEach(opt => {
+          opt.classList.toggle("active", String(opt.getAttribute("data-value") || "") === String(val || ""));
+        });
+        const active = options.find(opt => opt.classList.contains("active"));
+        valueEl.textContent = active ? String(active.getAttribute("data-label") || active.textContent || "").trim() : "";
+      }
+
+      syncActive(currentValue);
+
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const willOpen = !root.classList.contains("open");
+        qdCloseSeenControls();
+        if (willOpen) root.classList.add("open");
+      });
+
+      options.forEach(opt => {
+        opt.addEventListener("click", async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const val = String(opt.getAttribute("data-value") || "");
+          syncActive(val);
+          root.classList.remove("open");
+          await onSelect(val);
+        });
+      });
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".seenControl")) qdCloseSeenControls();
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") qdCloseSeenControls();
+    });
+
+    function ensureSeenRangeControl(){
+      if (document.getElementById("seenRangeControl")) return;
+
+      const toolbarLeft = document.querySelector(".toolbarLeft");
+      if (!toolbarLeft) return;
+
+      const wrap = document.createElement("div");
+      wrap.className = "seenRangeField";
+      wrap.innerHTML = `
+        <label>Seen range</label>
+        <div class="seenControl" id="seenRangeControl">
+          <button class="seenControlBtn" type="button">
+            <span data-seen-control-value></span>
+            <span class="seenControlCaret">▾</span>
+          </button>
+          <div class="seenControlMenu">
+            <button class="seenControlOption" type="button" data-value="1m" data-label="Last month">Last month</button>
+            <button class="seenControlOption" type="button" data-value="3m" data-label="Last 3 months">Last 3 months</button>
+            <button class="seenControlOption" type="button" data-value="6m" data-label="Last 6 months">Last 6 months</button>
+            <button class="seenControlOption" type="button" data-value="1y" data-label="Last year">Last year</button>
+            <button class="seenControlOption" type="button" data-value="all" data-label="All time">All time</button>
+          </div>
+        </div>
+      `;
+
+      toolbarLeft.appendChild(wrap);
+
+      qdInitSeenControl(
+        document.getElementById("seenRangeControl"),
+        state.seenRange || "3m",
+        async (val) => {
+          state.seenRange = val || "3m";
+          try{
+            localStorage.setItem("qdSeenRange", state.seenRange);
+          }catch(_){}
+          await loadWatchlist();
+        }
+      );
+    }
+
+
+    function ensureSeenTypeControl(){
+      if (document.getElementById("seenTypeControl")) return;
+
+      const toolbarLeft = document.querySelector(".toolbarLeft");
+      if (!toolbarLeft) return;
+
+      const wrap = document.createElement("div");
+      wrap.className = "seenTypeField";
+      wrap.innerHTML = `
+        <label>Seen type</label>
+        <div class="seenControl" id="seenTypeControl">
+          <button class="seenControlBtn" type="button">
+            <span data-seen-control-value></span>
+            <span class="seenControlCaret">▾</span>
+          </button>
+          <div class="seenControlMenu">
+            <button class="seenControlOption" type="button" data-value="all" data-label="All">All</button>
+            <button class="seenControlOption" type="button" data-value="movies" data-label="Movies">Movies</button>
+            <button class="seenControlOption" type="button" data-value="tv" data-label="TV">TV</button>
+          </div>
+        </div>
+      `;
+
+      toolbarLeft.appendChild(wrap);
+
+      qdInitSeenControl(
+        document.getElementById("seenTypeControl"),
+        state.seenTypeFilter || "all",
+        async (val) => {
+          state.seenTypeFilter = val || "all";
+          try{
+            localStorage.setItem("qdSeenTypeFilter", state.seenTypeFilter);
+          }catch(_){}
+          applyFilter();
+        }
+      );
     }
 
     async function loadWatchlist(){
@@ -2146,7 +2842,7 @@ function renderLists(){
       err.textContent = "";
 
       try{
-        const r = await fetch("/api/watchlist", {
+        const r = await fetch(`/api/watchlist?seen_range=${encodeURIComponent(state.seenRange || "3m")}`, {
           credentials: "same-origin",
           cache: "no-store",
         });
@@ -2165,6 +2861,8 @@ function renderLists(){
         await loadRecommendUsers();
         await loadSentRecommendations();
         await loadRecommendedFeed();
+        await loadCommunityRatings();
+        renderRecommendedFeed();
         applyFilter();
       }catch(e){
         console.error(e);
@@ -2318,6 +3016,9 @@ function renderLists(){
     }
 
     wireRecommendedActionsDelegated();
+    ensureSeenRangeControl();
+    ensureSeenTypeControl();
+    ensureRecommendedControls();
     loadWatchlist();
   </script>
 </body>

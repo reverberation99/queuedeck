@@ -282,6 +282,23 @@ ce; }
       transition: background .15s ease, border-color .15s ease, transform .08s ease;
     }
 
+    /* --- User pill status states --- */
+    .userMenuBtn.status-ok{
+      border: 1px solid rgba(80,200,120,.7);
+      box-shadow: 0 0 10px rgba(80,200,120,.35);
+    }
+
+    .userMenuBtn.status-bad{
+      border: 1px solid rgba(255,80,80,.8);
+      box-shadow: 0 0 10px rgba(255,80,80,.4);
+    }
+
+    .userMenuBtn.status-loading{
+      border: 1px solid rgba(255,200,80,.6);
+      box-shadow: 0 0 8px rgba(255,200,80,.25);
+    }
+
+
     .userMenuBtn:hover{
       background: rgba(255,255,255,.09);
       border-color: rgba(255,255,255,.16);
@@ -2257,6 +2274,39 @@ border-radius:10px;
     }
   }
 
+
+
+/* --- Mobile header fix after Review / Rate button --- */
+@media (max-width: 640px){
+  .topbar{
+    align-items:flex-start !important;
+  }
+
+  .actions{
+    width:100% !important;
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:12px !important;
+    justify-items:stretch !important;
+  }
+
+  .actions > .btn,
+  .actions > a.btn,
+  .actions > button.btn{
+    width:100% !important;
+    justify-content:center !important;
+  }
+
+  .actions .userMenu{
+    width:100% !important;
+  }
+
+  .actions .userMenuBtn{
+    width:100% !important;
+    justify-content:space-between !important;
+  }
+}
+
 </style>
 </head>
 
@@ -2275,8 +2325,9 @@ border-radius:10px;
 
       <div class="actions">
         <button id="qdOpenSeerrSearch" class="btn primary" type="button">🔎 Search / Request</button>
-          <a class="btn primary" href="/discover">Discover</a>
-        <button class="btn statusPill" id="statusPill" type="button" title="Status">
+        <a class="btn primary" href="/watchlist?tab=seen">⭐ Review / Rate</a>
+        <a class="btn primary" href="/discover">Discover</a>
+        <button class="btn statusPill hidden" id="statusPill" type="button" title="Status" aria-hidden="true" tabindex="-1" style="display:none !important;">
           <span class="statusDot" id="statusDot"></span>
           <span class="statusLabel" id="statusText">Ready</span>
         </button>
@@ -2451,16 +2502,33 @@ border-radius:10px;
     function setStatus(ok, msg){
       const dot = document.getElementById("statusDot");
       const pill = document.getElementById("pill-status");
-      if (!dot) return;
+      const userBtn = document.getElementById("userMenuBtn");
 
-      dot.classList.remove("ok", "loading", "bad");
+      if (dot){
+        dot.classList.remove("ok", "loading", "bad");
 
-      if (ok === null){
-        dot.classList.add("loading");
-      } else if (ok) {
-        dot.classList.add("ok");
-      } else {
-        dot.classList.add("bad");
+        if (ok === null){
+          dot.classList.add("loading");
+        } else if (ok) {
+          dot.classList.add("ok");
+        } else {
+          dot.classList.add("bad");
+        }
+      }
+
+      // NEW: update user pill border
+      if (userBtn){
+        userBtn.classList.remove("status-ok","status-bad","status-loading");
+
+        if (ok === null){
+          userBtn.classList.add("status-loading");
+        } else if (ok){
+          userBtn.classList.add("status-ok");
+        } else {
+          userBtn.classList.add("status-bad");
+        }
+
+        userBtn.title = msg || (ok ? "All systems go" : "Error");
       }
 
       if (pill) pill.title = msg || (ok ? "OK" : "Error");
