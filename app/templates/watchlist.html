@@ -1502,6 +1502,8 @@
       })(),
       recommended: { direct: [], community: [] },
       communityRatings: [],
+      seenLoaded: false,
+      recommendedLoaded: false,
       recFilters: {
         minStars: 0,
         type: "all",
@@ -2295,9 +2297,13 @@ function renderLists(){
         : `<div class="empty">${state.query ? "No movie results match your search." : "No movie items found."}</div>`;
 
       calEl.innerHTML = renderCalendarGroups(calRows);
-      renderSeen();
-      renderRecommendedFeed();
-      wireSeenFeedbackActions();
+
+      if (state.activeTab === "seen"){
+        renderSeen();
+        wireSeenFeedbackActions();
+      } else if (state.activeTab === "recommended"){
+        renderRecommendedFeed();
+      }
     }
 
     function renderCurrentTab(){
@@ -2856,14 +2862,7 @@ function renderRecommendedFeed(){
         state.calendar = Array.isArray(j.calendar) ? j.calendar : [];
       state.seen = j.seen || { movies: [], series: [] };
 
-        await Promise.all([
-          loadSeenFeedback(),
-          loadRecommendUsers(),
-          loadSentRecommendations(),
-          loadRecommendedFeed(),
-          loadCommunityRatings()
-        ]);
-        renderRecommendedFeed();
+        // defer heavy loads until tabs are opened
         applyFilter();
       }catch(e){
         console.error(e);
@@ -2878,6 +2877,26 @@ function renderRecommendedFeed(){
     document.querySelectorAll(".tab").forEach(btn => {
       btn.addEventListener("click", () => {
         state.activeTab = btn.getAttribute("data-tab") || "tv";
+
+        if (state.activeTab === "seen" && !state.seenLoaded){
+          state.seenLoaded = true;
+          loadSeenFeedback().then(()=>{
+            renderSeen();
+            wireSeenFeedbackActions();
+          });
+        }
+
+        if (state.activeTab === "recommended" && !state.recommendedLoaded){
+          state.recommendedLoaded = true;
+          Promise.all([
+            loadRecommendUsers(),
+            loadSentRecommendations(),
+            loadRecommendedFeed(),
+            loadCommunityRatings()
+          ]).then(()=>{
+            renderRecommendedFeed();
+          });
+        }
         renderCurrentTab();
       });
     });

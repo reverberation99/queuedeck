@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.4.2 - 2026-03-31
+
+**Watchlist Bug Fixes**
+
+- #Fixed load times on watchlist
+
+
+
 ## v1.4.1 - 2026-03-31
 
 **Bug Fixes For watchlist**
