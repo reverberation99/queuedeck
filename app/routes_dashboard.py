@@ -176,6 +176,18 @@ def root():
         return redirect("/admin/users")
     return render_template("index.html", me=me)
 
+
+# --------------------------------------------------
+# Mobile Dashboard (v1)
+# --------------------------------------------------
+
+@bp.get("/mobile")
+@login_required
+def mobile_dashboard():
+    me = current_user() or {}
+    return render_template("index_mobile.html", me=me)
+
+
 # --------------------------------------------------
 # Jellyfin helpers (for season progress enrichment)
 # --------------------------------------------------
@@ -1279,3 +1291,20 @@ def api_sonarr_missing():
 @bp.get("/healthz")
 def healthz():
     return jsonify(ok=True)
+
+
+@bp.get("/api/jellyfin/latest-anime")
+@login_required
+def api_jellyfin_latest_anime():
+    try:
+        data = api_jellyfin_nextup_split().get_json()
+
+        anime = (
+            data.get("anime_items")
+            or data.get("anime")
+            or []
+        )
+
+        return jsonify({"items": anime[:40]})
+    except Exception as e:
+        return jsonify({"items": [], "error": str(e)})

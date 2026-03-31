@@ -1,0 +1,997 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>QueueDeck Mobile</title>
+
+<style>
+:root{
+  --bg0:#07090c;
+  --bg1:#0b0f14;
+  --card: rgba(255,255,255,.06);
+  --border: rgba(255,255,255,.10);
+  --text: rgba(255,255,255,.92);
+  --muted: rgba(255,255,255,.62);
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: linear-gradient(180deg,var(--bg0),var(--bg1));
+  color:var(--text);
+}
+
+.wrap{
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+.header{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.title{
+  font-size:20px;
+  font-weight:800;
+}
+
+.subtitle{
+  font-size:13px;
+  color:var(--muted);
+}
+
+.btn{
+  border-radius:999px;
+  padding:14px;
+  font-weight:800;
+  text-align:center;
+  text-decoration:none;
+  color:white;
+  background: linear-gradient(135deg,#6fa0ff,#9b5cff);
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
+}
+
+.section{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:14px;
+}
+
+.sectionTitle{
+  font-weight:800;
+  margin-bottom:10px;
+}
+
+.row{
+  display:flex;
+  gap:12px;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+
+.row::-webkit-scrollbar{
+  display:none;
+}
+
+.card{
+  min-width:160px;
+  width:160px;
+  border-radius:18px;
+  overflow:hidden;
+  flex-shrink:0;
+  background: rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);
+  position:relative;
+  text-decoration:none;
+  color:var(--text);
+  box-shadow: 0 10px 28px rgba(0,0,0,.28);
+}
+
+.poster{
+  width:100%;
+  height:228px;
+  object-fit:cover;
+  display:block;
+  background: rgba(255,255,255,.04);
+}
+
+.cardOverlay{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  padding:10px;
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,.90));
+}
+
+.cardSeries{
+  font-size:12px;
+  color:rgba(255,255,255,.78);
+  line-height:1.15;
+  margin-bottom:4px;
+}
+
+.cardTitle{
+  font-size:13px;
+  font-weight:800;
+  line-height:1.2;
+}
+
+.cardMeta{
+  margin-top:4px;
+  font-size:11px;
+  color:rgba(255,255,255,.72);
+}
+
+.cardProgress{
+  margin-top:8px;
+  height:6px;
+  border-radius:999px;
+  background: rgba(255,255,255,.16);
+  overflow:hidden;
+}
+
+.cardProgressFill{
+  height:100%;
+  border-radius:999px;
+  background: linear-gradient(135deg,#6fa0ff,#9b5cff);
+}
+
+.quickGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.quickCard{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:52px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.05);
+  color:var(--text);
+  text-decoration:none;
+  font-weight:800;
+}
+
+.downloadList{
+  display:grid;
+  gap:10px;
+}
+
+.downloadCard{
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.05);
+  padding:12px;
+}
+
+.downloadKind{
+  font-size:11px;
+  color:var(--muted);
+  margin-bottom:4px;
+  font-weight:800;
+}
+
+.downloadTitle{
+  font-size:14px;
+  font-weight:800;
+}
+
+.downloadMeta{
+  margin-top:4px;
+  font-size:12px;
+  color:var(--muted);
+}
+
+.downloadBar{
+  margin-top:8px;
+  height:7px;
+  border-radius:999px;
+  background:rgba(255,255,255,.14);
+  overflow:hidden;
+}
+
+.downloadFill{
+  height:100%;
+  border-radius:999px;
+  background: linear-gradient(135deg,#6fa0ff,#9b5cff);
+}
+
+.nowCard{
+  min-width:220px;
+  width:220px;
+  border-radius:14px;
+  overflow:hidden;
+  flex-shrink:0;
+  background: rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  text-decoration:none;
+  color:var(--text);
+  padding:10px 12px;
+  display:block;
+}
+
+.nowCard.playing{
+  border-color: rgba(155,92,255,.95);
+  box-shadow: 0 0 0 1px rgba(155,92,255,.35) inset;
+}
+
+.nowCard.paused{
+  border-color: rgba(255,90,90,.95);
+  box-shadow: 0 0 0 1px rgba(255,90,90,.35) inset;
+}
+
+.nowBody{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+.nowUser{
+  font-size:11px;
+  color:var(--muted);
+  margin-bottom:4px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.nowTitle{
+  font-size:13px;
+  font-weight:800;
+  line-height:1.2;
+}
+
+.nowMeta{
+  margin-top:4px;
+  font-size:11px;
+  color:rgba(255,255,255,.72);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.nowProgress{
+  margin-top:8px;
+  height:6px;
+  border-radius:999px;
+  background:rgba(255,255,255,.14);
+  overflow:hidden;
+}
+
+.nowProgressFill{
+  height:100%;
+  border-radius:999px;
+  background: linear-gradient(135deg,#6fa0ff,#9b5cff);
+}
+
+.emptyNote{
+  color:var(--muted);
+  font-size:12px;
+}
+
+@media (max-width: 640px){
+  .card{
+    min-width:148px;
+    width:148px;
+  }
+  .poster{
+    height:210px;
+  }
+}
+
+
+.searchModal{
+  position:fixed;
+  inset:0;
+  background: rgba(0,0,0,.75);
+  backdrop-filter: blur(6px);
+  display:none;
+  z-index:9999;
+}
+
+.searchModalInner{
+  position:absolute;
+  inset:0;
+  padding:16px;
+  overflow-y:auto;
+}
+
+.searchHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+}
+
+.searchTitle{
+  font-size:18px;
+  font-weight:800;
+}
+
+.searchClose{
+  background:none;
+  border:none;
+  color:white;
+  font-size:22px;
+  cursor:pointer;
+}
+
+.searchInput{
+  width:100%;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.15);
+  background: rgba(255,255,255,.08);
+  color:white;
+  margin-bottom:16px;
+  font-size:16px;
+}
+
+.searchGrid{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap:12px;
+}
+
+.searchCard{
+  border-radius:14px;
+  overflow:hidden;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);
+  text-decoration:none;
+  color:var(--text);
+  box-shadow: 0 10px 24px rgba(0,0,0,.22);
+}
+
+.searchPoster{
+  width:100%;
+  aspect-ratio: 2/3;
+  object-fit:cover;
+  display:block;
+  background:rgba(255,255,255,.05);
+}
+
+.searchPoster.placeholder{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.searchBody{
+  padding:8px;
+}
+
+.searchName{
+  font-size:12px;
+  font-weight:800;
+  line-height:1.25;
+  color:var(--text);
+}
+
+.searchMeta{
+  margin-top:4px;
+  font-size:11px;
+  color:var(--muted);
+}
+
+.searchActions{
+  margin-top:8px;
+}
+
+.searchRequestBtn{
+  width:100%;
+  min-height:34px;
+  border:none;
+  border-radius:999px;
+  background: linear-gradient(135deg,#6fa0ff 0%, #9b5cff 100%);
+  color:#fff;
+  font-weight:800;
+  font-size:12px;
+  cursor:pointer;
+}
+
+.searchRequestBtn:disabled{
+  opacity:.6;
+  cursor:default;
+}
+
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="title">QueueDeck</div>
+    <div class="subtitle">Mobile dashboard</div>
+  </div>
+
+  <a href="#" class="btn" onclick="openSearchModal(event)">🔍 Search / Request</a>
+  <a href="/watchlist?tab=seen" class="btn">⭐ Review / Rate</a>
+  <a href="/discover" class="btn">Discover</a>
+
+  <div class="section">
+    <div class="sectionTitle">Quick Links</div>
+    <div class="quickGrid">
+      <a class="quickCard" href="/watchlist">Watchlist</a>
+      <a class="quickCard" href="/hidden">Hidden</a>
+      <a class="quickCard" href="/stats">Statistics</a>
+      <a class="quickCard" href="/">Desktop</a>
+      {% if me and me.get("is_admin") %}
+      <a class="quickCard" href="/admin/settings">Admin Settings</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if me and me.get("is_admin") %}
+  <div class="section" id="nowPlayingSection" style="display:none;">
+    <div class="sectionTitle">Now Playing</div>
+    <div class="row" id="nowPlayingRow"></div>
+  </div>
+  {% endif %}
+
+  <div class="section" id="cwSection">
+    <div class="sectionTitle">Continue Watching</div>
+    <div class="row" id="cwRow"></div>
+  </div>
+
+  <div class="section" id="nextTvSection">
+    <div class="sectionTitle">Next Up — TV</div>
+    <div class="row" id="nextTvRow"></div>
+  </div>
+
+  <div class="section" id="nextAnimeSection">
+    <div class="sectionTitle">Next Up — Anime</div>
+    <div class="row" id="nextAnimeRow"></div>
+  </div>
+
+  <div class="section" id="remainingSection">
+    <div class="sectionTitle">Series Remaining</div>
+    <div class="row" id="remainingRow"></div>
+  </div>
+
+  <div class="section" id="latestUnwatchedSeriesSection">
+    <div class="sectionTitle">Latest Unwatched Series</div>
+    <div class="row" id="latestUnwatchedSeriesRow"></div>
+  </div>
+
+  <div class="section" id="upcomingMissingTvSection">
+    <div class="sectionTitle">Upcoming / Missing TV</div>
+    <div class="row" id="upcomingMissingTvRow"></div>
+  </div>
+
+  <div class="section" id="latestMoviesSection">
+    <div class="sectionTitle">Latest Movies</div>
+    <div class="row" id="latestMoviesRow"></div>
+  </div>
+
+  <div class="section" id="latestAnimeSection">
+    <div class="sectionTitle">Latest Anime</div>
+    <div class="row" id="latestAnimeRow"></div>
+  </div>
+
+  <div class="section" id="upcomingMissingMoviesSection">
+    <div class="sectionTitle">Upcoming / Missing Movies</div>
+    <div class="row" id="upcomingMissingMoviesRow"></div>
+  </div>
+
+  <div class="section" id="requestedSection">
+    <div class="sectionTitle">Recent Requests</div>
+    <div class="row" id="requestedRow"></div>
+  </div>
+
+  <div class="section" id="downloadsSection">
+    <div class="sectionTitle">Download Activity</div>
+    <div class="downloadList" id="downloadsList"></div>
+  </div>
+
+</div>
+
+<script>
+function qdArray(obj, ...keys){
+  for (const k of keys){
+    const v = obj?.[k];
+    if (Array.isArray(v)) return v;
+  }
+  return [];
+}
+
+function qdImageForItem(it){
+  return (
+    it.primary_image_url ||
+    it.poster_url ||
+    it.poster ||
+    it.image ||
+    it.image_url ||
+    it.thumb ||
+    it.thumbnail ||
+    ""
+  );
+}
+
+function qdSeriesForItem(it){
+  return it.series || it.series_title || "";
+}
+
+function qdTitleForItem(it){
+  return it.title || it.Name || "";
+}
+
+function qdMetaForItem(it){
+  const parts = [];
+  if (it.season) parts.push(it.season);
+  if (it.episode) parts.push("E" + it.episode);
+  if (it.episode_tag && !parts.length) parts.push(it.episode_tag);
+  if (it.countdown) parts.push(it.countdown);
+  if (it.year && !parts.length) parts.push(String(it.year));
+  if (it.status && !parts.length) parts.push(String(it.status));
+  return parts.join(" • ");
+}
+
+function qdLinkForItem(it){
+  return it.jellyfin_web_url || it.open_url || it.radarr_url || it.sonarr_url || "#";
+}
+
+function toggle(id, arr){
+  const el = document.getElementById(id);
+  if (!el) return;
+  const show = Array.isArray(arr) && arr.length > 0;
+  el.style.display = show ? "" : "none";
+}
+
+function render(id, items, opts={}){
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  const arr = Array.isArray(items) ? items : [];
+  const showProgress = !!opts.showProgress;
+
+  if (!arr.length){
+    el.innerHTML = "";
+    return;
+  }
+
+  el.innerHTML = arr.map(it => {
+    const img = qdImageForItem(it);
+    const series = qdSeriesForItem(it);
+    const title = qdTitleForItem(it);
+    const meta = qdMetaForItem(it);
+    const href = qdLinkForItem(it);
+    const pct = Number(it.progress_percent || it.progress || 0);
+
+    return `
+      <a class="card" href="${href}">
+        <img class="poster" src="${img}" alt="">
+        <div class="cardOverlay">
+          ${series ? `<div class="cardSeries">${series}</div>` : ``}
+          <div class="cardTitle">${title}</div>
+          ${meta ? `<div class="cardMeta">${meta}</div>` : ``}
+          ${showProgress ? `
+            <div class="cardProgress">
+              <div class="cardProgressFill" style="width:${Math.max(0, Math.min(100, pct))}%"></div>
+            </div>
+          ` : ``}
+        </div>
+      </a>
+    `;
+  }).join("");
+}
+
+function renderDownloads(id, items){
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  const arr = Array.isArray(items) ? items : [];
+  if (!arr.length){
+    el.innerHTML = "";
+    return;
+  }
+
+  el.innerHTML = arr.map(it => `
+    <div class="downloadCard">
+      <div class="downloadKind">${it._kind || "Download"}</div>
+      <div class="downloadTitle">${it.series || it.title || "Item"}</div>
+      ${it.status ? `<div class="downloadMeta">${it.status}</div>` : ``}
+      <div class="downloadBar">
+        <div class="downloadFill" style="width:${Math.max(0, Math.min(100, Number(it.progress || 0)))}%"></div>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderNowPlaying(id, items){
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  const arr = Array.isArray(items) ? items : [];
+  if (!arr.length){
+    el.innerHTML = "";
+    return;
+  }
+
+  function qdNowProgress(it){
+    const raw = (
+      it.progress ??
+      it.progress_percent ??
+      it.position_percent ??
+      it.playback_percent ??
+      it.percent ??
+      it.percent_complete ??
+      it.Progress ??
+      it.ProgressPercent ??
+      0
+    );
+    const n = Number(raw);
+    return Math.max(0, Math.min(100, Number.isFinite(n) ? n : 0));
+  }
+
+  function qdNowPaused(it){
+    const s = String(
+      it.state ??
+      it.play_state ??
+      it.playState ??
+      it.player_state ??
+      it.playerState ??
+      ""
+    ).trim().toLowerCase();
+
+    return (
+      s === "paused" ||
+      s === "pause" ||
+      s === "stopped" ||
+      it.is_paused === true ||
+      it.paused === true ||
+      it.IsPaused === true
+    );
+  }
+
+  el.innerHTML = arr.map(it => {
+    const title =
+      it.title ||
+      it.NowPlayingItem?.Name ||
+      it.series ||
+      "Playing";
+
+    const user =
+      it.user ||
+      it.username ||
+      it.UserName ||
+      it.device ||
+      it.DeviceName ||
+      "";
+
+    const meta = [
+      it.series || it.SeriesName || "",
+      it.season || it.SeasonName || "",
+      it.episode || it.EpisodeName || ""
+    ].filter(Boolean).join(" • ");
+
+    const progress = qdNowProgress(it);
+    const paused = qdNowPaused(it);
+    const stateClass = paused ? "paused" : "playing";
+    const href = it.jellyfin_web_url || it.open_url || "#";
+
+    return `
+      <a class="nowCard ${stateClass}" href="${href}">
+        <div class="nowBody">
+          ${user ? `<div class="nowUser">${user}</div>` : ``}
+          <div class="nowTitle">${title}</div>
+          ${meta ? `<div class="nowMeta">${meta}</div>` : ``}
+          <div class="nowProgress">
+            <div class="nowProgressFill" style="width:${progress}%"></div>
+          </div>
+        </div>
+      </a>
+    `;
+  }).join("");
+}
+
+async function fetchJson(url, fallback={}){
+  try{
+    const r = await fetch(url, {
+      credentials: "same-origin",
+      cache: "no-store"
+    });
+    return await r.json();
+  }catch(_){
+    return fallback;
+  }
+}
+
+async function load(){
+  try{
+    const [
+      cw,
+      next,
+      remaining,
+      latestSplit,
+      sonarrUpcoming,
+      sonarrMissing,
+      latestMovies,
+      upcomingMissingMovies,
+      latestAnime,
+      requested,
+      nowPlaying,
+      sonarrQ,
+      radarrQ
+    ] = await Promise.all([
+      fetchJson("/api/jellyfin/continue-watching", {}),
+      fetchJson("/api/jellyfin/nextup/split", {}),
+      fetchJson("/api/jellyfin/series-remaining", {}),
+      fetchJson("/api/jellyfin/latest-unwatched-split?tv_limit=20&anime_limit=20", {}),
+      fetchJson("/api/sonarr/upcoming?limit=20", {}),
+      fetchJson("/api/sonarr/missing?limit=20", {}),
+      fetchJson("/api/radarr/recent-unwatched?limit=20", {}),
+      fetchJson("/api/radarr/upcoming-missing?limit=20", {}),
+      fetchJson("/api/jellyfin/latest-anime?limit=20", {}),
+      fetchJson("/api/seerr/my-requests?take=20", {}),
+      fetchJson("/api/jellyfin/active-sessions?limit=6", {items:[]}),
+      fetchJson("/api/sonarr/queue-summary?page_size=6", {items:[]}),
+      fetchJson("/api/radarr/queue-summary?page_size=6", {items:[]})
+    ]);
+
+    const cwItems = qdArray(cw, "items", "Items");
+    const nextTvItems = qdArray(next, "tv_items", "tv", "television");
+    const nextAnimeItems = qdArray(next, "anime_items", "anime");
+    const remainingItems = qdArray(remaining, "items", "Items");
+    const latestUnwatchedSeriesItems =
+      latestSplit?.tv_items ||
+      latestSplit?.tv ||
+      latestSplit?.items ||
+      latestSplit?.Items ||
+      [];
+    const upcomingTv = qdArray(sonarrUpcoming, "items", "Items");
+    const missingTv = qdArray(sonarrMissing, "items", "Items");
+    const upcomingMissingTv = [...missingTv, ...upcomingTv];
+    const latestMovieItems = qdArray(latestMovies, "items", "Items");
+    
+const upcomingMissingMovieItems =
+  upcomingMissingMovies?.items ||
+  upcomingMissingMovies?.movies ||
+  upcomingMissingMovies?.results ||
+  [];
+
+    const latestAnimeItems = qdArray(latestAnime, "items", "Items");
+    
+const requestedItems =
+  requested?.results ||
+  requested?.requests ||
+  requested?.items ||
+  [];
+
+
+    const nowPlayingItems = qdArray(nowPlaying, "items", "Items");
+    const downloads = [
+      ...qdArray(sonarrQ, "items", "Items").map(x => ({...x, _kind:"TV"})),
+      ...qdArray(radarrQ, "items", "Items").map(x => ({...x, _kind:"Movie"}))
+    ];
+
+    renderNowPlaying("nowPlayingRow", nowPlayingItems);
+    render("cwRow", cwItems, { showProgress: true });
+    render("nextTvRow", nextTvItems);
+    render("nextAnimeRow", nextAnimeItems);
+    render("remainingRow", remainingItems);
+    render("latestUnwatchedSeriesRow", latestUnwatchedSeriesItems);
+    render("upcomingMissingTvRow", upcomingMissingTv);
+    render("latestMoviesRow", latestMovieItems);
+    render("latestAnimeRow", latestAnimeItems);
+    render("upcomingMissingMoviesRow", upcomingMissingMovieItems);
+    render("requestedRow", requestedItems);
+    renderDownloads("downloadsList", downloads);
+
+    toggle("nowPlayingSection", nowPlayingItems);
+    toggle("cwSection", cwItems);
+    toggle("nextTvSection", nextTvItems);
+    toggle("nextAnimeSection", nextAnimeItems);
+    toggle("remainingSection", remainingItems);
+    toggle("latestUnwatchedSeriesSection", latestUnwatchedSeriesItems);
+    toggle("upcomingMissingTvSection", upcomingMissingTv);
+    toggle("latestMoviesSection", latestMovieItems);
+    toggle("latestAnimeSection", latestAnimeItems);
+    toggle("upcomingMissingMoviesSection", upcomingMissingMovieItems);
+    toggle("requestedSection", requestedItems);
+    toggle("downloadsSection", downloads);
+  }catch(e){
+    console.error(e);
+  }
+}
+
+load();
+
+
+function openSearchModal(e){
+  e.preventDefault();
+  document.getElementById("searchModal").style.display = "block";
+  document.getElementById("searchInput").focus();
+}
+
+function closeSearchModal(){
+  document.getElementById("searchModal").style.display = "none";
+}
+
+async function performSearch(q){
+  const grid = document.getElementById("searchGrid");
+  const status = document.getElementById("searchStatus");
+  if (!grid) return;
+
+  const query = String(q || "").trim();
+  if (status) status.textContent = "";
+
+  if (query.length < 2){
+    grid.innerHTML = "";
+    return;
+  }
+
+  grid.innerHTML = '<div class="emptyNote">Searching…</div>';
+
+  try{
+    const r = await fetch(`/api/seerr/search?q=${encodeURIComponent(query)}`, {
+      credentials:"same-origin",
+      cache:"no-store"
+    });
+
+    const data = await r.json().catch(() => ({}));
+
+    const items =
+      (Array.isArray(data.items) && data.items) ||
+      (Array.isArray(data.results) && data.results) ||
+      (Array.isArray(data.media) && data.media) ||
+      [];
+
+    if (status){
+      const errText = String(data.error || data.message || "").trim();
+      if (errText){
+        status.textContent = errText;
+      } else {
+        status.textContent = `Found ${items.length} result${items.length === 1 ? "" : "s"}.`;
+      }
+    }
+
+    if (!items.length){
+      grid.innerHTML = '<div class="emptyNote">No results.</div>';
+      return;
+    }
+
+    grid.innerHTML = items.map(it => {
+      const title = it.title || it.name || "";
+      const year = it.year || it.releaseYear || "";
+      const yearText = year ? ` (${year})` : "";
+      const type = String(it.media_type || it.mediaType || it.type || "").toLowerCase();
+      const typeLabel = type === "tv" ? "TV" : (type === "movie" ? "Movie" : "");
+      const posterUrl = String(it.poster_url || "").trim();
+      const tmdbId = String(it.tmdb_id || it.tmdbId || "");
+      const requestLabel = type === "tv" ? "Request Show" : "Request Movie";
+      const posterHtml = posterUrl
+        ? `<img class="searchPoster" src="${posterUrl}" alt="">`
+        : `<div class="searchPoster placeholder">No Poster</div>`;
+
+      return `
+        <div class="searchCard">
+          ${posterHtml}
+          <div class="searchBody">
+            <div class="searchName">${title}${yearText}</div>
+            <div class="searchMeta">${typeLabel || "Title"}</div>
+            <div class="searchActions">
+              <button
+                class="searchRequestBtn"
+                type="button"
+                data-search-request="1"
+                data-tmdb-id="${tmdbId}"
+                data-media-type="${type}"
+                data-title="${String(title).replace(/"/g, '&quot;')}"
+                ${tmdbId ? "" : "disabled"}
+              >${requestLabel}</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+  }catch(e){
+    console.error(e);
+    if (status) status.textContent = String(e && e.message ? e.message : e);
+    grid.innerHTML = '<div class="emptyNote">Search failed.</div>';
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("searchInput");
+  if (!input) return;
+
+  let t;
+  input.addEventListener("input", () => {
+    clearTimeout(t);
+    t = setTimeout(() => performSearch(input.value), 250);
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter"){
+      e.preventDefault();
+      clearTimeout(t);
+      performSearch(input.value);
+    }
+  });
+});
+
+
+
+document.addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-search-request='1']");
+  if (!btn) return;
+
+  const tmdbId = String(btn.getAttribute("data-tmdb-id") || "").trim();
+  const mediaType = String(btn.getAttribute("data-media-type") || "").trim();
+  const title = String(btn.getAttribute("data-title") || "").trim();
+
+  if (!tmdbId || !mediaType) return;
+
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Requesting...";
+
+  try{
+    const r = await fetch("/api/seerr/request", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tmdb_id: tmdbId,
+        media_type: mediaType
+      })
+    });
+
+    const data = await r.json().catch(() => ({}));
+
+    if (!r.ok || data.ok === false){
+      throw new Error(data.error || data.message || ("HTTP " + r.status));
+    }
+
+    btn.textContent = "Requested";
+  }catch(err){
+    console.error(err);
+    btn.disabled = false;
+    btn.textContent = original;
+    const status = document.getElementById("searchStatus");
+    if (status){
+      status.textContent = "Request failed: " + (err.message || err);
+    }
+  }
+});
+
+</script>
+
+
+<div id="searchModal" class="searchModal">
+  <div class="searchModalInner">
+
+    <div class="searchHeader">
+      <div class="searchTitle">Search</div>
+      <button class="searchClose" onclick="closeSearchModal()">✕</button>
+    </div>
+
+    <input id="searchInput" class="searchInput" placeholder="Search movies or TV..." />
+    <div id="searchStatus" class="emptyNote" style="margin:-6px 0 12px 0;"></div>
+
+    <div id="searchGrid" class="searchGrid"></div>
+
+  </div>
+</div>
+
+</body>
+</html>
