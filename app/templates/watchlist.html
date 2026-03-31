@@ -2273,7 +2273,6 @@
         html = `<div class="empty">${state.query ? "No seen items match your search." : "No seen items found."}</div>`;
       }
 
-      html += communityRatingsSectionHTML();
       container.innerHTML = html;
     }
 
@@ -2857,11 +2856,13 @@ function renderRecommendedFeed(){
         state.calendar = Array.isArray(j.calendar) ? j.calendar : [];
       state.seen = j.seen || { movies: [], series: [] };
 
-        await loadSeenFeedback();
-        await loadRecommendUsers();
-        await loadSentRecommendations();
-        await loadRecommendedFeed();
-        await loadCommunityRatings();
+        await Promise.all([
+          loadSeenFeedback(),
+          loadRecommendUsers(),
+          loadSentRecommendations(),
+          loadRecommendedFeed(),
+          loadCommunityRatings()
+        ]);
         renderRecommendedFeed();
         applyFilter();
       }catch(e){

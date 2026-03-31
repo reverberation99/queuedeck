@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.4.1 - 2026-03-31
+
+**Bug Fixes For watchlist**
+
+- Removed Community Ratings from Seen
+
+
+
 ## v1.4 - 2026-03-27
 
 **Added a Community Rating system for Seen**
