@@ -1503,6 +1503,7 @@
       recommended: { direct: [], community: [] },
       communityRatings: [],
       seenLoaded: false,
+      seenLoading: false,
       recommendedLoaded: false,
       recFilters: {
         minStars: 0,
@@ -2194,6 +2195,16 @@
     }
 
     function renderSeen(){
+  if (!state.seenLoaded){
+    const el = document.getElementById("watchlistSeen");
+    if (el){
+      el.innerHTML = state.seenLoading
+        ? '<div class="empty">Loading ratings...</div>'
+        : '<div class="empty">No ratings loaded yet.</div>';
+    }
+    return;
+  }
+
       const container = document.getElementById("watchlistSeen");
       if (!container) return;
 
@@ -2306,6 +2317,33 @@ function renderLists(){
       }
     }
 
+    function ensureSeenLoaded(){
+      if (state.seenLoaded || state.seenLoading) return;
+
+      state.seenLoading = true;
+
+      const seenEl = document.getElementById("watchlistSeen");
+      if (seenEl){
+        seenEl.innerHTML = '<div class="empty">Loading ratings...</div>';
+      }
+
+      loadSeenFeedback()
+        .then(() => {
+          state.seenLoaded = true;
+          state.seenLoading = false;
+          renderSeen();
+          wireSeenFeedbackActions();
+        })
+        .catch((err) => {
+          console.error(err);
+          state.seenLoading = false;
+          const el = document.getElementById("watchlistSeen");
+          if (el){
+            el.innerHTML = '<div class="empty">Could not load ratings.</div>';
+          }
+        });
+    }
+
     function renderCurrentTab(){
       const tvEl = document.getElementById("watchlistTV");
       const movieEl = document.getElementById("watchlistMovies");
@@ -2363,6 +2401,10 @@ function renderLists(){
         communityRatings.sort((a,b)=> new Date(b.updated_at||0)-new Date(a.updated_at||0));
       }
       const recommendedCount = directRecs.length + communityRecs.length + communityRatings.length;
+
+      if (showingSeen){
+        ensureSeenLoaded();
+      }
 
       tvEl.classList.toggle("hidden", !showingTV);
       movieEl.classList.toggle("hidden", !showingMovies);
@@ -2878,12 +2920,8 @@ function renderRecommendedFeed(){
       btn.addEventListener("click", () => {
         state.activeTab = btn.getAttribute("data-tab") || "tv";
 
-        if (state.activeTab === "seen" && !state.seenLoaded){
-          state.seenLoaded = true;
-          loadSeenFeedback().then(()=>{
-            renderSeen();
-            wireSeenFeedbackActions();
-          });
+        if (state.activeTab === "seen"){
+          ensureSeenLoaded();
         }
 
         if (state.activeTab === "recommended" && !state.recommendedLoaded){

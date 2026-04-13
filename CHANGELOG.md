@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.4.3 - 2026-04-13
+
+**Fixed seen page not loading ratings on first load**
+
+- #fixed issue with lazy load not loading ratings on seen page on first load
+
+
+
 ## v1.4.2 - 2026-03-31
 
 **Watchlist Bug Fixes**
