@@ -854,6 +854,26 @@ def api_jellyfin_latest_unwatched_split():
         return jsonify(error=str(e)), 500
 
 
+
+def _get_sonarr_season_counts(series_id):
+    """
+    Return {seasonNumber: episode_count} for a Sonarr series.
+    Used for Season Finale / Series Finale badge detection.
+    """
+    try:
+        from app.clients.sonarr import _sonarr_get
+        eps = _sonarr_get("/api/v3/episode", params={"seriesId": series_id}) or []
+        counts = {}
+        for ep in eps:
+            s = ep.get("seasonNumber")
+            if s is None:
+                continue
+            counts[s] = counts.get(s, 0) + 1
+        return counts
+    except Exception:
+        return {}
+
+
 # --------------------------------------------------
 # Sonarr: Upcoming
 # --------------------------------------------------
@@ -875,22 +895,35 @@ def sonarr_upcoming():
 
         slug_map = get_series_slug_map()
         cleaned = []
+        season_cache = {}
+
         for it in items:
             series = it.get("series") or {}
+            series_id = series.get("id")
+            season_number = it.get("seasonNumber")
+
+            if series_id not in season_cache:
+                season_cache[series_id] = _get_sonarr_season_counts(series_id)
+
+            season_counts = season_cache.get(series_id, {}) or {}
+            stats = series.get("statistics") or {}
 
             cleaned.append({
                 "series": series.get("title"),
-                "season_number": it.get("seasonNumber"),
+                "season_number": season_number,
                 "episode_number": it.get("episodeNumber"),
                 "title": it.get("title"),
                 "air_date_utc": it.get("airDateUtc"),
                 "episode_id": it.get("id"),
-                "series_id": series.get("id"),
-                "series_slug": (series.get("slug") or slug_map.get(series.get("id"))),
+                "series_id": series_id,
+                "series_slug": (series.get("slug") or slug_map.get(series_id)),
                 "poster_url": (
                     f"/img/sonarr/series/{series.get('tvdbId')}.jpg"
                     if series.get("tvdbId") else None
                 ),
+                "season_episode_count": season_counts.get(season_number),
+                "series_status": series.get("status"),
+                "last_season_number": stats.get("seasonCount"),
             })
 
         cleaned.sort(key=lambda x: x.get("air_date_utc") or "")
@@ -900,6 +933,7 @@ def sonarr_upcoming():
 
     except Exception as e:
         return jsonify(error=str(e)), 500
+
 
 
 # --------------------------------------------------
@@ -925,7 +959,8 @@ def _build_sonarr_missing_items(days: int = 14, limit: int = 60):
 
     slug_map = get_series_slug_map()
     items = []
-    seen = set()  # (seriesId, season, episode)
+    seen = set()
+    season_cache = {}
 
     def add_item(series_obj: dict, ep_obj: dict, air_utc: str):
         series_id = series_obj.get("id")
@@ -936,6 +971,12 @@ def _build_sonarr_missing_items(days: int = 14, limit: int = 60):
         if key in seen:
             return
         seen.add(key)
+
+        if series_id not in season_cache:
+            season_cache[series_id] = _get_sonarr_season_counts(series_id)
+
+        season_counts = season_cache.get(series_id, {}) or {}
+        stats = series_obj.get("statistics") or {}
 
         tvdb_id = series_obj.get("tvdbId")
         poster_url = f"/img/sonarr/series/{tvdb_id}.jpg" if tvdb_id else None
@@ -950,6 +991,9 @@ def _build_sonarr_missing_items(days: int = 14, limit: int = 60):
             "series_id": series_id,
             "series_slug": (series_obj.get("slug") or series_obj.get("titleSlug") or slug_map.get(series_id)),
             "poster_url": poster_url,
+            "season_episode_count": season_counts.get(season_number),
+            "series_status": series_obj.get("status"),
+            "last_season_number": stats.get("seasonCount"),
         })
 
     for ep in cal:
@@ -1001,6 +1045,7 @@ def _build_sonarr_missing_items(days: int = 14, limit: int = 60):
 
     items.sort(key=lambda x: x.get("air_date_utc") or "", reverse=True)
     return items[:limit]
+
 
 
 # --------------------------------------------------

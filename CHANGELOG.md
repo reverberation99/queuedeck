@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.4.4 - 2026-04-30
+
+**Added Premier and Finale Badges**
+
+- #Premier and Finale Badges added to Upcoming Missing section
+
+
+
 ## v1.4.3 - 2026-04-13
 
 **Fixed seen page not loading ratings on first load**

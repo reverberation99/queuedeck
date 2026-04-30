@@ -2307,6 +2307,47 @@ border-radius:10px;
   }
 }
 
+
+/* Premiere / Finale badges */
+.eventBadge{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  margin-top:6px;
+  padding:4px 9px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.02em;
+  color:#fff6d6;
+  background:rgba(245,197,66,.14);
+  border:1px solid rgba(245,197,66,.40);
+  box-shadow:0 0 18px rgba(245,197,66,.16);
+}
+
+.eventBadge.premiere{
+  color:#dbeafe;
+  background:rgba(111,160,255,.14);
+  border-color:rgba(111,160,255,.40);
+  box-shadow:0 0 18px rgba(111,160,255,.16);
+}
+
+.card.eventFinale{
+  border-color:rgba(245,197,66,.55) !important;
+  box-shadow:
+    0 0 0 1px rgba(245,197,66,.22) inset,
+    0 0 28px rgba(245,197,66,.18),
+    0 14px 30px rgba(0,0,0,.28);
+}
+
+.card.eventSeriesFinale{
+  border-color:rgba(255,132,87,.70) !important;
+  box-shadow:
+    0 0 0 1px rgba(255,132,87,.28) inset,
+    0 0 30px rgba(255,132,87,.22),
+    0 14px 30px rgba(0,0,0,.28);
+}
+
 </style>
 </head>
 
@@ -3553,12 +3594,39 @@ function airsTonight(dateStr){
 // Glow for newly arrived Sonarr episodes (recently aired)
       const isNewEp = (mode === "sonarr" || mode === "nextup_tv" || mode === "nextup_anime") && isRecentlyAired(item.air_date_utc || item.airDateUtc || item.airDate || item.premiere_date, NEW_EP_HOURS);
 
+      let sonarrBadge = "";
+      if (mode === "sonarr"){
+        const seasonNum = Number(item.season_number ?? item.seasonNumber);
+        const episodeNum = Number(item.episode_number ?? item.episodeNumber);
+        const seasonCount = Number(item.season_episode_count);
+        const lastSeason = Number(item.last_season_number);
+        const status = String(item.series_status || "").toLowerCase();
+
+        if (episodeNum && seasonCount && episodeNum === seasonCount){
+          sonarrBadge = (status === "ended" && seasonNum === lastSeason)
+            ? "Series Finale"
+            : "Season Finale";
+        } else if (seasonNum === 1 && episodeNum === 1){
+          sonarrBadge = "Series Premiere";
+        } else if (episodeNum === 1){
+          sonarrBadge = "Season Premiere";
+        }
+      }
+
+      const sonarrBadgeKind = sonarrBadge.includes("Premiere") ? "premiere" : "finale";
+      const sonarrBadgeHtml = sonarrBadge
+        ? `<div class="eventBadge ${sonarrBadgeKind}">${escapeHTML(sonarrBadge)}</div>`
+        : "";
+
       let cardClass = (isSonarrMissing || isRadarrMissing)
         ? (isRemaining ? "card small missing" : "card missing")
         : (isRemaining ? "card small" : "card");
 
       
       if (isJustAired && !isSonarrMissing){ cardClass += " justAired"; }
+
+      if (sonarrBadge === "Season Finale") cardClass += " eventFinale";
+      if (sonarrBadge === "Series Finale") cardClass += " eventSeriesFinale";
 
 if (isNewEp && !isSonarrMissing) cardClass += " newEp";
 const meta1 =
@@ -3723,6 +3791,7 @@ e="${escapeHTML(mode)}">
           </div>
           <div class="card-body">
             <div class="title">${title}</div>
+            ${sonarrBadgeHtml}
             ${meta1 ? `<div class="meta">${escapeHTML(meta1)}</div>` : ``}
             ${qdMeta2 ? `<div class="meta">${escapeHTML(qdMeta2)}</div>` : ``}
             ${qdMeta3 ? `<div class="meta">${escapeHTML(qdMeta3)}</div>` : ``}
