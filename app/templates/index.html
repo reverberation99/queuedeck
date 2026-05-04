@@ -3602,14 +3602,17 @@ function airsTonight(dateStr){
         const lastSeason = Number(item.last_season_number);
         const status = String(item.series_status || "").toLowerCase();
 
-        if (episodeNum && seasonCount && episodeNum === seasonCount){
-          sonarrBadge = (status === "ended" && seasonNum === lastSeason)
-            ? "Series Finale"
-            : "Season Finale";
-        } else if (seasonNum === 1 && episodeNum === 1){
+        // Premiere wins over finale.
+        // Sonarr often only knows SxE1 for future seasons, which makes
+        // season_episode_count look like 1. Do not label E1 as a finale.
+        if (seasonNum === 1 && episodeNum === 1){
           sonarrBadge = "Series Premiere";
         } else if (episodeNum === 1){
           sonarrBadge = "Season Premiere";
+        } else if (episodeNum > 1 && seasonCount && episodeNum === seasonCount){
+          sonarrBadge = (status === "ended" && seasonNum === lastSeason)
+            ? "Series Finale"
+            : "Season Finale";
         }
       }
 

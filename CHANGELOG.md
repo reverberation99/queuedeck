@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.4.5 - 2026-05-04
+
+**Series Premier Bug Fix**
+
+- #Fixed Issue where Series Premier being marked as Series Finale
+
+
+
 ## v1.4.4 - 2026-04-30
 
 **Added Premier and Finale Badges**
